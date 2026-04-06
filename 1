@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnSpace</title>
+
+<style>
+  /* Uporabljam tvoj obstoječi stil, dodajam le par malenkosti za povezave */
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f13; --bg2: #17171e; --bg3: #1f1f29; --border: #2e2e3f;
+    --accent: #6c63ff; --accent2: #a78bfa; --text: #e8e8f0; --muted: #7070a0;
+    --danger: #e05555; --radius: 12px;
+  }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:15px; }
+
+  .screen { display:none; }
+  .screen.active { display:flex; }
+
+  #screen-login { align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at 60% 20%,#1a1440 0%,var(--bg) 70%); }
+  .login-box { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:3rem 2.5rem; width:100%; max-width:400px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
+  .login-box h1 { font-family:'DM Serif Display',serif; font-size:2rem; margin-bottom:.25rem; background:linear-gradient(120deg,#fff,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .login-box .subtitle { color:var(--muted); margin-bottom:2rem; font-size:.9rem; }
+  .login-err { background:#3a1f1f; border:1px solid #7a3030; color:#f09090; border-radius:8px; padding:.65rem .9rem; font-size:.85rem; margin-bottom:1rem; display:none; }
+  
+  .inp { display:block; width:100%; padding:.7rem .9rem; background:var(--bg3); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:inherit; margin-bottom:.75rem; outline:none; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; padding:.6rem 1.3rem; border-radius:9px; background:var(--accent); color:#fff; border:none; font-weight:600; cursor:pointer; width:100%; }
+  
+  .auth-footer { margin-top: 1.5rem; text-align: center; font-size: 0.85rem; }
+  .auth-link { color: var(--accent2); cursor: pointer; text-decoration: none; display: block; margin-top: 0.5rem; }
+  .auth-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div id="toast-area"></div>
+
+<div id="screen-login" class="screen active">
+  <div class="login-box">
+    <h1 id="auth-title">LearnSpace</h1>
+    <p id="auth-subtitle" class="subtitle">Vpišite se za vstop v učilnico.</p>
+    
+    <div id="login-err" class="login-err"></div>
+    
+    <label style="font-size: 0.8rem; color: var(--muted);">E-pošta</label>
+    <input id="login-email" type="email" class="inp" placeholder="vas@mail.com">
+    
+    <label style="font-size: 0.8rem; color: var(--muted);">Geslo</label>
+    <input id="login-pass" type="password" class="inp" placeholder="••••••••">
+    
+    <button id="auth-btn" class="btn" onclick="APP.handleAuth()">Prijava</button>
+
+    <div class="auth-footer">
+      <span id="toggle-text">Še nimate računa?</span>
+      <a class="auth-link" id="toggle-link" onclick="APP.toggleAuthMode()">Ustvari račun</a>
+      <a class="auth-link" style="font-size: 0.75rem; color: var(--muted);" onclick="APP.forgotPassword()">Pozabljeno geslo?</a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } 
+       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs } 
+       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Tvoji Firebase podatki
+const firebaseConfig = {
+  apiKey: "AIzaSyBSaI7bxp7LH76LhkUI5wvub0XGMRbXwbY",
+  authDomain: "fit-ucilnica.firebaseapp.com",
+  projectId: "fit-ucilnica",
+  storageBucket: "fit-ucilnica.firebasestorage.app",
+  messagingSenderId: "Y702377248893",
+  appId: "1:702377248893:web:161eecf07a69570fe68914"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const g = id => document.getElementById(id);
+
+/* Pomožna funkcija za preverjanje dovoljenja v Firestore */
+async function isEmailAllowed(email) {
+  const e = email.toLowerCase().trim();
+  const q = query(collection(db, "allowedUsers"), where("email", "==", e));
+  const snap = await getDocs(q);
+  return !snap.empty;
+}
+
+const APP = {
+  mode: 'login',
+
+  toggleAuthMode() {
+    this.mode = (this.mode === 'login') ? 'signup' : 'login';
+    g("auth-title").textContent = (this.mode === 'login') ? "LearnSpace" : "Registracija";
+    g("auth-subtitle").textContent = (this.mode === 'login') ? "Vpišite se za vstop." : "Ustvarite račun z odobreno e-pošto.";
+    g("auth-btn").textContent = (this.mode === 'login') ? "Prijava" : "Registracija";
+    g("toggle-text").textContent = (this.mode === 'login') ? "Še nimate računa?" : "Že imate račun?";
+    g("toggle-link").textContent = (this.mode === 'login') ? "Ustvari račun" : "Prijavite se";
+  },
+
+  async handleAuth() {
+    const email = g("login-email").value.trim();
+    const pass = g("login-pass").value;
+    const errEl = g("login-err");
+    errEl.style.display = "none";
+
+    if (!email || !pass) {
+      errEl.textContent = "Vpišite email in geslo.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    try {
+      if (this.mode === 'signup') {
+        // 1. Preveri, če je na seznamu
+        const allowed = await isEmailAllowed(email);
+        if (!allowed) {
+          errEl.textContent = "Ta e-pošta ni odobrena. Kontaktirajte administratorja.";
+          errEl.style.display = "block";
+          return;
+        }
+        // 2. Ustvari račun v Authentication
+        await createUserWithEmailAndPassword(auth, email, pass);
+        alert("Račun uspešno ustvarjen! Zdaj se lahko prijavite.");
+        this.toggleAuthMode();
+      } else {
+        // Prijava
+        await signInWithEmailAndPassword(auth, email, pass);
+      }
+    } catch (err) {
+      errEl.textContent = "Napaka: " + err.message;
+      errEl.style.display = "block";
+    }
+  },
+
+  async forgotPassword() {
+    const email = g("login-email").value.trim();
+    if (!email) { alert("Vpišite svoj email za ponastavitev gesla."); return; }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("Povezava za ponastavitev gesla je bila poslana na vaš email.");
+    } catch (err) {
+      alert("Napaka: " + err.message);
+    }
+  }
+};
+
+window.APP = APP;
+
+// Spremljanje stanja prijave
+onAuthStateChanged(auth, user => {
+  if (user) {
+    // Če je prijavljen, ga preusmeri na Vercel app del (to kodo že imaš v svojem screen-app)
+    console.log("Uporabnik prijavljen:", user.email);
+    // Tu bi dodal: switchScreen("app");
+  }
+});
+</script>
+</body>
+</html>
