@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LearnSpace</title>
- 
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
- 
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #0f0f13; --bg2: #17171e; --bg3: #1f1f29; --border: #2e2e3f;
@@ -15,18 +15,18 @@
     --danger: #e05555; --radius: 12px;
   }
   body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:15px; }
- 
+
   /* screens */
   .screen { display:none; }
   .screen.active { display:flex; }
- 
+
   /* login */
   #screen-login { align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at 60% 20%,#1a1440 0%,var(--bg) 70%); }
   .login-box { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:3rem 2.5rem; width:100%; max-width:400px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
   .login-box h1 { font-family:'DM Serif Display',serif; font-size:2rem; margin-bottom:.25rem; background:linear-gradient(120deg,#fff,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .login-box .subtitle { color:var(--muted); margin-bottom:2rem; font-size:.9rem; }
   .login-err { background:#3a1f1f; border:1px solid #7a3030; color:#f09090; border-radius:8px; padding:.65rem .9rem; font-size:.85rem; margin-bottom:1rem; display:none; }
- 
+
   /* app */
   #screen-app { height:100vh; overflow:hidden; }
   .sidebar { width:240px; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:1.5rem 1rem; flex-shrink:0; }
@@ -39,14 +39,14 @@
   .user-chip span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .logout-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.78rem; font-family:inherit; transition:color .15s; }
   .logout-btn:hover { color:var(--danger); }
- 
+
   .main-content { flex:1; overflow-y:auto; padding:2rem 2.5rem; }
   .section { display:none; }
   .section.active { display:block; }
   .page-header { margin-bottom:2rem; }
   .page-header h2 { font-family:'DM Serif Display',serif; font-size:1.8rem; }
   .page-header p { color:var(--muted); margin-top:.25rem; }
- 
+
   /* cards */
   .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.25rem; }
   .card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:transform .2s,box-shadow .2s; }
@@ -56,7 +56,7 @@
   .card-body { padding:1rem 1.1rem 1.25rem; }
   .card-body h3 { font-size:1rem; margin-bottom:.35rem; }
   .card-body p { color:var(--muted); font-size:.85rem; line-height:1.5; }
- 
+
   /* viewer */
   #course-viewer { display:none; position:fixed; inset:0; background:var(--bg); z-index:200; flex-direction:column; }
   #course-viewer.open { display:flex; }
@@ -79,7 +79,7 @@
   .step-body p { margin-bottom:1em; }
   .step-body ul,.step-body ol { margin:.5em 0 1em 1.5em; }
   .step-embed { margin-top:1.5rem; }
- 
+
   /* forms */
   .inp { display:block; width:100%; padding:.7rem .9rem; background:var(--bg3); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:inherit; font-size:.9rem; outline:none; transition:border-color .2s; margin-bottom:.75rem; resize:vertical; }
   .inp:focus { border-color:var(--accent); }
@@ -97,13 +97,13 @@
   label { display:block; font-size:.78rem; color:var(--muted); margin-bottom:.2rem; }
   .list-row { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem; background:var(--bg2); border:1px solid var(--border); border-radius:9px; margin-bottom:.45rem; gap:.5rem; flex-wrap:wrap; }
   .badge { padding:.2rem .55rem; border-radius:20px; background:rgba(108,99,255,.2); color:var(--accent2); font-size:.75rem; font-weight:600; }
- 
+
   /* modals */
   .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; }
   .modal-bg.open { display:flex; }
   .modal-box { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:2rem; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; }
   .modal-box h3 { font-family:'DM Serif Display',serif; font-size:1.3rem; margin-bottom:1.2rem; }
- 
+
   /* toast */
   #toast-area { position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; }
   .toast { padding:.75rem 1.2rem; border-radius:10px; font-size:.87rem; font-weight:500; margin-top:.5rem; animation:fadeUp .25s ease; box-shadow:0 8px 30px rgba(0,0,0,.4); }
@@ -118,9 +118,9 @@
 </style>
 </head>
 <body>
- 
+
 <div id="toast-area"></div>
- 
+
 <!-- LOGIN -->
 <div id="screen-login" class="screen active">
   <div class="login-box">
@@ -131,23 +131,23 @@
     <input id="login-email" type="email" class="inp" placeholder="you@example.com">
     <label>Password</label>
     <input id="login-pass" type="password" class="inp" placeholder="••••••••">
-    <button id="login-btn" class="btn btn-full" onclick="APP.login()">Sign In</button>
+    <button id="login-btn" class="btn btn-full" id="login-btn-fix">Sign In</button>
   </div>
 </div>
- 
+
 <!-- APP -->
 <div id="screen-app" class="screen">
   <nav class="sidebar">
     <div class="sidebar-logo">LearnSpace</div>
-    <button class="nav-item" id="nav-dashboard" onclick="APP.nav('dashboard')">
+    <button class="nav-item" id="nav-dashboard">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v9h5v-5h4v5h5v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Dashboard
     </button>
-    <button class="nav-item" id="nav-courses" onclick="APP.nav('courses')">
+    <button class="nav-item" id="nav-courses">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
       My Courses
     </button>
-    <button class="nav-item" id="nav-admin" onclick="APP.nav('admin')" style="display:none">
+    <button class="nav-item" id="nav-admin" style="display:none">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Admin
     </button>
@@ -155,45 +155,45 @@
       <div class="user-chip">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
         <span id="user-label">—</span>
-        <button class="logout-btn" onclick="APP.logout()">Sign out</button>
+        <button id="logout-btn" class="logout-btn">Sign out</button>
       </div>
     </div>
   </nav>
- 
+
   <div class="main-content">
     <div id="sec-dashboard" class="section active">
       <div class="page-header"><h2>Welcome back 👋</h2><p>Select a course to continue learning.</p></div>
       <div id="dash-grid" class="cards-grid"><p class="muted">Loading…</p></div>
     </div>
- 
+
     <div id="sec-courses" class="section">
       <div class="page-header"><h2>All Courses</h2></div>
       <div id="courses-list"></div>
     </div>
- 
+
     <div id="sec-admin" class="section">
       <div class="page-header"><h2>Admin Panel</h2></div>
       <div class="card-form">
         <h3>Allowed Users</h3>
         <div class="btn-row" style="margin-bottom:.75rem">
           <input id="new-user-email" type="email" placeholder="user@email.com" class="inp" style="margin:0;flex:1;min-width:160px">
-          <button class="btn" onclick="APP.addUser()">Add User</button>
+          <button id="add-user-btn" class="btn">Add User</button>
         </div>
         <div id="users-list"></div>
       </div>
       <div class="card-form">
         <h3>Courses</h3>
-        <button class="btn" style="margin-bottom:1rem" onclick="APP.openAddCourse()">+ New Course</button>
+        <button id="open-add-course" class="btn" style="margin-bottom:1rem">+ New Course</button>
         <div id="admin-courses"></div>
       </div>
     </div>
   </div>
 </div>
- 
+
 <!-- COURSE VIEWER -->
 <div id="course-viewer">
   <div class="viewer-topbar">
-    <button class="btn btn-ghost btn-sm" onclick="APP.closeViewer()">← Back</button>
+    <button id="close-viewer-btn" class="btn btn-ghost btn-sm">← Back</button>
     <h3 id="viewer-title"></h3>
   </div>
   <div class="viewer-body">
@@ -204,7 +204,7 @@
     <div class="step-content-area" id="viewer-content"><p class="muted">Select a lesson to begin.</p></div>
   </div>
 </div>
- 
+
 <!-- MODAL: Add Course -->
 <div id="modal-add-course" class="modal-bg">
   <div class="modal-box">
@@ -213,12 +213,12 @@
     <label>Description</label><textarea id="nc-desc" class="inp" rows="2" placeholder="Short description"></textarea>
     <label>Thumbnail URL (optional)</label><input id="nc-thumb" class="inp" placeholder="https://...">
     <div class="btn-row mt">
-      <button class="btn" onclick="APP.saveCourse()">Create</button>
-      <button class="btn btn-ghost" onclick="APP.closeModal('modal-add-course')">Cancel</button>
+      <button id="save-course-btn" class="btn">Create</button>
+      <button id="cancel-add-course" class="btn btn-ghost">Cancel</button>
     </div>
   </div>
 </div>
- 
+
 <!-- MODAL: Manage Lessons -->
 <div id="modal-steps" class="modal-bg">
   <div class="modal-box" style="max-width:620px">
@@ -233,12 +233,12 @@
     <label>Image URL</label><input id="ns-image" class="inp" placeholder="https://...">
     <label>Custom embed (Lottie, Google Slides, etc.)</label><textarea id="ns-embed" class="inp" rows="2" placeholder="&lt;iframe ...&gt;&lt;/iframe&gt;"></textarea>
     <div class="btn-row mt">
-      <button class="btn" onclick="APP.addLesson()">Add Lesson</button>
-      <button class="btn btn-ghost" onclick="APP.closeModal('modal-steps')">Close</button>
+      <button id="add-lesson-btn" class="btn">Add Lesson</button>
+      <button id="close-steps-btn" class="btn btn-ghost">Close</button>
     </div>
   </div>
 </div>
- 
+
 <!-- MODAL: Edit Lesson -->
 <div id="modal-edit-lesson" class="modal-bg">
   <div class="modal-box">
@@ -251,12 +251,12 @@
     <label>Image URL</label><input id="el-image" class="inp">
     <label>Custom embed</label><textarea id="el-embed" class="inp" rows="2"></textarea>
     <div class="btn-row mt">
-      <button class="btn" onclick="APP.saveLesson()">Save</button>
-      <button class="btn btn-ghost" onclick="APP.closeModal('modal-edit-lesson')">Cancel</button>
+      <button id="save-lesson-btn" class="btn">Save</button>
+      <button id="cancel-edit-lesson" class="btn btn-ghost">Cancel</button>
     </div>
   </div>
 </div>
- 
+
 <script type="module">
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
@@ -264,7 +264,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
          addDoc, updateDoc, deleteDoc, query, orderBy, where }
                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
- 
+
 // ╔════════════════════════════════════════╗
 // ║  PASTE YOUR FIREBASE CONFIG BELOW     ║
 // ╚════════════════════════════════════════╝
@@ -273,19 +273,19 @@ const firebaseConfig = {
   authDomain:        "fit-ucilnica.firebaseapp.com",
   projectId:         "fit-ucilnica",
   storageBucket:     "fit-ucilnica.firebasestorage.app",
-  messagingSenderId: "Y702377248893",
-  appId:             "1:702377248893:web:161eecf07a69570fe68914""
+  messagingSenderId: "702377248893",
+  appId:             "1:702377248893:web:161eecf07a69570fe68914"
 };
- 
+
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
- 
+
 /* ── tiny helpers ── */
 const g   = id => document.getElementById(id);
 const htm = (id, h) => { g(id).innerHTML = h; };
 const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
- 
+
 function toast(msg, type="ok") {
   const d = document.createElement("div");
   d.className = "toast toast-"+type;
@@ -295,7 +295,7 @@ function toast(msg, type="ok") {
 }
 // ekey still used when WRITING new users from admin panel
 function ekey(email){ return email.toLowerCase().replace(/[^a-z0-9]/g,"_"); }
- 
+
 /* ── helpers: check by email FIELD (works regardless of doc ID) ── */
 async function emailExistsInCollection(colName, email) {
   const e = email.toLowerCase().trim();
@@ -317,11 +317,11 @@ async function emailExistsInCollection(colName, email) {
   } catch(err2) { throw err2; }
   return false;
 }
- 
+
 /* ── state ── */
 let IS_ADMIN = false;
 let CURRENT_COURSE_ID = "";
- 
+
 /* ── auth ── */
 onAuthStateChanged(auth, async user => {
   if (!user) { switchScreen("login"); return; }
@@ -335,10 +335,10 @@ onAuthStateChanged(auth, async user => {
   switchScreen("app");
   APP.nav("dashboard");
 });
- 
+
 /* ── login ── */
 function showLoginErr(msg){ const el=g("login-err"); el.textContent=msg; el.style.display="block"; }
- 
+
 const ERRORS = {
   "auth/user-not-found":"No account with that email.",
   "auth/wrong-password":"Wrong password.",
@@ -346,16 +346,16 @@ const ERRORS = {
   "auth/invalid-email":"Invalid email.",
   "auth/too-many-requests":"Too many attempts, try later."
 };
- 
+
 /* ── screen / section switching ── */
 function switchScreen(name){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   g("screen-"+name).classList.add("active");
 }
- 
+
 /* ── APP namespace exposed to HTML ── */
 const APP = window.APP = {
- 
+
   login: async () => {
     const email = g("login-email").value.trim();
     const pass  = g("login-pass").value;
@@ -368,9 +368,9 @@ const APP = window.APP = {
     } catch(e){ showLoginErr(ERRORS[e.code]||"Login failed: "+e.message); }
     btn.innerHTML="Sign In"; btn.disabled=false;
   },
- 
+
   logout: ()=>signOut(auth),
- 
+
   nav(section) {
     // update active nav button
     document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
@@ -384,7 +384,7 @@ const APP = window.APP = {
     if (section==="courses")   this._loadCoursesList();
     if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadAdminCourses(); }
   },
- 
+
   /* ── Dashboard ── */
   async _loadDashboard() {
     htm("dash-grid","<p class='muted'>Loading…</p>");
@@ -403,7 +403,7 @@ const APP = window.APP = {
       }).join(""));
     } catch(e){ htm("dash-grid",`<p class='muted'>Error: ${esc(e.message)}</p>`); }
   },
- 
+
   /* ── Courses List ── */
   async _loadCoursesList() {
     htm("courses-list","<p class='muted'>Loading…</p>");
@@ -420,7 +420,7 @@ const APP = window.APP = {
       </div>`;
     }).join(""));
   },
- 
+
   /* ── Course Viewer ── */
   async openCourse(courseId) {
     CURRENT_COURSE_ID = courseId;
@@ -436,9 +436,9 @@ const APP = window.APP = {
     htm("viewer-content","<p class='muted'>Select a lesson to begin.</p>");
     g("course-viewer").classList.add("open");
   },
- 
+
   closeViewer() { g("course-viewer").classList.remove("open"); },
- 
+
   async showStep(courseId, stepId) {
     document.querySelectorAll(".step-row").forEach(r=>r.classList.remove("active"));
     const row = g("sr-"+stepId); if(row) row.classList.add("active");
@@ -464,7 +464,7 @@ const APP = window.APP = {
     if (s.embed)   html+=`<div class="step-embed">${s.embed}</div>`;
     htm("viewer-content", html);
   },
- 
+
   /* ── Admin: Users ── */
   async _loadUsers() {
     const snap = await getDocs(collection(db,"allowedUsers"));
@@ -475,7 +475,7 @@ const APP = window.APP = {
     });
     htm("users-list", rows.length ? rows.join("") : "<p class='muted'>No users yet.</p>");
   },
- 
+
   async addUser() {
     const email = g("new-user-email").value.trim().toLowerCase();
     if (!email){ toast("Enter an email.","err"); return; }
@@ -484,14 +484,14 @@ const APP = window.APP = {
     toast("Added: "+email);
     this._loadUsers();
   },
- 
+
   async removeUser(email) {
     if (!confirm("Remove "+email+"?")) return;
     await deleteDoc(doc(db,"allowedUsers",ekey(email)));
     toast("Removed: "+email);
     this._loadUsers();
   },
- 
+
   /* ── Admin: Courses ── */
   async _loadAdminCourses() {
     const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
@@ -507,9 +507,9 @@ const APP = window.APP = {
     });
     htm("admin-courses", rows.length ? rows.join("") : "<p class='muted'>No courses.</p>");
   },
- 
+
   openAddCourse() { this.openModal("modal-add-course"); },
- 
+
   async saveCourse() {
     const title = g("nc-title").value.trim();
     if (!title){ toast("Title required.","err"); return; }
@@ -523,7 +523,7 @@ const APP = window.APP = {
     toast("Course created!");
     this._loadAdminCourses();
   },
- 
+
   async deleteCourse(id) {
     if (!confirm("Delete course and all its lessons?")) return;
     const steps = await getDocs(collection(db,"courses",id,"steps"));
@@ -531,7 +531,7 @@ const APP = window.APP = {
     await deleteDoc(doc(db,"courses",id));
     toast("Deleted."); this._loadAdminCourses();
   },
- 
+
   /* ── Admin: Lessons ── */
   async openLessonsModal(courseId, title) {
     g("steps-course-id").value = courseId;
@@ -540,7 +540,7 @@ const APP = window.APP = {
     await this._refreshLessonsList(courseId);
     this.openModal("modal-steps");
   },
- 
+
   async _refreshLessonsList(courseId) {
     const snap = await getDocs(query(collection(db,"courses",courseId,"steps"),orderBy("order")));
     const rows = snap.docs.map((d,i)=>{
@@ -555,7 +555,7 @@ const APP = window.APP = {
     });
     htm("steps-list", rows.length ? rows.join("") : "<p class='muted'>No lessons yet.</p>");
   },
- 
+
   async addLesson() {
     const courseId = g("steps-course-id").value;
     const title = g("ns-title").value.trim();
@@ -569,13 +569,13 @@ const APP = window.APP = {
     ["ns-title","ns-content","ns-video","ns-image","ns-embed"].forEach(id=>g(id).value="");
     toast("Lesson added!"); this._refreshLessonsList(courseId);
   },
- 
+
   async deleteLesson(courseId, stepId) {
     if (!confirm("Delete this lesson?")) return;
     await deleteDoc(doc(db,"courses",courseId,"steps",stepId));
     toast("Deleted."); this._refreshLessonsList(courseId);
   },
- 
+
   async editLesson(courseId, stepId) {
     const snap = await getDoc(doc(db,"courses",courseId,"steps",stepId));
     const s = snap.data();
@@ -584,7 +584,7 @@ const APP = window.APP = {
     g("el-video").value=s.video||""; g("el-image").value=s.image||""; g("el-embed").value=s.embed||"";
     this.openModal("modal-edit-lesson");
   },
- 
+
   async saveLesson() {
     const courseId=g("el-course-id").value, stepId=g("el-step-id").value;
     const title=g("el-title").value.trim();
@@ -596,17 +596,48 @@ const APP = window.APP = {
     toast("Saved!"); this.closeModal("modal-edit-lesson");
     this._refreshLessonsList(courseId);
   },
- 
+
   /* ── Modals ── */
   openModal(id)  { g(id).classList.add("open"); },
   closeModal(id) { g(id).classList.remove("open"); }
 };
- 
+
 // close modals on backdrop click
 document.querySelectorAll(".modal-bg").forEach(m=>{
   m.addEventListener("click", e=>{ if(e.target===m) m.classList.remove("open"); });
 });
+
+// ── Wire up all static buttons (avoids module scope issues with inline onclick) ──
+function on(id, fn){ const el=document.getElementById(id); if(el) el.addEventListener("click", fn); }
+
+on("login-btn",       ()=> APP.login());
+on("login-pass",      e => { if(e.type==="keydown"&&e.key==="Enter") APP.login(); });
+on("nav-dashboard",   ()=> APP.nav("dashboard"));
+on("nav-courses",     ()=> APP.nav("courses"));
+on("nav-admin",       ()=> APP.nav("admin"));
+
+// logout button (by class, not id)
+document.querySelectorAll(".logout-btn").forEach(b=> b.addEventListener("click", ()=>APP.logout()));
+
+// admin panel static buttons
+on("add-user-btn",    ()=> APP.addUser());
+on("open-add-course", ()=> APP.openAddCourse());
+on("save-course-btn", ()=> APP.saveCourse());
+on("cancel-add-course",()=>APP.closeModal("modal-add-course"));
+on("add-lesson-btn",  ()=> APP.addLesson());
+on("close-steps-btn", ()=> APP.closeModal("modal-steps"));
+on("save-lesson-btn", ()=> APP.saveLesson());
+on("cancel-edit-lesson",()=>APP.closeModal("modal-edit-lesson"));
+on("close-viewer-btn",()=> APP.closeViewer());
+
+// allow Enter key on login
+document.getElementById("login-pass").addEventListener("keydown", e=>{
+  if(e.key==="Enter") APP.login();
+});
+document.getElementById("login-email").addEventListener("keydown", e=>{
+  if(e.key==="Enter") APP.login();
+});
 </script>
- 
+
 </body>
 </html>
