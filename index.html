@@ -26,6 +26,11 @@
   .login-box h1 { font-family:'DM Serif Display',serif; font-size:2rem; margin-bottom:.25rem; background:linear-gradient(120deg,#fff,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .login-box .subtitle { color:var(--muted); margin-bottom:2rem; font-size:.9rem; }
   .login-err { background:#3a1f1f; border:1px solid #7a3030; color:#f09090; border-radius:8px; padding:.65rem .9rem; font-size:.85rem; margin-bottom:1rem; display:none; }
+  .login-ok  { background:#1a3326; border:1px solid #2a6648; color:#7ee8a2; border-radius:8px; padding:.65rem .9rem; font-size:.85rem; margin-bottom:1rem; display:none; }
+  .auth-tabs { display:flex; gap:.25rem; margin-bottom:1.5rem; background:var(--bg3); border-radius:10px; padding:.25rem; }
+  .auth-tab  { flex:1; padding:.5rem .4rem; border:none; border-radius:8px; background:none; color:var(--muted); font-family:inherit; font-size:.82rem; font-weight:500; cursor:pointer; transition:all .2s; }
+  .auth-tab.active { background:var(--accent); color:#fff; }
+  .auth-hint { color:var(--muted); font-size:.83rem; margin-bottom:1rem; line-height:1.5; }
 
   /* app */
   #screen-app { height:100vh; overflow:hidden; }
@@ -125,13 +130,46 @@
 <div id="screen-login" class="screen active">
   <div class="login-box">
     <h1>LearnSpace</h1>
-    <p class="subtitle">Sign in with your approved email address.</p>
-    <div id="login-err" class="login-err"></div>
-    <label>Email</label>
-    <input id="login-email" type="email" class="inp" placeholder="you@example.com">
-    <label>Password</label>
-    <input id="login-pass" type="password" class="inp" placeholder="••••••••">
-    <button id="login-btn" class="btn btn-full" id="login-btn-fix">Sign In</button>
+
+    <!-- tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-signin" onclick_wire="tab-signin">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick_wire="tab-signup">Sign Up</button>
+      <button class="auth-tab" id="tab-forgot" onclick_wire="tab-forgot">Forgot Password</button>
+    </div>
+
+    <div id="auth-err" class="login-err"></div>
+    <div id="auth-ok" class="login-ok"></div>
+
+    <!-- SIGN IN -->
+    <div id="panel-signin">
+      <label>Email</label>
+      <input id="login-email" type="email" class="inp" placeholder="you@example.com">
+      <label>Password</label>
+      <input id="login-pass" type="password" class="inp" placeholder="••••••••">
+      <button id="login-btn" class="btn btn-full">Sign In</button>
+    </div>
+
+    <!-- SIGN UP -->
+    <div id="panel-signup" style="display:none">
+      <p class="auth-hint">Only emails approved by the admin can register.</p>
+      <label>Email</label>
+      <input id="signup-email" type="email" class="inp" placeholder="you@example.com">
+      <label>Password</label>
+      <input id="signup-pass" type="password" class="inp" placeholder="min 6 characters">
+      <label>Confirm Password</label>
+      <input id="signup-pass2" type="password" class="inp" placeholder="repeat password">
+      <button id="signup-btn" class="btn btn-full">Create Account</button>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div id="panel-forgot" style="display:none">
+      <p class="auth-hint">Enter your approved email and we'll send a password reset link.</p>
+      <label>Email</label>
+      <input id="forgot-email" type="email" class="inp" placeholder="you@example.com">
+      <button id="forgot-btn" class="btn btn-full">Send Reset Email</button>
+    </div>
+
   </div>
 </div>
 
@@ -259,7 +297,7 @@
 
 <script type="module">
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged }
                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
          addDoc, updateDoc, deleteDoc, query, orderBy, where }
@@ -337,7 +375,10 @@ onAuthStateChanged(auth, async user => {
 });
 
 /* ── login ── */
-function showLoginErr(msg){ const el=g("login-err"); el.textContent=msg; el.style.display="block"; }
+function showAuthErr(msg){ const e=g("auth-err"); e.textContent=msg; e.style.display="block"; g("auth-ok").style.display="none"; }
+function showAuthOk(msg) { const e=g("auth-ok"); e.textContent=msg; e.style.display="block"; g("auth-err").style.display="none"; }
+function clearAuthMsg()  { g("auth-err").style.display="none"; g("auth-ok").style.display="none"; }
+function showLoginErr(msg){ showAuthErr(msg); }
 
 const ERRORS = {
   "auth/user-not-found":"No account with that email.",
@@ -356,17 +397,56 @@ function switchScreen(name){
 /* ── APP namespace exposed to HTML ── */
 const APP = window.APP = {
 
+  switchTab(tab) {
+    ["signin","signup","forgot"].forEach(t=>{
+      g("tab-"+t).classList.toggle("active", t===tab);
+      g("panel-"+t).style.display = t===tab ? "" : "none";
+    });
+    clearAuthMsg();
+  },
+
   login: async () => {
     const email = g("login-email").value.trim();
     const pass  = g("login-pass").value;
-    if (!email||!pass){ showLoginErr("Enter email and password."); return; }
+    if (!email||!pass){ showAuthErr("Enter email and password."); return; }
     const btn = g("login-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      g("login-err").style.display="none";
-    } catch(e){ showLoginErr(ERRORS[e.code]||"Login failed: "+e.message); }
+      clearAuthMsg();
+    } catch(e){ showAuthErr(ERRORS[e.code]||"Login failed: "+e.message); }
     btn.innerHTML="Sign In"; btn.disabled=false;
+  },
+
+  signup: async () => {
+    const email = g("signup-email").value.trim().toLowerCase();
+    const pass  = g("signup-pass").value;
+    const pass2 = g("signup-pass2").value;
+    if (!email||!pass){ showAuthErr("Fill in all fields."); return; }
+    if (pass !== pass2){ showAuthErr("Passwords do not match."); return; }
+    if (pass.length < 6){ showAuthErr("Password must be at least 6 characters."); return; }
+    const btn = g("signup-btn");
+    btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+    try {
+      const allowed = await emailExistsInCollection("allowedUsers", email);
+      if (!allowed){ showAuthErr("This email is not approved. Ask your admin to add it first."); btn.innerHTML="Create Account"; btn.disabled=false; return; }
+      await createUserWithEmailAndPassword(auth, email, pass);
+      clearAuthMsg();
+    } catch(e){ showAuthErr(ERRORS[e.code]||"Sign up failed: "+e.message); }
+    btn.innerHTML="Create Account"; btn.disabled=false;
+  },
+
+  forgotPassword: async () => {
+    const email = g("forgot-email").value.trim();
+    if (!email){ showAuthErr("Enter your email address."); return; }
+    const btn = g("forgot-btn");
+    btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+    try {
+      await sendPasswordResetEmail(auth, email);
+      showAuthOk("Reset email sent! Check your inbox (and spam folder).");
+      g("forgot-email").value="";
+    } catch(e){ showAuthErr(ERRORS[e.code]||"Failed: "+e.message); }
+    btn.innerHTML="Send Reset Email"; btn.disabled=false;
   },
 
   logout: ()=>signOut(auth),
@@ -610,8 +690,12 @@ document.querySelectorAll(".modal-bg").forEach(m=>{
 // ── Wire up all static buttons (avoids module scope issues with inline onclick) ──
 function on(id, fn){ const el=document.getElementById(id); if(el) el.addEventListener("click", fn); }
 
-on("login-btn",       ()=> APP.login());
-on("login-pass",      e => { if(e.type==="keydown"&&e.key==="Enter") APP.login(); });
+on("login-btn",   ()=> APP.login());
+on("signup-btn",  ()=> APP.signup());
+on("forgot-btn",  ()=> APP.forgotPassword());
+on("tab-signin",  ()=> APP.switchTab("signin"));
+on("tab-signup",  ()=> APP.switchTab("signup"));
+on("tab-forgot",  ()=> APP.switchTab("forgot"));
 on("nav-dashboard",   ()=> APP.nav("dashboard"));
 on("nav-courses",     ()=> APP.nav("courses"));
 on("nav-admin",       ()=> APP.nav("admin"));
@@ -631,11 +715,14 @@ on("cancel-edit-lesson",()=>APP.closeModal("modal-edit-lesson"));
 on("close-viewer-btn",()=> APP.closeViewer());
 
 // allow Enter key on login
-document.getElementById("login-pass").addEventListener("keydown", e=>{
-  if(e.key==="Enter") APP.login();
+["login-pass","login-email"].forEach(id=>{
+  document.getElementById(id).addEventListener("keydown", e=>{ if(e.key==="Enter") APP.login(); });
 });
-document.getElementById("login-email").addEventListener("keydown", e=>{
-  if(e.key==="Enter") APP.login();
+["signup-email","signup-pass","signup-pass2"].forEach(id=>{
+  document.getElementById(id).addEventListener("keydown", e=>{ if(e.key==="Enter") APP.signup(); });
+});
+document.getElementById("forgot-email").addEventListener("keydown", e=>{
+  if(e.key==="Enter") APP.forgotPassword();
 });
 </script>
 
