@@ -1,216 +1,612 @@
 <!DOCTYPE html>
-<html lang="sl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LearnSpace</title>
+ 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+ 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #0f0f13; --bg2: #17171e; --bg3: #1f1f29; --border: #2e2e3f;
     --accent: #6c63ff; --accent2: #a78bfa; --text: #e8e8f0; --muted: #7070a0;
     --danger: #e05555; --radius: 12px;
   }
-  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:15px; overflow-x: hidden; }
-  .screen { display:none; min-height: 100vh; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:15px; }
+ 
+  /* screens */
+  .screen { display:none; }
   .screen.active { display:flex; }
-  
-  /* Login box */
-  #screen-login { align-items:center; justify-content:center; background:radial-gradient(ellipse at 60% 20%,#1a1440 0%,var(--bg) 70%); }
+ 
+  /* login */
+  #screen-login { align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at 60% 20%,#1a1440 0%,var(--bg) 70%); }
   .login-box { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:3rem 2.5rem; width:100%; max-width:400px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
   .login-box h1 { font-family:'DM Serif Display',serif; font-size:2rem; margin-bottom:.25rem; background:linear-gradient(120deg,#fff,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .login-box .subtitle { color:var(--muted); margin-bottom:2rem; font-size:.9rem; }
   .login-err { background:#3a1f1f; border:1px solid #7a3030; color:#f09090; border-radius:8px; padding:.65rem .9rem; font-size:.85rem; margin-bottom:1rem; display:none; }
-  
-  /* App UI */
-  #screen-app { flex-direction: row; }
+ 
+  /* app */
+  #screen-app { height:100vh; overflow:hidden; }
   .sidebar { width:240px; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:1.5rem 1rem; flex-shrink:0; }
-  .main-content { flex:1; padding:2rem 2.5rem; overflow-y: auto; }
+  .sidebar-logo { font-family:'DM Serif Display',serif; font-size:1.3rem; padding:.5rem .75rem 1.5rem; background:linear-gradient(120deg,#fff,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .nav-item { display:flex; align-items:center; gap:.75rem; padding:.65rem .85rem; border-radius:10px; cursor:pointer; color:var(--muted); font-weight:500; transition:all .2s; user-select:none; border:none; background:none; width:100%; text-align:left; font-family:inherit; font-size:.9rem; }
+  .nav-item:hover { background:var(--bg3); color:var(--text); }
+  .nav-item.active { background:rgba(108,99,255,.18); color:var(--accent2); }
+  .sidebar-footer { margin-top:auto; }
+  .user-chip { display:flex; align-items:center; gap:.6rem; padding:.65rem; border-radius:10px; background:var(--bg3); font-size:.82rem; color:var(--muted); }
+  .user-chip span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .logout-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.78rem; font-family:inherit; transition:color .15s; }
+  .logout-btn:hover { color:var(--danger); }
+ 
+  .main-content { flex:1; overflow-y:auto; padding:2rem 2.5rem; }
   .section { display:none; }
   .section.active { display:block; }
-  
-  /* Elements */
-  .inp { display:block; width:100%; padding:.7rem .9rem; background:var(--bg3); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:inherit; margin-bottom:.75rem; outline:none; }
-  .btn { display:inline-flex; align-items:center; justify-content:center; padding:.6rem 1.3rem; border-radius:9px; background:var(--accent); color:#fff; border:none; font-weight:600; cursor:pointer; width:100%; transition: 0.2s; }
-  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-  .auth-footer { margin-top: 1.5rem; text-align: center; font-size: 0.85rem; color: var(--muted); }
-  .auth-link { color: var(--accent2); cursor: pointer; display: block; margin-top: 0.5rem; font-weight: 500; }
-  
-  .user-card { margin-top:auto; padding:12px; background:var(--bg3); border-radius:12px; font-size:0.8rem; }
-  .list-item { display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border); }
+  .page-header { margin-bottom:2rem; }
+  .page-header h2 { font-family:'DM Serif Display',serif; font-size:1.8rem; }
+  .page-header p { color:var(--muted); margin-top:.25rem; }
+ 
+  /* cards */
+  .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.25rem; }
+  .card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:transform .2s,box-shadow .2s; }
+  .card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,.4); }
+  .card-thumb { width:100%; height:140px; object-fit:cover; display:block; }
+  .card-thumb-ph { width:100%; height:140px; background:linear-gradient(135deg,var(--bg3),#1a1440); display:flex; align-items:center; justify-content:center; font-size:2rem; }
+  .card-body { padding:1rem 1.1rem 1.25rem; }
+  .card-body h3 { font-size:1rem; margin-bottom:.35rem; }
+  .card-body p { color:var(--muted); font-size:.85rem; line-height:1.5; }
+ 
+  /* viewer */
+  #course-viewer { display:none; position:fixed; inset:0; background:var(--bg); z-index:200; flex-direction:column; }
+  #course-viewer.open { display:flex; }
+  .viewer-topbar { display:flex; align-items:center; gap:1rem; padding:.85rem 1.5rem; background:var(--bg2); border-bottom:1px solid var(--border); flex-shrink:0; }
+  .viewer-topbar h3 { font-family:'DM Serif Display',serif; font-size:1.15rem; }
+  .viewer-body { display:flex; flex:1; overflow:hidden; }
+  .steps-sidebar { width:260px; background:var(--bg2); border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
+  .steps-sidebar-title { padding:1rem 1.2rem .5rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+  .step-row { display:flex; align-items:center; gap:.75rem; padding:.7rem 1.2rem; cursor:pointer; transition:background .15s; font-size:.88rem; }
+  .step-row:hover { background:var(--bg3); }
+  .step-row.active { background:rgba(108,99,255,.2); color:var(--accent2); }
+  .step-num { width:22px; height:22px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:600; flex-shrink:0; }
+  .step-content-area { flex:1; overflow-y:auto; padding:2.5rem 3rem; max-width:860px; }
+  .step-content-area h2 { font-family:'DM Serif Display',serif; font-size:1.8rem; margin-bottom:1.5rem; }
+  .video-wrap { position:relative; padding-top:56.25%; border-radius:var(--radius); overflow:hidden; margin-bottom:1.5rem; background:#000; }
+  .video-wrap iframe,.video-wrap video { position:absolute; inset:0; width:100%; height:100%; border:none; }
+  .step-img { max-width:100%; border-radius:var(--radius); margin-bottom:1.5rem; display:block; }
+  .step-body { line-height:1.8; }
+  .step-body h1,.step-body h2,.step-body h3 { font-family:'DM Serif Display',serif; margin:1.2em 0 .4em; }
+  .step-body p { margin-bottom:1em; }
+  .step-body ul,.step-body ol { margin:.5em 0 1em 1.5em; }
+  .step-embed { margin-top:1.5rem; }
+ 
+  /* forms */
+  .inp { display:block; width:100%; padding:.7rem .9rem; background:var(--bg3); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:inherit; font-size:.9rem; outline:none; transition:border-color .2s; margin-bottom:.75rem; resize:vertical; }
+  .inp:focus { border-color:var(--accent); }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; padding:.6rem 1.3rem; border-radius:9px; background:var(--accent); color:#fff; border:none; font-family:inherit; font-size:.88rem; font-weight:600; cursor:pointer; transition:background .2s,transform .1s; }
+  .btn:hover { background:#5750e0; transform:translateY(-1px); }
+  .btn-ghost { background:var(--bg3); color:var(--text); }
+  .btn-ghost:hover { background:var(--border); }
+  .btn-danger { background:var(--danger); }
+  .btn-danger:hover { background:#c04; }
+  .btn-sm { padding:.35rem .75rem; font-size:.8rem; }
+  .btn-full { width:100%; }
+  .btn-row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  .card-form { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; margin-bottom:1.25rem; }
+  .card-form h3 { font-family:'DM Serif Display',serif; font-size:1.25rem; margin-bottom:1rem; }
+  label { display:block; font-size:.78rem; color:var(--muted); margin-bottom:.2rem; }
+  .list-row { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem; background:var(--bg2); border:1px solid var(--border); border-radius:9px; margin-bottom:.45rem; gap:.5rem; flex-wrap:wrap; }
+  .badge { padding:.2rem .55rem; border-radius:20px; background:rgba(108,99,255,.2); color:var(--accent2); font-size:.75rem; font-weight:600; }
+ 
+  /* modals */
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:center; justify-content:center; }
+  .modal-bg.open { display:flex; }
+  .modal-box { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:2rem; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; }
+  .modal-box h3 { font-family:'DM Serif Display',serif; font-size:1.3rem; margin-bottom:1.2rem; }
+ 
+  /* toast */
+  #toast-area { position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; }
+  .toast { padding:.75rem 1.2rem; border-radius:10px; font-size:.87rem; font-weight:500; margin-top:.5rem; animation:fadeUp .25s ease; box-shadow:0 8px 30px rgba(0,0,0,.4); }
+  .toast-ok  { background:#1a3326; border:1px solid #2a6648; color:#7ee8a2; }
+  .toast-err { background:#3a1f1f; border:1px solid #7a3030; color:#f09090; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+  .muted { color:var(--muted); font-size:.88rem; }
+  hr { border:none; border-top:1px solid var(--border); margin:1.25rem 0; }
+  .mt { margin-top:1rem; }
+  .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.2); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
 </style>
 </head>
 <body>
-
+ 
+<div id="toast-area"></div>
+ 
+<!-- LOGIN -->
 <div id="screen-login" class="screen active">
   <div class="login-box">
-    <h1 id="auth-title">LearnSpace</h1>
-    <p id="auth-subtitle" class="subtitle">Vpišite se za dostop do vsebin.</p>
+    <h1>LearnSpace</h1>
+    <p class="subtitle">Sign in with your approved email address.</p>
     <div id="login-err" class="login-err"></div>
-    
-    <label style="font-size: 12px; color: var(--muted); margin-bottom: 4px; display: block;">E-pošta</label>
-    <input id="login-email" type="email" class="inp" placeholder="vas@mail.com">
-    
-    <label style="font-size: 12px; color: var(--muted); margin-bottom: 4px; display: block;">Geslo</label>
+    <label>Email</label>
+    <input id="login-email" type="email" class="inp" placeholder="you@example.com">
+    <label>Password</label>
     <input id="login-pass" type="password" class="inp" placeholder="••••••••">
-    
-    <button id="auth-btn" class="btn" onclick="APP.handleAuth()">Prijava</button>
-
-    <div class="auth-footer">
-      <span id="toggle-text">Nimate računa?</span>
-      <a class="auth-link" id="toggle-link" onclick="APP.toggleAuthMode()">Ustvari račun</a>
-      <a class="auth-link" style="font-size: 11px; color: var(--muted); margin-top: 12px;" onclick="APP.forgotPass()">Pozabljeno geslo?</a>
-    </div>
+    <button id="login-btn" class="btn btn-full" onclick="APP.login()">Sign In</button>
   </div>
 </div>
-
+ 
+<!-- APP -->
 <div id="screen-app" class="screen">
   <nav class="sidebar">
-    <div style="font-family:'DM Serif Display'; font-size:1.4rem; margin-bottom:2rem;">LearnSpace</div>
-    <button class="btn" style="background:none; text-align:left; justify-content:flex-start; color:var(--text); margin-bottom:5px;" onclick="APP.nav('dash')">Domov</button>
-    <button id="nav-admin" class="btn" style="background:none; text-align:left; justify-content:flex-start; color:var(--text); display:none;" onclick="APP.nav('admin')">Admin Panel</button>
-    
-    <div class="user-card">
-      <div id="user-display" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px;">—</div>
-      <button onclick="APP.logout()" style="color:var(--danger); border:none; background:none; cursor:pointer; font-size:0.75rem; font-weight:600;">Odjava</button>
+    <div class="sidebar-logo">LearnSpace</div>
+    <button class="nav-item" id="nav-dashboard" onclick="APP.nav('dashboard')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v9h5v-5h4v5h5v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" id="nav-courses" onclick="APP.nav('courses')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      My Courses
+    </button>
+    <button class="nav-item" id="nav-admin" onclick="APP.nav('admin')" style="display:none">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Admin
+    </button>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
+        <span id="user-label">—</span>
+        <button class="logout-btn" onclick="APP.logout()">Sign out</button>
+      </div>
     </div>
   </nav>
-
+ 
   <div class="main-content">
-    <div id="sec-dash" class="section active">
-      <h2>Moji tečaji</h2>
-      <p style="color:var(--muted); margin-top:10px;">Tukaj se bodo pojavili vaši tečaji.</p>
+    <div id="sec-dashboard" class="section active">
+      <div class="page-header"><h2>Welcome back 👋</h2><p>Select a course to continue learning.</p></div>
+      <div id="dash-grid" class="cards-grid"><p class="muted">Loading…</p></div>
     </div>
-
+ 
+    <div id="sec-courses" class="section">
+      <div class="page-header"><h2>All Courses</h2></div>
+      <div id="courses-list"></div>
+    </div>
+ 
     <div id="sec-admin" class="section">
-      <h2>Admin Panel</h2>
-      <div style="background:var(--bg2); padding:1.5rem; border-radius:15px; margin-top:1.5rem; border:1px solid var(--border);">
-        <h3 style="font-size:1rem; margin-bottom:1rem;">Dovoli novega uporabnika</h3>
-        <input id="admin-new-email" class="inp" placeholder="novi-učenec@mail.com">
-        <button class="btn" onclick="APP.addUser()">Dodaj na seznam</button>
+      <div class="page-header"><h2>Admin Panel</h2></div>
+      <div class="card-form">
+        <h3>Allowed Users</h3>
+        <div class="btn-row" style="margin-bottom:.75rem">
+          <input id="new-user-email" type="email" placeholder="user@email.com" class="inp" style="margin:0;flex:1;min-width:160px">
+          <button class="btn" onclick="APP.addUser()">Add User</button>
+        </div>
+        <div id="users-list"></div>
       </div>
-      <div id="admin-users-list" style="margin-top:2rem;"></div>
+      <div class="card-form">
+        <h3>Courses</h3>
+        <button class="btn" style="margin-bottom:1rem" onclick="APP.openAddCourse()">+ New Course</button>
+        <div id="admin-courses"></div>
+      </div>
     </div>
   </div>
 </div>
-
+ 
+<!-- COURSE VIEWER -->
+<div id="course-viewer">
+  <div class="viewer-topbar">
+    <button class="btn btn-ghost btn-sm" onclick="APP.closeViewer()">← Back</button>
+    <h3 id="viewer-title"></h3>
+  </div>
+  <div class="viewer-body">
+    <div class="steps-sidebar">
+      <div class="steps-sidebar-title">Lessons</div>
+      <div id="viewer-steps"></div>
+    </div>
+    <div class="step-content-area" id="viewer-content"><p class="muted">Select a lesson to begin.</p></div>
+  </div>
+</div>
+ 
+<!-- MODAL: Add Course -->
+<div id="modal-add-course" class="modal-bg">
+  <div class="modal-box">
+    <h3>New Course</h3>
+    <label>Title *</label><input id="nc-title" class="inp" placeholder="Course title">
+    <label>Description</label><textarea id="nc-desc" class="inp" rows="2" placeholder="Short description"></textarea>
+    <label>Thumbnail URL (optional)</label><input id="nc-thumb" class="inp" placeholder="https://...">
+    <div class="btn-row mt">
+      <button class="btn" onclick="APP.saveCourse()">Create</button>
+      <button class="btn btn-ghost" onclick="APP.closeModal('modal-add-course')">Cancel</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- MODAL: Manage Lessons -->
+<div id="modal-steps" class="modal-bg">
+  <div class="modal-box" style="max-width:620px">
+    <h3 id="steps-modal-title">Lessons</h3>
+    <input type="hidden" id="steps-course-id">
+    <div id="steps-list" style="margin-bottom:1rem"></div>
+    <hr>
+    <h4 style="margin-bottom:.75rem;color:var(--accent2)">Add New Lesson</h4>
+    <label>Title *</label><input id="ns-title" class="inp">
+    <label>Content (HTML supported)</label><textarea id="ns-content" class="inp" rows="4" placeholder="&lt;p&gt;Lesson text here&lt;/p&gt;"></textarea>
+    <label>Video URL (YouTube / Vimeo / .mp4)</label><input id="ns-video" class="inp" placeholder="https://youtube.com/watch?v=...">
+    <label>Image URL</label><input id="ns-image" class="inp" placeholder="https://...">
+    <label>Custom embed (Lottie, Google Slides, etc.)</label><textarea id="ns-embed" class="inp" rows="2" placeholder="&lt;iframe ...&gt;&lt;/iframe&gt;"></textarea>
+    <div class="btn-row mt">
+      <button class="btn" onclick="APP.addLesson()">Add Lesson</button>
+      <button class="btn btn-ghost" onclick="APP.closeModal('modal-steps')">Close</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- MODAL: Edit Lesson -->
+<div id="modal-edit-lesson" class="modal-bg">
+  <div class="modal-box">
+    <h3>Edit Lesson</h3>
+    <input type="hidden" id="el-course-id">
+    <input type="hidden" id="el-step-id">
+    <label>Title *</label><input id="el-title" class="inp">
+    <label>Content (HTML)</label><textarea id="el-content" class="inp" rows="5"></textarea>
+    <label>Video URL</label><input id="el-video" class="inp">
+    <label>Image URL</label><input id="el-image" class="inp">
+    <label>Custom embed</label><textarea id="el-embed" class="inp" rows="2"></textarea>
+    <div class="btn-row mt">
+      <button class="btn" onclick="APP.saveLesson()">Save</button>
+      <button class="btn btn-ghost" onclick="APP.closeModal('modal-edit-lesson')">Cancel</button>
+    </div>
+  </div>
+</div>
+ 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
+         addDoc, updateDoc, deleteDoc, query, orderBy, where }
+                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+ 
+// ╔════════════════════════════════════════╗
+// ║  PASTE YOUR FIREBASE CONFIG BELOW     ║
+// ╚════════════════════════════════════════╝
 const firebaseConfig = {
-  apiKey: "AIzaSyBSaI7bxp7LH76LhkUI5wvub0XGMRbXwbY",
-  authDomain: "fit-ucilnica.firebaseapp.com",
-  projectId: "fit-ucilnica",
-  storageBucket: "fit-ucilnica.firebasestorage.app",
-  messagingSenderId: "Y702377248893",
-  appId: "1:702377248893:web:161eecf07a69570fe68914"
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };
-
-const app = initializeApp(firebaseConfig);
+ 
+const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
-
-const g = id => document.getElementById(id);
-const ekey = email => email.toLowerCase().replace(/[^a-z0-9]/g, "_");
-
-const APP = {
-  mode: 'login',
-
-  toggleAuthMode() {
-    this.mode = (this.mode === 'login') ? 'signup' : 'login';
-    g("auth-title").textContent = (this.mode === 'login') ? "LearnSpace" : "Registracija";
-    g("auth-btn").textContent = (this.mode === 'login') ? "Prijava" : "Ustvari račun";
-    g("toggle-text").textContent = (this.mode === 'login') ? "Nimate računa?" : "Že imate račun?";
-    g("toggle-link").textContent = (this.mode === 'login') ? "Ustvari račun" : "Prijavite se";
-  },
-
-  async handleAuth() {
-    const email = g("login-email").value.trim();
-    const pass = g("login-pass").value;
-    const errEl = g("login-err");
-    errEl.style.display = "none";
-
-    if (!email || pass.length < 6) { alert("Vpišite pravilen email in geslo (vsaj 6 znakov)."); return; }
-
-    try {
-      if (this.mode === 'signup') {
-        // Preveri če je mail v allowedUsers
-        const snap = await getDoc(doc(db, "allowedUsers", ekey(email)));
-        if (!snap.exists()) { throw new Error("Ta e-pošta ni na seznamu odobrenih."); }
-        await createUserWithEmailAndPassword(auth, email, pass);
-        alert("Račun ustvarjen! Dobrodošli.");
-      } else {
-        await signInWithEmailAndPassword(auth, email, pass);
-      }
-    } catch (err) {
-      errEl.textContent = err.message;
-      errEl.style.display = "block";
+const db   = getFirestore(app);
+ 
+/* ── tiny helpers ── */
+const g   = id => document.getElementById(id);
+const htm = (id, h) => { g(id).innerHTML = h; };
+const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+ 
+function toast(msg, type="ok") {
+  const d = document.createElement("div");
+  d.className = "toast toast-"+type;
+  d.textContent = msg;
+  g("toast-area").appendChild(d);
+  setTimeout(()=>d.remove(), 3000);
+}
+// ekey still used when WRITING new users from admin panel
+function ekey(email){ return email.toLowerCase().replace(/[^a-z0-9]/g,"_"); }
+ 
+/* ── helpers: check by email FIELD (works regardless of doc ID) ── */
+async function emailExistsInCollection(colName, email) {
+  const e = email.toLowerCase().trim();
+  // 1. try field query
+  try {
+    const q = query(collection(db, colName), where("email","==",e));
+    const snap = await getDocs(q);
+    if (!snap.empty) return true;
+  } catch(err) { /* fallback below */ }
+  // 2. scan all docs (fallback for Firestore rules that block queries)
+  try {
+    const snap = await getDocs(collection(db, colName));
+    for (const d of snap.docs) {
+      const stored = (d.data().email || "").toLowerCase().trim();
+      if (stored === e) return true;
+      // also match doc ID variants
+      if (d.id.toLowerCase() === ekey(e)) return true;
     }
-  },
-
-  async forgotPass() {
-    const email = g("login-email").value.trim();
-    if (!email) { alert("Vpišite email."); return; }
-    await sendPasswordResetEmail(auth, email);
-    alert("Povezava za ponastavitev poslana na email.");
-  },
-
-  logout: () => signOut(auth),
-
-  nav(name) {
-    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-    g("sec-" + name).classList.add("active");
-    if (name === 'admin') this.loadUsers();
-  },
-
-  async addUser() {
-    const email = g("admin-new-email").value.trim();
-    if (!email) return;
-    await setDoc(doc(db, "allowedUsers", ekey(email)), { email: email });
-    g("admin-new-email").value = "";
-    this.loadUsers();
-  },
-
-  async loadUsers() {
-    const snap = await getDocs(collection(db, "allowedUsers"));
-    g("admin-users-list").innerHTML = snap.docs.map(d => `
-      <div class="list-item">
-        <span>${d.data().email}</span>
-        <button onclick="APP.delUser('${d.id}')" style="color:var(--danger); background:none; border:none; cursor:pointer; font-size:12px;">Odstrani</button>
-      </div>
-    `).join("");
-  },
-
-  async delUser(id) {
-    if(confirm("Odstranim uporabnika?")) {
-      await deleteDoc(doc(db, "allowedUsers", id));
-      this.loadUsers();
-    }
-  }
-};
-
-// GLAVNI MOTOR - preklaplja zaslone
+  } catch(err2) { throw err2; }
+  return false;
+}
+ 
+/* ── state ── */
+let IS_ADMIN = false;
+let CURRENT_COURSE_ID = "";
+ 
+/* ── auth ── */
 onAuthStateChanged(auth, async user => {
-  if (user) {
-    g("screen-login").classList.remove("active");
-    g("screen-app").classList.add("active");
-    g("user-display").textContent = user.email;
-    
-    // Preveri če je admin
-    const adminSnap = await getDoc(doc(db, "admins", ekey(user.email)));
-    if (adminSnap.exists()) {
-      g("nav-admin").style.display = "block";
-    }
-  } else {
-    g("screen-app").classList.remove("active");
-    g("screen-login").classList.add("active");
-  }
+  if (!user) { switchScreen("login"); return; }
+  try {
+    const allowed = await emailExistsInCollection("allowedUsers", user.email);
+    if (!allowed) { await signOut(auth); showLoginErr("Your email is not approved. Ask your admin."); return; }
+    IS_ADMIN = await emailExistsInCollection("admins", user.email);
+  } catch(e) { await signOut(auth); showLoginErr("Access check failed: "+e.message); return; }
+  g("user-label").textContent = user.email;
+  g("nav-admin").style.display = IS_ADMIN ? "" : "none";
+  switchScreen("app");
+  APP.nav("dashboard");
 });
-
-window.APP = APP;
+ 
+/* ── login ── */
+function showLoginErr(msg){ const el=g("login-err"); el.textContent=msg; el.style.display="block"; }
+ 
+const ERRORS = {
+  "auth/user-not-found":"No account with that email.",
+  "auth/wrong-password":"Wrong password.",
+  "auth/invalid-credential":"Wrong email or password.",
+  "auth/invalid-email":"Invalid email.",
+  "auth/too-many-requests":"Too many attempts, try later."
+};
+ 
+/* ── screen / section switching ── */
+function switchScreen(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  g("screen-"+name).classList.add("active");
+}
+ 
+/* ── APP namespace exposed to HTML ── */
+const APP = window.APP = {
+ 
+  login: async () => {
+    const email = g("login-email").value.trim();
+    const pass  = g("login-pass").value;
+    if (!email||!pass){ showLoginErr("Enter email and password."); return; }
+    const btn = g("login-btn");
+    btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      g("login-err").style.display="none";
+    } catch(e){ showLoginErr(ERRORS[e.code]||"Login failed: "+e.message); }
+    btn.innerHTML="Sign In"; btn.disabled=false;
+  },
+ 
+  logout: ()=>signOut(auth),
+ 
+  nav(section) {
+    // update active nav button
+    document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
+    const btn = g("nav-"+section);
+    if (btn) btn.classList.add("active");
+    // show correct section
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+    g("sec-"+section).classList.add("active");
+    // load data
+    if (section==="dashboard") this._loadDashboard();
+    if (section==="courses")   this._loadCoursesList();
+    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadAdminCourses(); }
+  },
+ 
+  /* ── Dashboard ── */
+  async _loadDashboard() {
+    htm("dash-grid","<p class='muted'>Loading…</p>");
+    try {
+      const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
+      if (snap.empty){ htm("dash-grid","<p class='muted'>No courses yet.</p>"); return; }
+      htm("dash-grid", snap.docs.map(d=>{
+        const c=d.data();
+        const thumb = c.thumbnail
+          ? `<img src="${esc(c.thumbnail)}" class="card-thumb" alt="">`
+          : `<div class="card-thumb-ph">📚</div>`;
+        return `<div class="card" onclick="APP.openCourse('${d.id}')">
+          ${thumb}
+          <div class="card-body"><h3>${esc(c.title)}</h3><p>${esc(c.description||"")}</p></div>
+        </div>`;
+      }).join(""));
+    } catch(e){ htm("dash-grid",`<p class='muted'>Error: ${esc(e.message)}</p>`); }
+  },
+ 
+  /* ── Courses List ── */
+  async _loadCoursesList() {
+    htm("courses-list","<p class='muted'>Loading…</p>");
+    const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
+    if (snap.empty){ htm("courses-list","<p class='muted'>No courses yet.</p>"); return; }
+    htm("courses-list", snap.docs.map(d=>{
+      const c=d.data();
+      return `<div class="list-row">
+        <strong>${esc(c.title)}</strong>
+        <div class="btn-row">
+          <span class="badge">${c.steps||0} lessons</span>
+          <button class="btn btn-sm" onclick="APP.openCourse('${d.id}')">Open</button>
+        </div>
+      </div>`;
+    }).join(""));
+  },
+ 
+  /* ── Course Viewer ── */
+  async openCourse(courseId) {
+    CURRENT_COURSE_ID = courseId;
+    const cSnap = await getDoc(doc(db,"courses",courseId));
+    const c = cSnap.data();
+    g("viewer-title").textContent = c.title;
+    const stSnap = await getDocs(query(collection(db,"courses",courseId,"steps"),orderBy("order")));
+    const steps = stSnap.docs.map(d=>({id:d.id,...d.data()}));
+    htm("viewer-steps", steps.length
+      ? steps.map((s,i)=>`<div class="step-row" id="sr-${s.id}" onclick="APP.showStep('${courseId}','${s.id}')">
+          <div class="step-num">${i+1}</div><span>${esc(s.title)}</span></div>`).join("")
+      : "<p class='muted' style='padding:1rem'>No lessons yet.</p>");
+    htm("viewer-content","<p class='muted'>Select a lesson to begin.</p>");
+    g("course-viewer").classList.add("open");
+  },
+ 
+  closeViewer() { g("course-viewer").classList.remove("open"); },
+ 
+  async showStep(courseId, stepId) {
+    document.querySelectorAll(".step-row").forEach(r=>r.classList.remove("active"));
+    const row = g("sr-"+stepId); if(row) row.classList.add("active");
+    const snap = await getDoc(doc(db,"courses",courseId,"steps",stepId));
+    const s = snap.data();
+    let html = `<h2>${esc(s.title)}</h2>`;
+    if (s.video) {
+      let src="";
+      if (s.video.includes("youtu.be/")){
+        const vid=s.video.split("youtu.be/")[1].split("?")[0];
+        src=`https://www.youtube.com/embed/${vid}`;
+      } else if (s.video.includes("youtube.com/watch")){
+        try{ const vid=new URL(s.video).searchParams.get("v"); src=`https://www.youtube.com/embed/${vid}`; }catch(e){}
+      } else if (s.video.includes("vimeo.com")){
+        const vid=s.video.split("/").pop().split("?")[0];
+        src=`https://player.vimeo.com/video/${vid}`;
+      }
+      if(src) html+=`<div class="video-wrap"><iframe src="${src}" allowfullscreen></iframe></div>`;
+      else     html+=`<div class="video-wrap"><video controls src="${esc(s.video)}"></video></div>`;
+    }
+    if (s.image)   html+=`<img src="${esc(s.image)}" class="step-img" alt="">`;
+    if (s.content) html+=`<div class="step-body">${s.content}</div>`;
+    if (s.embed)   html+=`<div class="step-embed">${s.embed}</div>`;
+    htm("viewer-content", html);
+  },
+ 
+  /* ── Admin: Users ── */
+  async _loadUsers() {
+    const snap = await getDocs(collection(db,"allowedUsers"));
+    const rows = snap.docs.map(d=>{
+      const email = d.data().email || d.id.replace(/_at_/g,"@").replace(/_/g,".");
+      return `<div class="list-row"><span>${esc(email)}</span>
+        <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Remove</button></div>`;
+    });
+    htm("users-list", rows.length ? rows.join("") : "<p class='muted'>No users yet.</p>");
+  },
+ 
+  async addUser() {
+    const email = g("new-user-email").value.trim().toLowerCase();
+    if (!email){ toast("Enter an email.","err"); return; }
+    await setDoc(doc(db,"allowedUsers",ekey(email)),{email,addedAt:new Date().toISOString()});
+    g("new-user-email").value="";
+    toast("Added: "+email);
+    this._loadUsers();
+  },
+ 
+  async removeUser(email) {
+    if (!confirm("Remove "+email+"?")) return;
+    await deleteDoc(doc(db,"allowedUsers",ekey(email)));
+    toast("Removed: "+email);
+    this._loadUsers();
+  },
+ 
+  /* ── Admin: Courses ── */
+  async _loadAdminCourses() {
+    const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
+    const rows = snap.docs.map(d=>{
+      const c=d.data();
+      return `<div class="list-row">
+        <strong>${esc(c.title)}</strong>
+        <div class="btn-row">
+          <button class="btn btn-sm" onclick="APP.openLessonsModal('${d.id}','${esc(c.title)}')">Manage Lessons</button>
+          <button class="btn btn-sm btn-danger" onclick="APP.deleteCourse('${d.id}')">Delete</button>
+        </div>
+      </div>`;
+    });
+    htm("admin-courses", rows.length ? rows.join("") : "<p class='muted'>No courses.</p>");
+  },
+ 
+  openAddCourse() { this.openModal("modal-add-course"); },
+ 
+  async saveCourse() {
+    const title = g("nc-title").value.trim();
+    if (!title){ toast("Title required.","err"); return; }
+    const snap = await getDocs(collection(db,"courses"));
+    await addDoc(collection(db,"courses"),{
+      title, description:g("nc-desc").value.trim(),
+      thumbnail:g("nc-thumb").value.trim(), order:snap.size, steps:0
+    });
+    ["nc-title","nc-desc","nc-thumb"].forEach(id=>g(id).value="");
+    this.closeModal("modal-add-course");
+    toast("Course created!");
+    this._loadAdminCourses();
+  },
+ 
+  async deleteCourse(id) {
+    if (!confirm("Delete course and all its lessons?")) return;
+    const steps = await getDocs(collection(db,"courses",id,"steps"));
+    for (const s of steps.docs) await deleteDoc(s.ref);
+    await deleteDoc(doc(db,"courses",id));
+    toast("Deleted."); this._loadAdminCourses();
+  },
+ 
+  /* ── Admin: Lessons ── */
+  async openLessonsModal(courseId, title) {
+    g("steps-course-id").value = courseId;
+    g("steps-modal-title").textContent = "Lessons — "+title;
+    ["ns-title","ns-content","ns-video","ns-image","ns-embed"].forEach(id=>g(id).value="");
+    await this._refreshLessonsList(courseId);
+    this.openModal("modal-steps");
+  },
+ 
+  async _refreshLessonsList(courseId) {
+    const snap = await getDocs(query(collection(db,"courses",courseId,"steps"),orderBy("order")));
+    const rows = snap.docs.map((d,i)=>{
+      const s=d.data();
+      return `<div class="list-row">
+        <span><strong>${i+1}.</strong> ${esc(s.title)}</span>
+        <div class="btn-row">
+          <button class="btn btn-sm" onclick="APP.editLesson('${courseId}','${d.id}')">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="APP.deleteLesson('${courseId}','${d.id}')">Del</button>
+        </div>
+      </div>`;
+    });
+    htm("steps-list", rows.length ? rows.join("") : "<p class='muted'>No lessons yet.</p>");
+  },
+ 
+  async addLesson() {
+    const courseId = g("steps-course-id").value;
+    const title = g("ns-title").value.trim();
+    if (!title){ toast("Title required.","err"); return; }
+    const snap = await getDocs(collection(db,"courses",courseId,"steps"));
+    await addDoc(collection(db,"courses",courseId,"steps"),{
+      title, content:g("ns-content").value.trim(), video:g("ns-video").value.trim(),
+      image:g("ns-image").value.trim(), embed:g("ns-embed").value.trim(), order:snap.size
+    });
+    await updateDoc(doc(db,"courses",courseId),{steps:snap.size+1});
+    ["ns-title","ns-content","ns-video","ns-image","ns-embed"].forEach(id=>g(id).value="");
+    toast("Lesson added!"); this._refreshLessonsList(courseId);
+  },
+ 
+  async deleteLesson(courseId, stepId) {
+    if (!confirm("Delete this lesson?")) return;
+    await deleteDoc(doc(db,"courses",courseId,"steps",stepId));
+    toast("Deleted."); this._refreshLessonsList(courseId);
+  },
+ 
+  async editLesson(courseId, stepId) {
+    const snap = await getDoc(doc(db,"courses",courseId,"steps",stepId));
+    const s = snap.data();
+    g("el-course-id").value=courseId; g("el-step-id").value=stepId;
+    g("el-title").value=s.title||""; g("el-content").value=s.content||"";
+    g("el-video").value=s.video||""; g("el-image").value=s.image||""; g("el-embed").value=s.embed||"";
+    this.openModal("modal-edit-lesson");
+  },
+ 
+  async saveLesson() {
+    const courseId=g("el-course-id").value, stepId=g("el-step-id").value;
+    const title=g("el-title").value.trim();
+    if (!title){ toast("Title required.","err"); return; }
+    await updateDoc(doc(db,"courses",courseId,"steps",stepId),{
+      title, content:g("el-content").value.trim(), video:g("el-video").value.trim(),
+      image:g("el-image").value.trim(), embed:g("el-embed").value.trim()
+    });
+    toast("Saved!"); this.closeModal("modal-edit-lesson");
+    this._refreshLessonsList(courseId);
+  },
+ 
+  /* ── Modals ── */
+  openModal(id)  { g(id).classList.add("open"); },
+  closeModal(id) { g(id).classList.remove("open"); }
+};
+ 
+// close modals on backdrop click
+document.querySelectorAll(".modal-bg").forEach(m=>{
+  m.addEventListener("click", e=>{ if(e.target===m) m.classList.remove("open"); });
+});
 </script>
+ 
 </body>
 </html>
