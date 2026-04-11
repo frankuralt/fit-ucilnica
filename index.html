@@ -158,6 +158,19 @@
   .list-row { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem; background:var(--bg2); border:1px solid var(--border); border-radius:9px; margin-bottom:.45rem; gap:.5rem; flex-wrap:wrap; }
   .badge { padding:.2rem .55rem; border-radius:20px; background:rgba(37,99,235,.2); color:var(--accent2); font-size:.75rem; font-weight:600; }
 
+  /* ── DRAG & DROP ── */
+  .drag-list { display:flex; flex-direction:column; gap:.4rem; }
+  .drag-item { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem; background:var(--bg2); border:1px solid var(--border); border-radius:9px; gap:.5rem; flex-wrap:wrap; cursor:default; transition:box-shadow .15s, opacity .15s, border-color .15s; user-select:none; }
+  .drag-item.dragging { opacity:.45; box-shadow:0 8px 32px rgba(0,0,0,.5); border-color:var(--accent); }
+  .drag-item.drag-over { border-color:var(--accent2); background:rgba(37,99,235,.1); }
+  .drag-handle { display:flex; flex-direction:column; gap:3px; padding:.2rem .35rem; cursor:grab; color:var(--muted); flex-shrink:0; }
+  .drag-handle:active { cursor:grabbing; }
+  .drag-handle span { display:block; width:14px; height:2px; background:currentColor; border-radius:1px; }
+  .drag-item-label { flex:1; min-width:0; }
+  .drag-item-label strong { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* inline rename */
+  .rename-input { background:var(--bg3); border:1px solid var(--accent); border-radius:6px; color:var(--text); font-family:inherit; font-size:.9rem; padding:.25rem .5rem; width:100%; outline:none; }
+
   /* ── MODALS ── */
   .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:flex-end; justify-content:center; }
   .modal-bg.open { display:flex; }
@@ -176,7 +189,7 @@
   .mt { margin-top:1rem; }
   .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.2); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
-  .brand-F { font-size:1em; line-height:1; display:inline-block; vertical-align:baseline; }
+  .brand-F { font-size:1.5em; line-height:1; display:inline-block; vertical-align:baseline; }
 
   /* ── DASHBOARD HERO ── */
   .dash-hero { background:linear-gradient(135deg,#0a1628,#1e3a5f); border-radius:16px; padding:2rem 2.5rem; margin-bottom:2rem; border:1px solid rgba(37,99,235,.25); position:relative; overflow:hidden; }
@@ -811,17 +824,47 @@ const APP = window.APP = {
   /* ── Skrbnik: Courses ── */
   async _loadSkrbnikCourses() {
     const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
+    if (snap.empty){ htm("admin-courses","<p class='muted'>Ni tečajev.</p>"); return; }
     const rows = snap.docs.map(d=>{
       const c=d.data();
-      return `<div class="list-row">
-        <strong>${esc(c.title)}</strong>
+      return `<div class="drag-item" draggable="true" data-id="${d.id}" data-type="course">
+        <div class="drag-handle" title="Povleci za premik"><span></span><span></span><span></span></div>
+        <div class="drag-item-label">
+          <strong id="course-label-${d.id}">${esc(c.title)}</strong>
+        </div>
         <div class="btn-row">
-          <button class="btn btn-sm" onclick="APP.openLekcijeModal('${d.id}','${esc(c.title)}')">Manage Lekcije</button>
+          <button class="btn btn-sm btn-ghost" onclick="APP.renameCourse('${d.id}')">✏️ Preimenuj</button>
+          <button class="btn btn-sm" onclick="APP.openLekcijeModal('${d.id}','${esc(c.title)}')">Lekcije</button>
           <button class="btn btn-sm btn-danger" onclick="APP.deleteCourse('${d.id}')">Izbriši</button>
         </div>
       </div>`;
     });
-    htm("admin-courses", rows.length ? rows.join("") : "<p class='muted'>No courses.</p>");
+    htm("admin-courses", `<div class="drag-list" id="courses-drag-list">${rows.join("")}</div>`);
+    this._initDragList("courses-drag-list", async (orderedIds) => {
+      // save new order to Firestore
+      const batch = orderedIds.map((id,i) => updateDoc(doc(db,"courses",id),{order:i}));
+      await Promise.all(batch);
+      toast("Vrstni red shranjen.");
+    });
+  },
+
+  renameCourse(courseId) {
+    const label = g("course-label-"+courseId);
+    if (!label) return;
+    const current = label.textContent;
+    label.innerHTML = `<input class="rename-input" id="ri-${courseId}" value="${esc(current)}" maxlength="80">`;
+    const inp = g("ri-"+courseId);
+    inp.focus(); inp.select();
+    const save = async () => {
+      const val = inp.value.trim();
+      if (val && val !== current) {
+        await updateDoc(doc(db,"courses",courseId),{title:val});
+        toast("Tečaj preimenovan.");
+      }
+      label.textContent = val || current;
+    };
+    inp.addEventListener("blur", save);
+    inp.addEventListener("keydown", e => { if(e.key==="Enter") inp.blur(); if(e.key==="Escape"){ label.textContent=current; } });
   },
 
   openAddCourse() { this.openModal("modal-add-course"); },
@@ -859,17 +902,49 @@ const APP = window.APP = {
 
   async _refreshLekcijeList(courseId) {
     const snap = await getDocs(query(collection(db,"courses",courseId,"steps"),orderBy("order")));
+    if (snap.empty){ htm("steps-list","<p class='muted'>Še ni lekcij.</p>"); return; }
     const rows = snap.docs.map((d,i)=>{
       const s=d.data();
-      return `<div class="list-row">
-        <span><strong>${i+1}.</strong> ${esc(s.title)}</span>
+      return `<div class="drag-item" draggable="true" data-id="${d.id}" data-type="lesson">
+        <div class="drag-handle" title="Povleci za premik"><span></span><span></span><span></span></div>
+        <div class="drag-item-label">
+          <strong id="lesson-label-${d.id}">${i+1}. ${esc(s.title)}</strong>
+        </div>
         <div class="btn-row">
+          <button class="btn btn-sm btn-ghost" onclick="APP.renameLesson('${courseId}','${d.id}')">✏️</button>
           <button class="btn btn-sm" onclick="APP.editLesson('${courseId}','${d.id}')">Uredi</button>
           <button class="btn btn-sm btn-danger" onclick="APP.deleteLesson('${courseId}','${d.id}')">Izb.</button>
         </div>
       </div>`;
     });
-    htm("steps-list", rows.length ? rows.join("") : "<p class='muted'>No lessons yet.</p>");
+    htm("steps-list", `<div class="drag-list" id="lessons-drag-list">${rows.join("")}</div>`);
+    this._initDragList("lessons-drag-list", async (orderedIds) => {
+      const batch = orderedIds.map((id,i) => updateDoc(doc(db,"courses",courseId,"steps",id),{order:i}));
+      await Promise.all(batch);
+      toast("Vrstni red shranjen.");
+      // refresh to update numbers
+      setTimeout(()=>this._refreshLekcijeList(courseId), 400);
+    });
+  },
+
+  renameLesson(courseId, stepId) {
+    const label = g("lesson-label-"+stepId);
+    if (!label) return;
+    // strip the "1. " prefix for editing
+    const current = label.textContent.replace(/^\d+\.\s*/, "");
+    label.innerHTML = `<input class="rename-input" id="rli-${stepId}" value="${esc(current)}" maxlength="120">`;
+    const inp = g("rli-"+stepId);
+    inp.focus(); inp.select();
+    const save = async () => {
+      const val = inp.value.trim();
+      if (val && val !== current) {
+        await updateDoc(doc(db,"courses",courseId,"steps",stepId),{title:val});
+        toast("Lekcija preimenovana.");
+      }
+      this._refreshLekcijeList(courseId);
+    };
+    inp.addEventListener("blur", save);
+    inp.addEventListener("keydown", e => { if(e.key==="Enter") inp.blur(); if(e.key==="Escape") this._refreshLekcijeList(courseId); });
   },
 
   async addLesson() {
@@ -911,6 +986,41 @@ const APP = window.APP = {
     });
     toast("Shranjeno!"); this.closeModal("modal-edit-lesson");
     this._refreshLekcijeList(courseId);
+  },
+
+  /* ── Drag & Drop ── */
+  _initDragList(listId, onReorder) {
+    const list = g(listId);
+    if (!list) return;
+    let dragged = null;
+
+    list.querySelectorAll(".drag-item").forEach(item => {
+      item.addEventListener("dragstart", e => {
+        dragged = item;
+        setTimeout(() => item.classList.add("dragging"), 0);
+        e.dataTransfer.effectAllowed = "move";
+      });
+      item.addEventListener("dragend", () => {
+        item.classList.remove("dragging");
+        list.querySelectorAll(".drag-item").forEach(i => i.classList.remove("drag-over"));
+        // collect new order and save
+        const ids = [...list.querySelectorAll(".drag-item")].map(i => i.dataset.id);
+        onReorder(ids);
+      });
+      item.addEventListener("dragover", e => {
+        e.preventDefault();
+        if (item === dragged) return;
+        list.querySelectorAll(".drag-item").forEach(i => i.classList.remove("drag-over"));
+        item.classList.add("drag-over");
+        // insert before or after based on mouse position
+        const rect = item.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (e.clientY < mid) list.insertBefore(dragged, item);
+        else list.insertBefore(dragged, item.nextSibling);
+      });
+      item.addEventListener("dragleave", () => item.classList.remove("drag-over"));
+      item.addEventListener("drop", e => { e.preventDefault(); item.classList.remove("drag-over"); });
+    });
   },
 
   /* ── Modals ── */
