@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LearnSpace</title>
+<title>FIT Team Sistemi</title>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -11,7 +11,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #0f0f13; --bg2: #17171e; --bg3: #1f1f29; --border: #2e2e3f;
-    --accent: #6c63ff; --accent2: #a78bfa; --text: #e8e8f0; --muted: #7070a0;
+    --accent: #2563eb; --accent2: #60a5fa; --text: #e8e8f0; --muted: #7070a0;
     --danger: #e05555; --radius: 12px;
     --nav-h: 56px; /* mobile bottom nav height */
   }
@@ -22,9 +22,9 @@
   .screen.active { display:flex; }
 
   /* ── LOGIN ── */
-  #screen-login { align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at 60% 20%,#1a1440 0%,var(--bg) 70%); padding:1rem; }
+  #screen-login { align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at 60% 20%,#0a1628 0%,var(--bg) 70%); padding:1rem; }
   .login-box { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:2.5rem 2rem; width:100%; max-width:400px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
-  .login-box h1 { font-family:'DM Serif Display',serif; font-size:2rem; margin-bottom:.25rem; background:linear-gradient(120deg,#fff,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .login-box h1 { font-family:'DM Serif Display',serif; font-size:2rem; margin-bottom:.25rem; background:linear-gradient(120deg,#e0f2fe,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .login-box .subtitle { color:var(--muted); margin-bottom:2rem; font-size:.9rem; }
   .login-err { background:#3a1f1f; border:1px solid #7a3030; color:#f09090; border-radius:8px; padding:.65rem .9rem; font-size:.85rem; margin-bottom:1rem; display:none; }
   .login-ok  { background:#1a3326; border:1px solid #2a6648; color:#7ee8a2; border-radius:8px; padding:.65rem .9rem; font-size:.85rem; margin-bottom:1rem; display:none; }
@@ -36,10 +36,10 @@
   /* ── APP SHELL — desktop sidebar layout ── */
   #screen-app { height:100vh; overflow:hidden; }
   .sidebar { width:240px; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:1.5rem 1rem; flex-shrink:0; }
-  .sidebar-logo { font-family:'DM Serif Display',serif; font-size:1.3rem; padding:.5rem .75rem 1.5rem; background:linear-gradient(120deg,#fff,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .sidebar-logo { font-family:'DM Serif Display',serif; font-size:1.3rem; padding:.5rem .75rem 1.5rem; background:linear-gradient(120deg,#e0f2fe,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .nav-item { display:flex; align-items:center; gap:.75rem; padding:.65rem .85rem; border-radius:10px; cursor:pointer; color:var(--muted); font-weight:500; transition:all .2s; user-select:none; border:none; background:none; width:100%; text-align:left; font-family:inherit; font-size:.9rem; }
   .nav-item:hover { background:var(--bg3); color:var(--text); }
-  .nav-item.active { background:rgba(108,99,255,.18); color:var(--accent2); }
+  .nav-item.active { background:rgba(37,99,235,.18); color:var(--accent2); }
   .sidebar-footer { margin-top:auto; }
   .user-chip { display:flex; align-items:center; gap:.6rem; padding:.65rem; border-radius:10px; background:var(--bg3); font-size:.82rem; color:var(--muted); }
   .user-chip span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -48,11 +48,11 @@
 
   /* mobile top bar (hidden on desktop) */
   .mobile-topbar { display:none; align-items:center; justify-content:space-between; padding:0 1rem; height:52px; background:var(--bg2); border-bottom:1px solid var(--border); flex-shrink:0; }
-  .mobile-topbar-logo { font-family:'DM Serif Display',serif; font-size:1.2rem; background:linear-gradient(120deg,#fff,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .mobile-topbar-logo { font-family:'DM Serif Display',serif; font-size:1.2rem; background:linear-gradient(120deg,#e0f2fe,var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .mobile-user { font-size:.75rem; color:var(--muted); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   /* mobile bottom nav (hidden on desktop) */
-  .mobile-nav { display:none; position:fixed; bottom:0; left:0; right:0; height:var(--nav-h); background:var(--bg2); border-top:1px solid var(--border); z-index:100; }
+  .mobile-nav { display:none !important; position:fixed; bottom:0; left:0; right:0; height:var(--nav-h); background:var(--bg2); border-top:1px solid var(--border); z-index:100; }
   .mobile-nav-inner { display:flex; height:100%; }
   .mobile-nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:none; background:none; color:var(--muted); font-family:inherit; font-size:.65rem; font-weight:500; cursor:pointer; transition:color .15s; }
   .mobile-nav-btn.active { color:var(--accent2); }
@@ -66,46 +66,84 @@
   .page-header p { color:var(--muted); margin-top:.25rem; }
 
   /* ── CARDS ── */
-  .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.25rem; }
-  .card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:transform .2s,box-shadow .2s; }
-  .card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,.4); }
-  .card:active { transform:scale(.98); }
-  .card-thumb { width:100%; height:140px; object-fit:cover; display:block; }
-  .card-thumb-ph { width:100%; height:140px; background:linear-gradient(135deg,var(--bg3),#1a1440); display:flex; align-items:center; justify-content:center; font-size:2rem; }
-  .card-body { padding:1rem 1.1rem 1.25rem; }
-  .card-body h3 { font-size:1rem; margin-bottom:.35rem; }
-  .card-body p { color:var(--muted); font-size:.85rem; line-height:1.5; }
+  .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem; }
+  .card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s; position:relative; }
+  .card:hover { transform:translateY(-6px) scale(1.01); box-shadow:0 24px 60px rgba(0,0,0,.5); border-color:rgba(37,99,235,.35); }
+  .card:active { transform:scale(.97); }
+  .card-thumb { width:100%; height:160px; object-fit:cover; display:block; }
+  .card-thumb-ph { width:100%; height:160px; display:flex; align-items:center; justify-content:center; font-size:3rem; position:relative; overflow:hidden; }
+  .card-thumb-ph::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,#0a1628,#1e3a5f,#0f2240); }
+  .card-thumb-ph span { position:relative; z-index:1; }
+  .card-thumb-overlay { position:absolute; top:0; left:0; right:0; height:160px; background:linear-gradient(to bottom, transparent 40%, rgba(15,15,19,.9) 100%); }
+  .card-body { padding:1.1rem 1.25rem 1.35rem; }
+  .card-body h3 { font-size:1.05rem; font-weight:600; margin-bottom:.4rem; line-height:1.35; }
+  .card-body p { color:var(--muted); font-size:.83rem; line-height:1.55; margin-bottom:.85rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .card-meta { display:flex; align-items:center; gap:.75rem; }
+  .card-lessons { display:flex; align-items:center; gap:.3rem; font-size:.78rem; color:var(--muted); }
+  .card-lessons svg { color:var(--accent2); }
+  .card-progress-bar { height:3px; background:var(--bg3); border-radius:2px; margin-top:.85rem; overflow:hidden; }
+  .card-progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:2px; transition:width .4s; }
+  .card-open-btn { margin-left:auto; display:flex; align-items:center; gap:.3rem; font-size:.78rem; font-weight:600; color:var(--accent2); }
 
   /* ── COURSE VIEWER ── */
   #course-viewer { display:none; position:fixed; inset:0; background:var(--bg); z-index:200; flex-direction:column; }
   #course-viewer.open { display:flex; }
-  .viewer-topbar { display:flex; align-items:center; gap:1rem; padding:.85rem 1.5rem; background:var(--bg2); border-bottom:1px solid var(--border); flex-shrink:0; }
-  .viewer-topbar h3 { font-family:'DM Serif Display',serif; font-size:1.15rem; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  /* lessons toggle button — only shown on mobile */
-  #lessons-toggle { display:none; margin-left:auto; }
+
+  /* top bar */
+  .viewer-topbar { display:flex; align-items:center; gap:1rem; padding:.75rem 1.25rem; background:var(--bg2); border-bottom:1px solid var(--border); flex-shrink:0; height:56px; }
+  .viewer-topbar h3 { font-family:'DM Serif Display',serif; font-size:1.05rem; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #lessons-toggle { display:none; }
+  .viewer-progress-strip { height:3px; background:var(--bg3); flex-shrink:0; }
+  .viewer-progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .5s cubic-bezier(.4,0,.2,1); }
+
+  /* two-pane body */
   .viewer-body { display:flex; flex:1; overflow:hidden; }
-  .steps-sidebar { width:260px; background:var(--bg2); border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
-  .steps-sidebar-title { padding:1rem 1.2rem .5rem; font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
-  .step-row { display:flex; align-items:center; gap:.75rem; padding:.7rem 1.2rem; cursor:pointer; transition:background .15s; font-size:.88rem; }
+
+  /* lesson sidebar */
+  .steps-sidebar { width:280px; background:var(--bg2); border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; display:flex; flex-direction:column; }
+  .steps-sidebar-title { padding:1.1rem 1.2rem .6rem; font-size:.68rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); font-weight:600; }
+  .step-row { display:flex; align-items:center; gap:.85rem; padding:.75rem 1.1rem; cursor:pointer; transition:background .12s; border-left:3px solid transparent; }
   .step-row:hover { background:var(--bg3); }
-  .step-row.active { background:rgba(108,99,255,.2); color:var(--accent2); }
-  .step-num { width:22px; height:22px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:600; flex-shrink:0; }
-  .step-content-area { flex:1; overflow-y:auto; padding:2rem 2.5rem; max-width:860px; }
-  .step-content-area h2 { font-family:'DM Serif Display',serif; font-size:1.8rem; margin-bottom:1.5rem; }
-  .video-wrap { position:relative; padding-top:56.25%; border-radius:var(--radius); overflow:hidden; margin-bottom:1.5rem; background:#000; }
+  .step-row.active { background:rgba(37,99,235,.12); border-left-color:var(--accent); color:var(--accent2); }
+  .step-row.done .step-num { background:var(--accent); color:#fff; }
+  .step-num { width:26px; height:26px; border-radius:50%; background:var(--bg3); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex-shrink:0; transition:all .2s; }
+  .step-row.active .step-num { border-color:var(--accent); background:rgba(37,99,235,.2); color:var(--accent2); }
+  .step-title-text { font-size:.86rem; line-height:1.35; }
+  .step-done-icon { margin-left:auto; color:var(--accent2); flex-shrink:0; opacity:0; transition:opacity .2s; }
+  .step-row.done .step-done-icon { opacity:1; }
+
+  /* content area */
+  .step-content-area { flex:1; overflow-y:auto; display:flex; flex-direction:column; }
+  .step-content-inner { padding:2.5rem 3.5rem; max-width:820px; width:100%; }
+  .step-lesson-label { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--accent2); font-weight:600; margin-bottom:.6rem; }
+  .step-content-inner h2 { font-family:'DM Serif Display',serif; font-size:2rem; margin-bottom:.5rem; line-height:1.2; }
+  .step-content-inner .step-subtitle { color:var(--muted); font-size:.95rem; margin-bottom:2rem; }
+
+  .video-wrap { position:relative; padding-top:56.25%; border-radius:14px; overflow:hidden; margin-bottom:2rem; background:#000; box-shadow:0 20px 60px rgba(0,0,0,.5); }
   .video-wrap iframe,.video-wrap video { position:absolute; inset:0; width:100%; height:100%; border:none; }
-  .step-img { max-width:100%; border-radius:var(--radius); margin-bottom:1.5rem; display:block; }
-  .step-body { line-height:1.8; }
-  .step-body h1,.step-body h2,.step-body h3 { font-family:'DM Serif Display',serif; margin:1.2em 0 .4em; }
-  .step-body p { margin-bottom:1em; }
-  .step-body ul,.step-body ol { margin:.5em 0 1em 1.5em; }
-  .step-embed { margin-top:1.5rem; }
+  .step-img { max-width:100%; border-radius:14px; margin-bottom:2rem; display:block; box-shadow:0 12px 40px rgba(0,0,0,.4); }
+  .step-body { line-height:1.85; font-size:.97rem; color:#d0d0e8; }
+  .step-body h1,.step-body h2,.step-body h3 { font-family:'DM Serif Display',serif; margin:1.4em 0 .5em; color:var(--text); }
+  .step-body p { margin-bottom:1.1em; }
+  .step-body ul,.step-body ol { margin:.5em 0 1.2em 1.5em; }
+  .step-body li { margin-bottom:.35em; }
+  .step-embed { margin-top:1.5rem; border-radius:14px; overflow:hidden; }
+
+  /* prev/next nav */
+  .step-nav { display:flex; align-items:center; justify-content:space-between; padding:1.5rem 3.5rem 2.5rem; margin-top:auto; gap:1rem; flex-shrink:0; }
+  .step-nav-btn { display:flex; align-items:center; gap:.5rem; padding:.65rem 1.4rem; border-radius:10px; font-family:inherit; font-size:.88rem; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--bg2); color:var(--text); transition:all .18s; -webkit-tap-highlight-color:transparent; }
+  .step-nav-btn:hover { background:var(--bg3); border-color:var(--accent); color:var(--accent2); }
+  .step-nav-btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .step-nav-btn.primary:hover { background:#1d4ed8; }
+  .step-nav-btn:disabled { opacity:.35; cursor:not-allowed; }
+  .step-nav-btn:disabled:hover { background:var(--bg2); border-color:var(--border); color:var(--text); }
+  .step-complete-badge { display:flex; align-items:center; gap:.4rem; font-size:.8rem; color:var(--accent2); font-weight:500; }
 
   /* ── FORMS ── */
   .inp { display:block; width:100%; padding:.75rem .9rem; background:var(--bg3); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:inherit; font-size:1rem; outline:none; transition:border-color .2s; margin-bottom:.75rem; resize:vertical; -webkit-appearance:none; }
   .inp:focus { border-color:var(--accent); }
   .btn { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; padding:.7rem 1.3rem; border-radius:9px; background:var(--accent); color:#fff; border:none; font-family:inherit; font-size:.9rem; font-weight:600; cursor:pointer; transition:background .2s,transform .1s; -webkit-tap-highlight-color:transparent; }
-  .btn:hover { background:#5750e0; transform:translateY(-1px); }
+  .btn:hover { background:#1d4ed8; transform:translateY(-1px); }
   .btn:active { transform:scale(.97); }
   .btn-ghost { background:var(--bg3); color:var(--text); }
   .btn-ghost:hover { background:var(--border); }
@@ -118,7 +156,7 @@
   .card-form h3 { font-family:'DM Serif Display',serif; font-size:1.25rem; margin-bottom:1rem; }
   label { display:block; font-size:.78rem; color:var(--muted); margin-bottom:.2rem; }
   .list-row { display:flex; align-items:center; justify-content:space-between; padding:.7rem 1rem; background:var(--bg2); border:1px solid var(--border); border-radius:9px; margin-bottom:.45rem; gap:.5rem; flex-wrap:wrap; }
-  .badge { padding:.2rem .55rem; border-radius:20px; background:rgba(108,99,255,.2); color:var(--accent2); font-size:.75rem; font-weight:600; }
+  .badge { padding:.2rem .55rem; border-radius:20px; background:rgba(37,99,235,.2); color:var(--accent2); font-size:.75rem; font-weight:600; }
 
   /* ── MODALS ── */
   .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:300; align-items:flex-end; justify-content:center; }
@@ -138,6 +176,13 @@
   .mt { margin-top:1rem; }
   .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.2); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
+  .brand-F { font-size:1.5em; line-height:1; display:inline-block; vertical-align:baseline; }
+
+  /* ── DASHBOARD HERO ── */
+  .dash-hero { background:linear-gradient(135deg,#0a1628,#1e3a5f); border-radius:16px; padding:2rem 2.5rem; margin-bottom:2rem; border:1px solid rgba(37,99,235,.25); position:relative; overflow:hidden; }
+  .dash-hero::after { content:''; position:absolute; right:-40px; top:-40px; width:200px; height:200px; background:radial-gradient(circle,rgba(37,99,235,.3) 0%,transparent 70%); pointer-events:none; }
+  .dash-hero h2 { font-family:'DM Serif Display',serif; font-size:1.7rem; margin-bottom:.35rem; }
+  .dash-hero p { color:var(--accent2); font-size:.9rem; opacity:.85; }
 
   /* ══════════════════════════════════════════
      MOBILE OVERRIDES  (≤ 640px)
@@ -162,23 +207,28 @@
     .page-header h2 { font-size:1.4rem; }
 
     /* course viewer — stacked layout */
-    .viewer-topbar { padding:.7rem 1rem; }
-    .viewer-topbar h3 { font-size:1rem; }
+    .viewer-topbar { padding:.6rem .85rem; }
+    .viewer-topbar h3 { font-size:.95rem; }
     #lessons-toggle { display:flex; }
     .viewer-body { flex-direction:column; }
     .steps-sidebar {
       width:100%; border-right:none; border-bottom:1px solid var(--border);
-      max-height:0; overflow:hidden; transition:max-height .3s ease; flex-shrink:0;
+      max-height:0; overflow:hidden; transition:max-height .35s cubic-bezier(.4,0,.2,1); flex-shrink:0;
     }
-    .steps-sidebar.open { max-height:50vh; overflow-y:auto; }
-    .step-content-area { padding:1.25rem 1rem 5rem; }
-    .step-content-area h2 { font-size:1.35rem; }
+    .steps-sidebar.open { max-height:55vh; overflow-y:auto; }
+    .step-content-inner { padding:1.25rem 1rem 1rem; }
+    .step-content-inner h2 { font-size:1.4rem; }
+    .step-nav { padding:1rem 1rem 2rem; }
 
     /* modals slide up from bottom */
     .modal-box { border-radius:20px 20px 0 0; padding:1.25rem 1.25rem 2rem; }
 
     /* toast above bottom nav */
     #toast-area { bottom:calc(var(--nav-h) + .5rem); right:.75rem; left:.75rem; }
+
+    /* dashboard hero */
+    .dash-hero { padding:1.25rem 1.1rem; margin-bottom:1.25rem; }
+    .dash-hero h2 { font-size:1.25rem; }
 
     /* bigger tap targets */
     .btn-sm { padding:.5rem .9rem; font-size:.83rem; }
@@ -196,19 +246,19 @@
   <div class="mobile-nav-inner">
     <button class="mobile-nav-btn active" id="mnav-dashboard">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v9h5v-5h4v5h5v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Home
+      Domov
     </button>
     <button class="mobile-nav-btn" id="mnav-courses">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Courses
+      Tečaji
     </button>
     <button class="mobile-nav-btn" id="mnav-admin" style="display:none">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Admin
+      Skrbnik
     </button>
     <button class="mobile-nav-btn" id="mnav-logout">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Sign Out
+      Odjava
     </button>
   </div>
 </nav>
@@ -216,13 +266,13 @@
 <!-- LOGIN -->
 <div id="screen-login" class="screen active">
   <div class="login-box">
-    <h1>LearnSpace</h1>
+    <h1><span class="brand-F">F</span>it Team Sistemi</h1>
 
     <!-- tabs -->
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-signin" onclick_wire="tab-signin">Sign In</button>
-      <button class="auth-tab" id="tab-signup" onclick_wire="tab-signup">Sign Up</button>
-      <button class="auth-tab" id="tab-forgot" onclick_wire="tab-forgot">Forgot Password</button>
+      <button class="auth-tab active" id="tab-signin" onclick_wire="tab-signin">Prijava</button>
+      <button class="auth-tab" id="tab-signup" onclick_wire="tab-signup">Registracija</button>
+      <button class="auth-tab" id="tab-forgot" onclick_wire="tab-forgot">Pozabljeno geslo</button>
     </div>
 
     <div id="auth-err" class="login-err"></div>
@@ -230,31 +280,31 @@
 
     <!-- SIGN IN -->
     <div id="panel-signin">
-      <label>Email</label>
-      <input id="login-email" type="email" class="inp" placeholder="you@example.com">
-      <label>Password</label>
+      <label>E-pošta</label>
+      <input id="login-email" type="email" class="inp" placeholder="vi@primer.com">
+      <label>Geslo</label>
       <input id="login-pass" type="password" class="inp" placeholder="••••••••">
-      <button id="login-btn" class="btn btn-full">Sign In</button>
+      <button id="login-btn" class="btn btn-full">Prijava</button>
     </div>
 
     <!-- SIGN UP -->
     <div id="panel-signup" style="display:none">
-      <p class="auth-hint">Only emails approved by the admin can register.</p>
-      <label>Email</label>
-      <input id="signup-email" type="email" class="inp" placeholder="you@example.com">
-      <label>Password</label>
-      <input id="signup-pass" type="password" class="inp" placeholder="min 6 characters">
-      <label>Confirm Password</label>
-      <input id="signup-pass2" type="password" class="inp" placeholder="repeat password">
-      <button id="signup-btn" class="btn btn-full">Create Account</button>
+      <p class="auth-hint">Registracija je mogoča samo z e-poštnimi naslovi, ki jih odobri skrbnik.</p>
+      <label>E-pošta</label>
+      <input id="signup-email" type="email" class="inp" placeholder="vi@primer.com">
+      <label>Geslo</label>
+      <input id="signup-pass" type="password" class="inp" placeholder="najmanj 6 znakov">
+      <label>Potrdite geslo</label>
+      <input id="signup-pass2" type="password" class="inp" placeholder="ponovite geslo">
+      <button id="signup-btn" class="btn btn-full">Ustvari račun</button>
     </div>
 
     <!-- FORGOT PASSWORD -->
     <div id="panel-forgot" style="display:none">
-      <p class="auth-hint">Enter your approved email and we'll send a password reset link.</p>
-      <label>Email</label>
-      <input id="forgot-email" type="email" class="inp" placeholder="you@example.com">
-      <button id="forgot-btn" class="btn btn-full">Send Reset Email</button>
+      <p class="auth-hint">Vnesite odobreni e-poštni naslov in poslali vam bomo povezavo za ponastavitev gesla.</p>
+      <label>E-pošta</label>
+      <input id="forgot-email" type="email" class="inp" placeholder="vi@primer.com">
+      <button id="forgot-btn" class="btn btn-full">Pošlji e-pošto za ponastavitev</button>
     </div>
 
   </div>
@@ -265,57 +315,57 @@
 
   <!-- Mobile top bar -->
   <div class="mobile-topbar">
-    <span class="mobile-topbar-logo">LearnSpace</span>
+    <span class="mobile-topbar-logo"><span class="brand-F">F</span>it Team Sistemi</span>
     <span class="mobile-user" id="mobile-user-label">—</span>
   </div>
 
   <nav class="sidebar">
-    <div class="sidebar-logo">LearnSpace</div>
+    <div class="sidebar-logo"><span class="brand-F">F</span>it Team Sistemi</div>
     <button class="nav-item" id="nav-dashboard">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v9h5v-5h4v5h5v-9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Dashboard
+      Domov
     </button>
     <button class="nav-item" id="nav-courses">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      My Courses
+      Moji tečaji
     </button>
     <button class="nav-item" id="nav-admin" style="display:none">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Admin
+      Skrbnik
     </button>
     <div class="sidebar-footer">
       <div class="user-chip">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
         <span id="user-label">—</span>
-        <button id="logout-btn" class="logout-btn">Sign out</button>
+        <button id="logout-btn" class="logout-btn">Odjava</button>
       </div>
     </div>
   </nav>
 
   <div class="main-content">
     <div id="sec-dashboard" class="section active">
-      <div class="page-header"><h2>Welcome back 👋</h2><p>Select a course to continue learning.</p></div>
+      <div class="page-header"><h2>Dobrodošli nazaj 👋</h2><p>Izberite tečaj in nadaljujte z učenjem.</p></div>
       <div id="dash-grid" class="cards-grid"><p class="muted">Loading…</p></div>
     </div>
 
     <div id="sec-courses" class="section">
-      <div class="page-header"><h2>All Courses</h2></div>
+      <div class="page-header"><h2>Vsi tečaji</h2></div>
       <div id="courses-list"></div>
     </div>
 
     <div id="sec-admin" class="section">
-      <div class="page-header"><h2>Admin Panel</h2></div>
+      <div class="page-header"><h2>Skrbniška plošča</h2></div>
       <div class="card-form">
-        <h3>Allowed Users</h3>
+        <h3>Dovoljeni uporabniki</h3>
         <div class="btn-row" style="margin-bottom:.75rem">
-          <input id="new-user-email" type="email" placeholder="user@email.com" class="inp" style="margin:0;flex:1;min-width:160px">
-          <button id="add-user-btn" class="btn">Add User</button>
+          <input id="new-user-email" type="email" placeholder="uporabnik@email.com" class="inp" style="margin:0;flex:1;min-width:160px">
+          <button id="add-user-btn" class="btn">Dodaj uporabnika</button>
         </div>
         <div id="users-list"></div>
       </div>
       <div class="card-form">
-        <h3>Courses</h3>
-        <button id="open-add-course" class="btn" style="margin-bottom:1rem">+ New Course</button>
+        <h3>Tečaji</h3>
+        <button id="open-add-course" class="btn" style="margin-bottom:1rem">+ Nov tečaj</button>
         <div id="admin-courses"></div>
       </div>
     </div>
@@ -325,16 +375,18 @@
 <!-- COURSE VIEWER -->
 <div id="course-viewer">
   <div class="viewer-topbar">
-    <button id="close-viewer-btn" class="btn btn-ghost btn-sm">← Back</button>
+    <button id="close-viewer-btn" class="btn btn-ghost btn-sm">← Nazaj</button>
     <h3 id="viewer-title"></h3>
-    <button id="lessons-toggle" class="btn btn-ghost btn-sm">☰ Lessons</button>
+    <span id="viewer-step-counter" style="font-size:.78rem;color:var(--muted);white-space:nowrap;flex-shrink:0"></span>
+    <button id="lessons-toggle" class="btn btn-ghost btn-sm" style="flex-shrink:0">☰ Lekcije</button>
   </div>
+  <div class="viewer-progress-strip"><div class="viewer-progress-fill" id="viewer-progress" style="width:0%"></div></div>
   <div class="viewer-body">
     <div class="steps-sidebar">
-      <div class="steps-sidebar-title">Lessons</div>
+      <div class="steps-sidebar-title">Lekcije</div>
       <div id="viewer-steps"></div>
     </div>
-    <div class="step-content-area" id="viewer-content"><p class="muted">Select a lesson to begin.</p></div>
+    <div class="step-content-area" id="viewer-content"><p class="muted">Izberite lekcijo za začetek.</p></div>
   </div>
 </div>
 
@@ -342,34 +394,34 @@
 <div id="modal-add-course" class="modal-bg">
   <div class="modal-box">
     <div class="modal-handle"></div>
-    <h3>New Course</h3>
-    <label>Title *</label><input id="nc-title" class="inp" placeholder="Course title">
-    <label>Description</label><textarea id="nc-desc" class="inp" rows="2" placeholder="Short description"></textarea>
-    <label>Thumbnail URL (optional)</label><input id="nc-thumb" class="inp" placeholder="https://...">
+    <h3>Nov tečaj</h3>
+    <label>Naslov *</label><input id="nc-title" class="inp" placeholder="Naslov tečaja">
+    <label>Opis</label><textarea id="nc-desc" class="inp" rows="2" placeholder="Kratek opis"></textarea>
+    <label>URL slike (neobvezno)</label><input id="nc-thumb" class="inp" placeholder="https://...">
     <div class="btn-row mt">
-      <button id="save-course-btn" class="btn">Create</button>
-      <button id="cancel-add-course" class="btn btn-ghost">Cancel</button>
+      <button id="save-course-btn" class="btn">Ustvari</button>
+      <button id="cancel-add-course" class="btn btn-ghost">Prekliči</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: Manage Lessons -->
+<!-- MODAL: Manage Lekcije -->
 <div id="modal-steps" class="modal-bg">
   <div class="modal-box" style="max-width:620px">
     <div class="modal-handle"></div>
-    <h3 id="steps-modal-title">Lessons</h3>
+    <h3 id="steps-modal-title">Lekcije</h3>
     <input type="hidden" id="steps-course-id">
     <div id="steps-list" style="margin-bottom:1rem"></div>
     <hr>
-    <h4 style="margin-bottom:.75rem;color:var(--accent2)">Add New Lesson</h4>
-    <label>Title *</label><input id="ns-title" class="inp">
-    <label>Content (HTML supported)</label><textarea id="ns-content" class="inp" rows="4" placeholder="&lt;p&gt;Lesson text here&lt;/p&gt;"></textarea>
+    <h4 style="margin-bottom:.75rem;color:var(--accent2)">Dodaj novo lekcijo</h4>
+    <label>Naslov *</label><input id="ns-title" class="inp">
+    <label>Vsebina (podpira HTML)</label><textarea id="ns-content" class="inp" rows="4" placeholder="&lt;p&gt;Besedilo lekcije tukaj&lt;/p&gt;"></textarea>
     <label>Video URL (YouTube / Vimeo / .mp4)</label><input id="ns-video" class="inp" placeholder="https://youtube.com/watch?v=...">
-    <label>Image URL</label><input id="ns-image" class="inp" placeholder="https://...">
-    <label>Custom embed (Lottie, Google Slides, etc.)</label><textarea id="ns-embed" class="inp" rows="2" placeholder="&lt;iframe ...&gt;&lt;/iframe&gt;"></textarea>
+    <label>URL slike</label><input id="ns-image" class="inp" placeholder="https://...">
+    <label>Vgrajena koda (Lottie, Google Slides, itd.)</label><textarea id="ns-embed" class="inp" rows="2" placeholder="&lt;iframe ...&gt;&lt;/iframe&gt;"></textarea>
     <div class="btn-row mt">
-      <button id="add-lesson-btn" class="btn">Add Lesson</button>
-      <button id="close-steps-btn" class="btn btn-ghost">Close</button>
+      <button id="add-lesson-btn" class="btn">Dodaj lekcijo</button>
+      <button id="close-steps-btn" class="btn btn-ghost">Zapri</button>
     </div>
   </div>
 </div>
@@ -378,17 +430,17 @@
 <div id="modal-edit-lesson" class="modal-bg">
   <div class="modal-box">
     <div class="modal-handle"></div>
-    <h3>Edit Lesson</h3>
+    <h3>Uredi lekcijo</h3>
     <input type="hidden" id="el-course-id">
     <input type="hidden" id="el-step-id">
-    <label>Title *</label><input id="el-title" class="inp">
-    <label>Content (HTML)</label><textarea id="el-content" class="inp" rows="5"></textarea>
+    <label>Naslov *</label><input id="el-title" class="inp">
+    <label>Vsebina (HTML)</label><textarea id="el-content" class="inp" rows="5"></textarea>
     <label>Video URL</label><input id="el-video" class="inp">
-    <label>Image URL</label><input id="el-image" class="inp">
-    <label>Custom embed</label><textarea id="el-embed" class="inp" rows="2"></textarea>
+    <label>URL slike</label><input id="el-image" class="inp">
+    <label>Vgrajena koda</label><textarea id="el-embed" class="inp" rows="2"></textarea>
     <div class="btn-row mt">
-      <button id="save-lesson-btn" class="btn">Save</button>
-      <button id="cancel-edit-lesson" class="btn btn-ghost">Cancel</button>
+      <button id="save-lesson-btn" class="btn">Shrani</button>
+      <button id="cancel-edit-lesson" class="btn btn-ghost">Prekliči</button>
     </div>
   </div>
 </div>
@@ -463,9 +515,9 @@ onAuthStateChanged(auth, async user => {
   if (!user) { switchScreen("login"); return; }
   try {
     const allowed = await emailExistsInCollection("allowedUsers", user.email);
-    if (!allowed) { await signOut(auth); showLoginErr("Your email is not approved. Ask your admin."); return; }
+    if (!allowed) { await signOut(auth); showLoginErr("Vaš e-poštni naslov ni odobren. Obrnite se na skrbnika."); return; }
     IS_ADMIN = await emailExistsInCollection("admins", user.email);
-  } catch(e) { await signOut(auth); showLoginErr("Access check failed: "+e.message); return; }
+  } catch(e) { await signOut(auth); showLoginErr("Preverjanje dostopa ni uspelo: "+e.message); return; }
   g("user-label").textContent = user.email;
   if(g("mobile-user-label")) g("mobile-user-label").textContent = user.email;
   g("nav-admin").style.display = IS_ADMIN ? "" : "none";
@@ -481,17 +533,20 @@ function clearAuthMsg()  { g("auth-err").style.display="none"; g("auth-ok").styl
 function showLoginErr(msg){ showAuthErr(msg); }
 
 const ERRORS = {
-  "auth/user-not-found":"No account with that email.",
-  "auth/wrong-password":"Wrong password.",
-  "auth/invalid-credential":"Wrong email or password.",
-  "auth/invalid-email":"Invalid email.",
-  "auth/too-many-requests":"Too many attempts, try later."
+  "auth/user-not-found":"Ni računa s tem e-poštnim naslovom.",
+  "auth/wrong-password":"Napačno geslo.",
+  "auth/invalid-credential":"Napačen e-poštni naslov ali geslo.",
+  "auth/invalid-email":"Neveljaven e-poštni naslov.",
+  "auth/too-many-requests":"Preveč poskusov, poskusite pozneje."
 };
 
 /* ── screen / section switching ── */
 function switchScreen(name){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   g("screen-"+name).classList.add("active");
+  // show mobile nav only when app is visible
+  const mn = g("mobile-nav");
+  if(mn) mn.style.setProperty("display", name==="app" ? "block" : "none", "important");
 }
 
 /* ── APP namespace exposed to HTML ── */
@@ -508,13 +563,13 @@ const APP = window.APP = {
   login: async () => {
     const email = g("login-email").value.trim();
     const pass  = g("login-pass").value;
-    if (!email||!pass){ showAuthErr("Enter email and password."); return; }
+    if (!email||!pass){ showAuthErr("Vnesite e-pošto in geslo."); return; }
     const btn = g("login-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
     try {
       await signInWithEmailAndPassword(auth, email, pass);
       clearAuthMsg();
-    } catch(e){ showAuthErr(ERRORS[e.code]||"Login failed: "+e.message); }
+    } catch(e){ showAuthErr(ERRORS[e.code]||"Prijava ni uspela: "+e.message); }
     btn.innerHTML="Sign In"; btn.disabled=false;
   },
 
@@ -522,23 +577,23 @@ const APP = window.APP = {
     const email = g("signup-email").value.trim().toLowerCase();
     const pass  = g("signup-pass").value;
     const pass2 = g("signup-pass2").value;
-    if (!email||!pass){ showAuthErr("Fill in all fields."); return; }
-    if (pass !== pass2){ showAuthErr("Passwords do not match."); return; }
-    if (pass.length < 6){ showAuthErr("Password must be at least 6 characters."); return; }
+    if (!email||!pass){ showAuthErr("Izpolnite vsa polja."); return; }
+    if (pass !== pass2){ showAuthErr("Gesli se ne ujemata."); return; }
+    if (pass.length < 6){ showAuthErr("Geslo mora imeti vsaj 6 znakov."); return; }
     const btn = g("signup-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
     try {
       const allowed = await emailExistsInCollection("allowedUsers", email);
-      if (!allowed){ showAuthErr("This email is not approved. Ask your admin to add it first."); btn.innerHTML="Create Account"; btn.disabled=false; return; }
+      if (!allowed){ showAuthErr("Ta e-poštni naslov ni odobren. Prosite skrbnika, da vas doda."); btn.innerHTML="Create Account"; btn.disabled=false; return; }
       await createUserWithEmailAndPassword(auth, email, pass);
       clearAuthMsg();
-    } catch(e){ showAuthErr(ERRORS[e.code]||"Sign up failed: "+e.message); }
+    } catch(e){ showAuthErr(ERRORS[e.code]||"Registracija ni uspela: "+e.message); }
     btn.innerHTML="Create Account"; btn.disabled=false;
   },
 
   forgotPassword: async () => {
     const email = g("forgot-email").value.trim().toLowerCase();
-    if (!email){ showAuthErr("Enter your email address."); return; }
+    if (!email){ showAuthErr("Vnesite e-poštni naslov."); return; }
     const btn = g("forgot-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
     try {
@@ -548,9 +603,9 @@ const APP = window.APP = {
         body: JSON.stringify({ email })
       });
       if (!resp.ok) throw new Error("Server error");
-      showAuthOk("Reset email sent! Check your inbox.");
+      showAuthOk("E-pošta za ponastavitev je poslana! Preverite nabiralnik.");
       g("forgot-email").value="";
-    } catch(e){ showAuthErr("Failed to send reset email. Try again later."); }
+    } catch(e){ showAuthErr("Pošiljanje ni uspelo. Poskusite pozneje."); }
     btn.innerHTML="Send Reset Email"; btn.disabled=false;
   },
 
@@ -569,25 +624,39 @@ const APP = window.APP = {
     document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
     g("sec-"+section).classList.add("active");
     // load data
-    if (section==="dashboard") this._loadDashboard();
+    if (section==="dashboard") this._loadDomov();
     if (section==="courses")   this._loadCoursesList();
-    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadAdminCourses(); }
+    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); }
   },
 
-  /* ── Dashboard ── */
-  async _loadDashboard() {
-    htm("dash-grid","<p class='muted'>Loading…</p>");
+  /* ── Domov ── */
+  async _loadDomov() {
+    htm("dash-grid","<p class='muted'>Nalaganje…</p>");
     try {
       const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
-      if (snap.empty){ htm("dash-grid","<p class='muted'>No courses yet.</p>"); return; }
+      if (snap.empty){ htm("dash-grid","<p class='muted'>Še ni tečajev.</p>"); return; }
       htm("dash-grid", snap.docs.map(d=>{
         const c=d.data();
         const thumb = c.thumbnail
           ? `<img src="${esc(c.thumbnail)}" class="card-thumb" alt="">`
           : `<div class="card-thumb-ph">📚</div>`;
         return `<div class="card" onclick="APP.openCourse('${d.id}')">
-          ${thumb}
-          <div class="card-body"><h3>${esc(c.title)}</h3><p>${esc(c.description||"")}</p></div>
+          <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div></div>
+          <div class="card-body">
+            <h3>${esc(c.title)}</h3>
+            <p>${esc(c.description||"")}</p>
+            <div class="card-meta">
+              <span class="card-lessons">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                ${c.steps||0} lekcij
+              </span>
+              <span class="card-open-btn">
+                Začni
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </div>
+            <div class="card-progress-bar"><div class="card-progress-fill" style="width:0%"></div></div>
+          </div>
         </div>`;
       }).join(""));
     } catch(e){ htm("dash-grid",`<p class='muted'>Error: ${esc(e.message)}</p>`); }
@@ -595,16 +664,16 @@ const APP = window.APP = {
 
   /* ── Courses List ── */
   async _loadCoursesList() {
-    htm("courses-list","<p class='muted'>Loading…</p>");
+    htm("courses-list","<p class='muted'>Nalaganje…</p>");
     const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
-    if (snap.empty){ htm("courses-list","<p class='muted'>No courses yet.</p>"); return; }
+    if (snap.empty){ htm("courses-list","<p class='muted'>Še ni tečajev.</p>"); return; }
     htm("courses-list", snap.docs.map(d=>{
       const c=d.data();
       return `<div class="list-row">
         <strong>${esc(c.title)}</strong>
         <div class="btn-row">
           <span class="badge">${c.steps||0} lessons</span>
-          <button class="btn btn-sm" onclick="APP.openCourse('${d.id}')">Open</button>
+          <button class="btn btn-sm" onclick="APP.openCourse('${d.id}')">Odpri</button>
         </div>
       </div>`;
     }).join(""));
@@ -619,24 +688,43 @@ const APP = window.APP = {
     const stSnap = await getDocs(query(collection(db,"courses",courseId,"steps"),orderBy("order")));
     const steps = stSnap.docs.map(d=>({id:d.id,...d.data()}));
     htm("viewer-steps", steps.length
-      ? steps.map((s,i)=>`<div class="step-row" id="sr-${s.id}" onclick="APP.showStep('${courseId}','${s.id}')">
-          <div class="step-num">${i+1}</div><span>${esc(s.title)}</span></div>`).join("")
+      ? steps.map((s,i)=>`<div class="step-row" id="sr-${s.id}" onclick="APP.showStep('${courseId}','${s.id}',${i},${steps.length})">
+          <div class="step-num">${i+1}</div>
+          <span class="step-title-text">${esc(s.title)}</span>
+          <svg class="step-done-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>`).join("")
       : "<p class='muted' style='padding:1rem'>No lessons yet.</p>");
-    htm("viewer-content","<p class='muted'>Select a lesson to begin.</p>");
+    htm("viewer-content",`<div class="step-content-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1rem;text-align:center">
+      <svg width="48" height="48" fill="none" stroke="var(--accent2)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p style="color:var(--muted);font-size:.95rem">Izberite lekcijo in začnite z učenjem</p>
+    </div>`);
+    if(g("viewer-progress")) g("viewer-progress").style.width = "0%";
+    if(g("viewer-step-counter")) g("viewer-step-counter").textContent = "";
     g("course-viewer").classList.add("open");
   },
 
   closeViewer() { g("course-viewer").classList.remove("open"); },
 
-  async showStep(courseId, stepId) {
+  async showStep(courseId, stepId, stepIndex, totalSteps) {
     document.querySelectorAll(".step-row").forEach(r=>r.classList.remove("active"));
     const row = g("sr-"+stepId); if(row) row.classList.add("active");
+    // mark as done
+    if(row) row.classList.add("done");
     // auto-close lesson sidebar on mobile after selecting
     const sb = document.querySelector(".steps-sidebar");
     if (sb && window.innerWidth <= 640) sb.classList.remove("open");
+
+    // update progress bar + counter
+    if(g("viewer-progress") && totalSteps){
+      const pct = Math.round(((stepIndex+1)/totalSteps)*100);
+      g("viewer-progress").style.width = pct+"%";
+      if(g("viewer-step-counter")) g("viewer-step-counter").textContent = `${stepIndex+1} / ${totalSteps}`;
+    }
+
     const snap = await getDoc(doc(db,"courses",courseId,"steps",stepId));
     const s = snap.data();
-    let html = `<h2>${esc(s.title)}</h2>`;
+
+    let body = "";
     if (s.video) {
       let src="";
       if (s.video.includes("youtu.be/")){
@@ -648,52 +736,88 @@ const APP = window.APP = {
         const vid=s.video.split("/").pop().split("?")[0];
         src=`https://player.vimeo.com/video/${vid}`;
       }
-      if(src) html+=`<div class="video-wrap"><iframe src="${src}" allowfullscreen></iframe></div>`;
-      else     html+=`<div class="video-wrap"><video controls src="${esc(s.video)}"></video></div>`;
+      if(src) body+=`<div class="video-wrap"><iframe src="${src}" allowfullscreen></iframe></div>`;
+      else    body+=`<div class="video-wrap"><video controls src="${esc(s.video)}"></video></div>`;
     }
-    if (s.image)   html+=`<img src="${esc(s.image)}" class="step-img" alt="">`;
-    if (s.content) html+=`<div class="step-body">${s.content}</div>`;
-    if (s.embed)   html+=`<div class="step-embed">${s.embed}</div>`;
-    htm("viewer-content", html);
+    if (s.image)   body+=`<img src="${esc(s.image)}" class="step-img" alt="">`;
+    if (s.content) body+=`<div class="step-body">${s.content}</div>`;
+    if (s.embed)   body+=`<div class="step-embed">${s.embed}</div>`;
+
+    // get all step ids for prev/next
+    const allRows = [...document.querySelectorAll(".step-row[id^='sr-']")];
+    const ids = allRows.map(r=>r.id.replace("sr-",""));
+    const idx = ids.indexOf(stepId);
+    const prevId = idx > 0 ? ids[idx-1] : null;
+    const nextId = idx < ids.length-1 ? ids[idx+1] : null;
+
+    const prevBtn = prevId
+      ? `<button class="step-nav-btn" onclick="APP.showStep('${courseId}','${prevId}',${idx-1},${totalSteps||ids.length})">← Prejšnja</button>`
+      : `<button class="step-nav-btn" disabled>← Prejšnja</button>`;
+    const nextBtn = nextId
+      ? `<button class="step-nav-btn primary" onclick="APP.showStep('${courseId}','${nextId}',${idx+1},${totalSteps||ids.length})">Naslednja →</button>`
+      : `<button class="step-nav-btn primary" style="background:#1a4a2e;border-color:#2d7a50;cursor:default">
+           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+           Tečaj zaključen!
+         </button>`;
+
+    htm("viewer-content", `
+      <div class="step-content-inner">
+        <div class="step-lesson-label">Lekcija ${stepIndex !== undefined ? stepIndex+1 : ""}</div>
+        <h2>${esc(s.title)}</h2>
+        ${body}
+      </div>
+      <div class="step-nav">
+        ${prevBtn}
+        <span class="step-complete-badge">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          ${stepIndex !== undefined && totalSteps ? `${stepIndex+1} od ${totalSteps}` : ""}
+        </span>
+        ${nextBtn}
+      </div>
+    `);
+
+    // scroll content to top
+    const ca = document.querySelector(".step-content-area");
+    if(ca) ca.scrollTop = 0;
   },
 
-  /* ── Admin: Users ── */
+  /* ── Skrbnik: Users ── */
   async _loadUsers() {
     const snap = await getDocs(collection(db,"allowedUsers"));
     const rows = snap.docs.map(d=>{
       const email = d.data().email || d.id.replace(/_at_/g,"@").replace(/_/g,".");
       return `<div class="list-row"><span>${esc(email)}</span>
-        <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Remove</button></div>`;
+        <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button></div>`;
     });
     htm("users-list", rows.length ? rows.join("") : "<p class='muted'>No users yet.</p>");
   },
 
   async addUser() {
     const email = g("new-user-email").value.trim().toLowerCase();
-    if (!email){ toast("Enter an email.","err"); return; }
+    if (!email){ toast("Vnesite e-poštni naslov.","err"); return; }
     await setDoc(doc(db,"allowedUsers",ekey(email)),{email,addedAt:new Date().toISOString()});
     g("new-user-email").value="";
-    toast("Added: "+email);
+    toast("Dodano: "+email);
     this._loadUsers();
   },
 
   async removeUser(email) {
-    if (!confirm("Remove "+email+"?")) return;
+    if (!confirm("Odstraniti "+email+"?")) return;
     await deleteDoc(doc(db,"allowedUsers",ekey(email)));
-    toast("Removed: "+email);
+    toast("Odstranjeno: "+email);
     this._loadUsers();
   },
 
-  /* ── Admin: Courses ── */
-  async _loadAdminCourses() {
+  /* ── Skrbnik: Courses ── */
+  async _loadSkrbnikCourses() {
     const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
     const rows = snap.docs.map(d=>{
       const c=d.data();
       return `<div class="list-row">
         <strong>${esc(c.title)}</strong>
         <div class="btn-row">
-          <button class="btn btn-sm" onclick="APP.openLessonsModal('${d.id}','${esc(c.title)}')">Manage Lessons</button>
-          <button class="btn btn-sm btn-danger" onclick="APP.deleteCourse('${d.id}')">Delete</button>
+          <button class="btn btn-sm" onclick="APP.openLekcijeModal('${d.id}','${esc(c.title)}')">Manage Lekcije</button>
+          <button class="btn btn-sm btn-danger" onclick="APP.deleteCourse('${d.id}')">Izbriši</button>
         </div>
       </div>`;
     });
@@ -704,7 +828,7 @@ const APP = window.APP = {
 
   async saveCourse() {
     const title = g("nc-title").value.trim();
-    if (!title){ toast("Title required.","err"); return; }
+    if (!title){ toast("Naslov je obvezen.","err"); return; }
     const snap = await getDocs(collection(db,"courses"));
     await addDoc(collection(db,"courses"),{
       title, description:g("nc-desc").value.trim(),
@@ -712,36 +836,36 @@ const APP = window.APP = {
     });
     ["nc-title","nc-desc","nc-thumb"].forEach(id=>g(id).value="");
     this.closeModal("modal-add-course");
-    toast("Course created!");
-    this._loadAdminCourses();
+    toast("Tečaj ustvarjen!");
+    this._loadSkrbnikCourses();
   },
 
   async deleteCourse(id) {
-    if (!confirm("Delete course and all its lessons?")) return;
+    if (!confirm("Izbrisati tečaj in vse njegove lekcije?")) return;
     const steps = await getDocs(collection(db,"courses",id,"steps"));
     for (const s of steps.docs) await deleteDoc(s.ref);
     await deleteDoc(doc(db,"courses",id));
-    toast("Deleted."); this._loadAdminCourses();
+    toast("Izbrisano."); this._loadSkrbnikCourses();
   },
 
-  /* ── Admin: Lessons ── */
-  async openLessonsModal(courseId, title) {
+  /* ── Skrbnik: Lekcije ── */
+  async openLekcijeModal(courseId, title) {
     g("steps-course-id").value = courseId;
-    g("steps-modal-title").textContent = "Lessons — "+title;
+    g("steps-modal-title").textContent = "Lekcije — "+title;
     ["ns-title","ns-content","ns-video","ns-image","ns-embed"].forEach(id=>g(id).value="");
-    await this._refreshLessonsList(courseId);
+    await this._refreshLekcijeList(courseId);
     this.openModal("modal-steps");
   },
 
-  async _refreshLessonsList(courseId) {
+  async _refreshLekcijeList(courseId) {
     const snap = await getDocs(query(collection(db,"courses",courseId,"steps"),orderBy("order")));
     const rows = snap.docs.map((d,i)=>{
       const s=d.data();
       return `<div class="list-row">
         <span><strong>${i+1}.</strong> ${esc(s.title)}</span>
         <div class="btn-row">
-          <button class="btn btn-sm" onclick="APP.editLesson('${courseId}','${d.id}')">Edit</button>
-          <button class="btn btn-sm btn-danger" onclick="APP.deleteLesson('${courseId}','${d.id}')">Del</button>
+          <button class="btn btn-sm" onclick="APP.editLesson('${courseId}','${d.id}')">Uredi</button>
+          <button class="btn btn-sm btn-danger" onclick="APP.deleteLesson('${courseId}','${d.id}')">Izb.</button>
         </div>
       </div>`;
     });
@@ -751,7 +875,7 @@ const APP = window.APP = {
   async addLesson() {
     const courseId = g("steps-course-id").value;
     const title = g("ns-title").value.trim();
-    if (!title){ toast("Title required.","err"); return; }
+    if (!title){ toast("Naslov je obvezen.","err"); return; }
     const snap = await getDocs(collection(db,"courses",courseId,"steps"));
     await addDoc(collection(db,"courses",courseId,"steps"),{
       title, content:g("ns-content").value.trim(), video:g("ns-video").value.trim(),
@@ -759,13 +883,13 @@ const APP = window.APP = {
     });
     await updateDoc(doc(db,"courses",courseId),{steps:snap.size+1});
     ["ns-title","ns-content","ns-video","ns-image","ns-embed"].forEach(id=>g(id).value="");
-    toast("Lesson added!"); this._refreshLessonsList(courseId);
+    toast("Lekcija dodana!"); this._refreshLekcijeList(courseId);
   },
 
   async deleteLesson(courseId, stepId) {
-    if (!confirm("Delete this lesson?")) return;
+    if (!confirm("Izbrisati to lekcijo?")) return;
     await deleteDoc(doc(db,"courses",courseId,"steps",stepId));
-    toast("Deleted."); this._refreshLessonsList(courseId);
+    toast("Izbrisano."); this._refreshLekcijeList(courseId);
   },
 
   async editLesson(courseId, stepId) {
@@ -780,13 +904,13 @@ const APP = window.APP = {
   async saveLesson() {
     const courseId=g("el-course-id").value, stepId=g("el-step-id").value;
     const title=g("el-title").value.trim();
-    if (!title){ toast("Title required.","err"); return; }
+    if (!title){ toast("Naslov je obvezen.","err"); return; }
     await updateDoc(doc(db,"courses",courseId,"steps",stepId),{
       title, content:g("el-content").value.trim(), video:g("el-video").value.trim(),
       image:g("el-image").value.trim(), embed:g("el-embed").value.trim()
     });
-    toast("Saved!"); this.closeModal("modal-edit-lesson");
-    this._refreshLessonsList(courseId);
+    toast("Shranjeno!"); this.closeModal("modal-edit-lesson");
+    this._refreshLekcijeList(courseId);
   },
 
   /* ── Modals ── */
