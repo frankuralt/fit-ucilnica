@@ -655,6 +655,7 @@ async function emailExistsInCollection(colName, email) {
 /* ── state ── */
 let IS_ADMIN = false;
 let CURRENT_COURSE_ID = "";
+let currentUser = null;
 
 /* ── auth ── */
 onAuthStateChanged(auth, async user => {
