@@ -1221,29 +1221,21 @@ const APP = window.APP = {
 
       // Take only the LAST workout block
       const lastHeaderIdx = headerRowIdxs[headerRowIdxs.length-1];
-      // Find the workout number from the row with number in col A (row before or same)
-      // The number row is just before the Vaja header — col A has the workout number
-      let workoutNum = "";
-      let workoutDate = "";
-      // search up a few rows for the number
-      for (let i = lastHeaderIdx; i >= Math.max(0, lastHeaderIdx-3); i--) {
-        const r = rows[i];
-        if (r && r[0] && String(r[0]).trim().match(/^\d+/)) {
-          workoutNum = r[0].trim();
-          workoutDate = r[2] ? r[2].trim() : "";
-          break;
-        }
-      }
+      // Number in col A, date in col B — same row as "Vaja" header
+      const headerRow = rows[lastHeaderIdx];
+      const workoutNum = (headerRow[0]||"").trim();
+      const workoutDate = (headerRow[1]||"").trim();
 
-      // Collect exercise rows after the header until we hit an empty/quote row
+      // Collect exercise rows after the header until empty/quote row
       const exercises = [];
       for (let i = lastHeaderIdx+1; i < rows.length; i++) {
         const row = rows[i];
         const code = (row[1]||"").trim();
         const name = (row[2]||"").trim();
-        // stop at empty row or quote row (col B empty and col C is a quote or empty)
+        // stop at empty row
         if (!code && !name) break;
-        if (!code && name && name.startsWith('"')) break;
+        // stop at quote row
+        if (!code && name && (name.startsWith('"') || name.charCodeAt(0)===8220)) break;
         if (code && name && name !== "Vaja") {
           exercises.push({
             code,
