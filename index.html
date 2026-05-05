@@ -189,13 +189,93 @@
   .mt { margin-top:1rem; }
   .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.2); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
-  .brand-F { font-size:1em; line-height:1; display:inline-block; vertical-align:baseline; }
+  .brand-F { font-size:1.5em; line-height:1; display:inline-block; vertical-align:baseline; }
 
   /* ── DASHBOARD HERO ── */
   .dash-hero { background:linear-gradient(135deg,#0a1628,#1e3a5f); border-radius:16px; padding:2rem 2.5rem; margin-bottom:2rem; border:1px solid rgba(37,99,235,.25); position:relative; overflow:hidden; }
   .dash-hero::after { content:''; position:absolute; right:-40px; top:-40px; width:200px; height:200px; background:radial-gradient(circle,rgba(37,99,235,.3) 0%,transparent 70%); pointer-events:none; }
   .dash-hero h2 { font-family:'DM Serif Display',serif; font-size:1.7rem; margin-bottom:.35rem; }
   .dash-hero p { color:var(--accent2); font-size:.9rem; opacity:.85; }
+
+  /* ── TRAINING PLAN ── */
+  .training-tabs { display:flex; gap:.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+  .training-tab { padding:.55rem 1.2rem; border-radius:20px; border:1px solid var(--border); background:var(--bg2); color:var(--muted); font-family:inherit; font-size:.85rem; font-weight:500; cursor:pointer; transition:all .2s; }
+  .training-tab:hover { border-color:var(--accent); color:var(--text); }
+  .training-tab.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .training-empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
+  .training-empty svg { margin-bottom:1rem; opacity:.4; display:block; margin-left:auto; margin-right:auto; }
+  .workout-block { background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-bottom:1.5rem; }
+  .workout-header { background:linear-gradient(135deg,#0a1628,#1e3a5f); padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; }
+  .workout-header h3 { font-family:'DM Serif Display',serif; font-size:1.15rem; }
+  .workout-header .workout-num { font-size:.78rem; color:var(--accent2); font-weight:600; }
+  .workout-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  .workout-table thead tr { background:rgba(37,99,235,.12); }
+  .workout-table th { padding:.55rem .75rem; text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; color:var(--accent2); font-weight:600; white-space:nowrap; }
+  .workout-table td { padding:.6rem .75rem; border-bottom:1px solid var(--border); vertical-align:top; }
+  .workout-table tr:last-child td { border-bottom:none; }
+  .workout-table tr:hover td { background:rgba(37,99,235,.05); }
+  .ex-code { font-weight:700; color:var(--accent2); white-space:nowrap; }
+  .ex-name { font-weight:500; color:var(--text); }
+  .ex-note { color:var(--muted); font-size:.78rem; margin-top:.15rem; }
+  .ex-sets { font-weight:600; text-align:center; }
+  .ex-reps { text-align:center; }
+  .ex-tempo { text-align:center; color:var(--muted); font-size:.78rem; }
+  .ex-rest { text-align:center; }
+  .niz-cells { display:flex; gap:.3rem; flex-wrap:wrap; }
+  .niz-cell { background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:.2rem .45rem; font-size:.75rem; font-weight:500; white-space:nowrap; min-width:32px; text-align:center; }
+  .niz-cell:not(:empty) { border-color:rgba(37,99,235,.3); }
+  .no-sheet-msg { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:2rem; text-align:center; }
+  .no-sheet-msg h3 { font-family:"DM Serif Display",serif; margin-bottom:.5rem; }
+  .no-sheet-msg p { color:var(--muted); font-size:.88rem; }
+
+  /* ── FEED ── */
+  .feed-wrap { max-width:680px; }
+  /* new post box */
+  .new-post-box { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:1.25rem; margin-bottom:1.75rem; }
+  .new-post-box textarea { background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:inherit; font-size:.95rem; width:100%; padding:.75rem 1rem; outline:none; resize:none; min-height:80px; transition:border-color .2s; }
+  .new-post-box textarea:focus { border-color:var(--accent); }
+  .new-post-actions { display:flex; align-items:center; gap:.6rem; margin-top:.75rem; flex-wrap:wrap; }
+  .new-post-actions input { flex:1; min-width:140px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--muted); font-family:inherit; font-size:.82rem; padding:.45rem .75rem; outline:none; }
+  .new-post-actions input:focus { border-color:var(--accent); color:var(--text); }
+  .post-type-select { background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:inherit; font-size:.82rem; padding:.45rem .75rem; outline:none; cursor:pointer; }
+  /* post card */
+  .post-card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; margin-bottom:1.1rem; overflow:hidden; animation:fadeUp .25s ease; }
+  .post-header { display:flex; align-items:center; gap:.75rem; padding:1rem 1.25rem .75rem; }
+  .post-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700; color:#fff; flex-shrink:0; }
+  .post-meta { flex:1; min-width:0; }
+  .post-author { font-size:.88rem; font-weight:600; }
+  .post-time { font-size:.75rem; color:var(--muted); }
+  .post-type-badge { padding:.15rem .55rem; border-radius:20px; font-size:.7rem; font-weight:600; }
+  .type-novica { background:rgba(37,99,235,.2); color:var(--accent2); }
+  .type-aktivnost { background:rgba(34,197,94,.15); color:#4ade80; }
+  .type-zabava { background:rgba(234,179,8,.15); color:#facc15; }
+  .post-delete-btn { background:none; border:none; color:var(--muted); cursor:pointer; padding:.3rem; border-radius:6px; transition:color .15s; }
+  .post-delete-btn:hover { color:var(--danger); }
+  .post-body { padding:0 1.25rem .85rem; font-size:.93rem; line-height:1.65; white-space:pre-wrap; word-break:break-word; }
+  .post-image { width:100%; max-height:420px; object-fit:cover; display:block; }
+  .post-image-wrap { margin-bottom:.1rem; }
+  /* reactions */
+  .post-footer { display:flex; align-items:center; gap:.25rem; padding:.6rem 1rem; border-top:1px solid var(--border); }
+  .react-btn { display:flex; align-items:center; gap:.3rem; background:none; border:1px solid transparent; border-radius:20px; color:var(--muted); font-family:inherit; font-size:.82rem; padding:.3rem .75rem; cursor:pointer; transition:all .15s; }
+  .react-btn:hover { background:var(--bg3); border-color:var(--border); color:var(--text); }
+  .react-btn.reacted { background:rgba(37,99,235,.15); border-color:rgba(37,99,235,.3); color:var(--accent2); }
+  .react-count { font-weight:600; }
+  .comment-toggle { margin-left:auto; background:none; border:none; color:var(--muted); font-family:inherit; font-size:.8rem; cursor:pointer; display:flex; align-items:center; gap:.3rem; padding:.3rem .6rem; border-radius:8px; transition:all .15s; }
+  .comment-toggle:hover { background:var(--bg3); color:var(--text); }
+  /* comments */
+  .comments-area { border-top:1px solid var(--border); padding:.75rem 1.25rem 1rem; }
+  .comment-item { display:flex; gap:.6rem; margin-bottom:.75rem; }
+  .comment-avatar { width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:700; color:#fff; flex-shrink:0; margin-top:.1rem; }
+  .comment-bubble { background:var(--bg3); border-radius:0 10px 10px 10px; padding:.5rem .85rem; flex:1; }
+  .comment-author { font-size:.75rem; font-weight:600; color:var(--accent2); margin-bottom:.15rem; }
+  .comment-text { font-size:.85rem; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+  .comment-input-row { display:flex; gap:.5rem; margin-top:.5rem; }
+  .comment-input-row input { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:20px; color:var(--text); font-family:inherit; font-size:.85rem; padding:.45rem 1rem; outline:none; transition:border-color .2s; }
+  .comment-input-row input:focus { border-color:var(--accent); }
+  .comment-send-btn { background:var(--accent); border:none; border-radius:20px; color:#fff; font-family:inherit; font-size:.82rem; font-weight:600; padding:.45rem 1rem; cursor:pointer; white-space:nowrap; }
+  .feed-empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
+  .feed-empty svg { margin-bottom:1rem; opacity:.4; }
+  .pinned-banner { display:flex; align-items:center; gap:.4rem; font-size:.72rem; color:#facc15; padding:.35rem 1.25rem; background:rgba(234,179,8,.08); border-bottom:1px solid rgba(234,179,8,.15); }
 
   /* ══════════════════════════════════════════
      MOBILE OVERRIDES  (≤ 640px)
@@ -268,6 +348,14 @@
     <button class="mobile-nav-btn" id="mnav-admin" style="display:none">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Skrbnik
+    </button>
+    <button class="mobile-nav-btn" id="mnav-feed">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Skupnost
+    </button>
+    <button class="mobile-nav-btn" id="mnav-training">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Trening
     </button>
     <button class="mobile-nav-btn" id="mnav-logout">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -342,6 +430,14 @@
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Moji tečaji
     </button>
+    <button class="nav-item" id="nav-feed">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Skupnost
+    </button>
+    <button class="nav-item" id="nav-training">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Moj trening
+    </button>
     <button class="nav-item" id="nav-admin" style="display:none">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Skrbnik
@@ -366,14 +462,45 @@
       <div id="courses-list"></div>
     </div>
 
+    <div id="sec-training" class="section">
+      <div class="page-header"><h2>Moj trening 💪</h2><p>Tvoj trenutni vadbeni načrt.</p></div>
+      <div id="training-wrap">
+        <div class="training-tabs" id="training-tabs"></div>
+        <div id="training-content"><div class="training-empty">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p>Nalaganje vadbenega načrta…</p>
+        </div></div>
+      </div>
+    </div>
+
+    <div id="sec-feed" class="section">
+      <div class="page-header"><h2>Skupnost 💬</h2><p>Objave, napovedi in pogovori.</p></div>
+      <!-- new post — admin only -->
+      <div class="new-post-box" id="new-post-box" style="display:none">
+        <textarea id="post-text" placeholder="Napiši objavo… (npr. planinski izlet, zanimivost, napoved)"></textarea>
+        <div class="new-post-actions">
+          <select class="post-type-select" id="post-type">
+            <option value="novica">📢 Novica</option>
+            <option value="aktivnost">🏔️ Aktivnost</option>
+            <option value="zabava">😄 Zabava</option>
+          </select>
+          <input id="post-img" type="url" placeholder="URL slike (neobvezno)">
+          <button class="btn" id="post-submit-btn">Objavi</button>
+        </div>
+      </div>
+      <div id="feed-list" class="feed-wrap"></div>
+    </div>
+
     <div id="sec-admin" class="section">
       <div class="page-header"><h2>Skrbniška plošča</h2></div>
       <div class="card-form">
         <h3>Dovoljeni uporabniki</h3>
-        <div class="btn-row" style="margin-bottom:.75rem">
-          <input id="new-user-email" type="email" placeholder="uporabnik@email.com" class="inp" style="margin:0;flex:1;min-width:160px">
-          <button id="add-user-btn" class="btn">Dodaj uporabnika</button>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+          <input id="new-user-email" type="email" placeholder="E-pošta stranke" class="inp" style="margin:0;flex:2;min-width:160px">
+          <input id="new-user-sheet" type="text" placeholder="Google Sheet ID (opcijsko)" class="inp" style="margin:0;flex:3;min-width:200px">
+          <button id="add-user-btn" class="btn" style="white-space:nowrap">Dodaj uporabnika</button>
         </div>
+        <p class="muted" style="margin-bottom:.75rem;font-size:.78rem">Sheet ID najdeš v URL-ju Google Sheets: docs.google.com/spreadsheets/d/<strong>ID_JE_TU</strong>/edit</p>
         <div id="users-list"></div>
       </div>
       <div class="card-form">
@@ -463,7 +590,7 @@ import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/fir
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }
                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
-         addDoc, updateDoc, deleteDoc, query, orderBy, where }
+         addDoc, updateDoc, deleteDoc, query, orderBy, where, serverTimestamp }
                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ╔════════════════════════════════════════╗
@@ -481,6 +608,12 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
+
+// ╔══════════════════════════════════════════════╗
+// ║  YOUR CONFIGURATION — fill these in         ║
+// ╚══════════════════════════════════════════════╝
+const RESET_API_URL  = "https://YOUR_VERCEL_APP.vercel.app/api/send-reset";
+const SHEETS_API_KEY = "AIzaSyDTuMXsRd4Rv_oi3eNgRb9MYG9RwokiS9M";
 
 /* ── tiny helpers ── */
 const g   = id => document.getElementById(id);
@@ -525,6 +658,7 @@ let CURRENT_COURSE_ID = "";
 
 /* ── auth ── */
 onAuthStateChanged(auth, async user => {
+  currentUser = user;
   if (!user) { switchScreen("login"); return; }
   try {
     const allowed = await emailExistsInCollection("allowedUsers", user.email);
@@ -640,6 +774,8 @@ const APP = window.APP = {
     if (section==="dashboard") this._loadDomov();
     if (section==="courses")   this._loadCoursesList();
     if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); }
+    if (section==="feed") this._loadFeed();
+    if (section==="training") this._loadTraining();
   },
 
   /* ── Domov ── */
@@ -798,18 +934,43 @@ const APP = window.APP = {
   async _loadUsers() {
     const snap = await getDocs(collection(db,"allowedUsers"));
     const rows = snap.docs.map(d=>{
-      const email = d.data().email || d.id.replace(/_at_/g,"@").replace(/_/g,".");
-      return `<div class="list-row"><span>${esc(email)}</span>
-        <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button></div>`;
+      const data = d.data();
+      const email = data.email || d.id.replace(/_at_/g,"@").replace(/_/g,".");
+      const sheetId = data.sheetId || "";
+      const sheetBadge = sheetId
+        ? `<span class="badge" title="${esc(sheetId)}" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">📊 Sheet</span>`
+        : `<span style="font-size:.75rem;color:var(--muted)">Brez sheet-a</span>`;
+      return `<div class="list-row" style="flex-wrap:wrap;gap:.4rem">
+        <div style="flex:1;min-width:160px">
+          <div style="font-weight:500">${esc(email)}</div>
+          <div style="display:flex;align-items:center;gap:.4rem;margin-top:.2rem">${sheetBadge}</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-sm btn-ghost" onclick="APP.editUserSheet('${esc(email)}','${esc(sheetId)}')">✏️ Sheet ID</button>
+          <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button>
+        </div>
+      </div>`;
     });
-    htm("users-list", rows.length ? rows.join("") : "<p class='muted'>No users yet.</p>");
+    htm("users-list", rows.length ? rows.join("") : "<p class='muted'>Še ni uporabnikov.</p>");
+  },
+
+  async editUserSheet(email, currentSheetId) {
+    const newId = prompt("Vnesi Google Sheet ID za "+email+":", currentSheetId);
+    if (newId === null) return; // cancelled
+    await updateDoc(doc(db,"allowedUsers",ekey(email)),{sheetId: newId.trim()});
+    toast("Sheet ID posodobljen.");
+    this._loadUsers();
   },
 
   async addUser() {
     const email = g("new-user-email").value.trim().toLowerCase();
+    const sheetId = (g("new-user-sheet")?.value||"").trim();
     if (!email){ toast("Vnesite e-poštni naslov.","err"); return; }
-    await setDoc(doc(db,"allowedUsers",ekey(email)),{email,addedAt:new Date().toISOString()});
+    const userData = {email, addedAt:new Date().toISOString()};
+    if (sheetId) userData.sheetId = sheetId;
+    await setDoc(doc(db,"allowedUsers",ekey(email)), userData);
     g("new-user-email").value="";
+    if(g("new-user-sheet")) g("new-user-sheet").value="";
     toast("Dodano: "+email);
     this._loadUsers();
   },
@@ -988,6 +1149,350 @@ const APP = window.APP = {
     this._refreshLekcijeList(courseId);
   },
 
+  /* ── TRAINING PLAN ── */
+  async _loadTraining() {
+    const wrap = g("training-content");
+    const tabsEl = g("training-tabs");
+    htm("training-content", "<div class='training-empty'><svg width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' viewBox='0 0 24 24'><path d='M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z' stroke-linecap='round' stroke-linejoin='round'/></svg><p>Nalaganje…</p></div>");
+
+    // get sheet ID for this user
+    const userSnap = await getDocs(collection(db,"allowedUsers"));
+    let sheetId = null;
+    for (const d of userSnap.docs) {
+      const data = d.data();
+      if ((data.email||"").toLowerCase().trim() === currentUser.email.toLowerCase().trim()) {
+        sheetId = data.sheetId || null;
+        break;
+      }
+    }
+
+    if (!sheetId) {
+      htm("training-content", `<div class='no-sheet-msg'>
+        <h3>Vadbeni načrt ni nastavljen</h3>
+        <p>Tvoj trener še ni dodal tvojega Google Sheet-a. Javi se mu!</p>
+      </div>`);
+      htm("training-tabs","");
+      return;
+    }
+
+    // tabs for the 4 sheet names
+    const TABS = ["Ogrevanje","Moč 1","Moč 2","Moč 3"];
+    tabsEl.innerHTML = TABS.map((t,i)=>
+      `<button class="training-tab${i===0?" active":""}" data-tab="${t}" onclick="APP._showTrainingTab('${sheetId}','${t}',this)">${t}</button>`
+    ).join("");
+
+    // load first tab
+    await this._showTrainingTab(sheetId, TABS[0], tabsEl.querySelector(".training-tab"));
+  },
+
+  async _showTrainingTab(sheetId, tabName, btnEl) {
+    // update active tab button
+    document.querySelectorAll(".training-tab").forEach(b=>b.classList.remove("active"));
+    if(btnEl) btnEl.classList.add("active");
+
+    htm("training-content","<div class='training-empty'><p>Nalaganje ${tabName}…</p></div>");
+
+    try {
+      // Fetch full column range — A through Q, all rows
+      const range = encodeURIComponent(`'${tabName}'!A:Q`);
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
+      const data = await resp.json();
+      const rows = data.values || [];
+
+      if (!rows.length) {
+        htm("training-content","<div class='training-empty'><p>V tem listu ni podatkov.</p></div>");
+        return;
+      }
+
+      // Find all workout header rows (where col C === "Vaja")
+      // Col index: A=0,B=1,C=2,D=3,E=4,F=5,G=6,H=7,I=8..P=15,Q=16
+      const headerRowIdxs = [];
+      rows.forEach((row,i) => {
+        if ((row[2]||"").trim() === "Vaja") headerRowIdxs.push(i);
+      });
+
+      if (!headerRowIdxs.length) {
+        htm("training-content","<div class='training-empty'><p>V tem listu še ni vadb.</p></div>");
+        return;
+      }
+
+      // Take only the LAST workout block
+      const lastHeaderIdx = headerRowIdxs[headerRowIdxs.length-1];
+      // Find the workout number from the row with number in col A (row before or same)
+      // The number row is just before the Vaja header — col A has the workout number
+      let workoutNum = "";
+      let workoutDate = "";
+      // search up a few rows for the number
+      for (let i = lastHeaderIdx; i >= Math.max(0, lastHeaderIdx-3); i--) {
+        const r = rows[i];
+        if (r && r[0] && String(r[0]).trim().match(/^\d+/)) {
+          workoutNum = r[0].trim();
+          workoutDate = r[2] ? r[2].trim() : "";
+          break;
+        }
+      }
+
+      // Collect exercise rows after the header until we hit an empty/quote row
+      const exercises = [];
+      for (let i = lastHeaderIdx+1; i < rows.length; i++) {
+        const row = rows[i];
+        const code = (row[1]||"").trim();
+        const name = (row[2]||"").trim();
+        // stop at empty row or quote row (col B empty and col C is a quote or empty)
+        if (!code && !name) break;
+        if (!code && name && name.startsWith('"')) break;
+        if (code && name && name !== "Vaja") {
+          exercises.push({
+            code,
+            name,
+            note:  (row[3]||"").trim(),
+            sets:  (row[4]||"").trim(),
+            reps:  (row[5]||"").trim(),
+            tempo: (row[6]||"").trim(),
+            rest:  (row[7]||"").trim(),
+            nizi:  [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]].map(v=>(v||"").trim()).filter(v=>v)
+          });
+        }
+      }
+
+      if (!exercises.length) {
+        htm("training-content","<div class='training-empty'><p>V tem treningu ni vaj.</p></div>");
+        return;
+      }
+
+      // Build workout table HTML
+      const nizHeaders = exercises.reduce((max,ex)=>Math.max(max,ex.nizi.length),0);
+      const nizCols = Math.min(nizHeaders, 8);
+
+      const tableRows = exercises.map(ex => {
+        const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>
+          `<span class="niz-cell">${ex.nizi[i]||""}</span>`
+        ).join("");
+        return `<tr>
+          <td><span class="ex-code">${esc(ex.code)}</span></td>
+          <td><div class="ex-name">${esc(ex.name)}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
+          <td class="ex-sets">${esc(ex.sets)}</td>
+          <td class="ex-reps">${esc(ex.reps)}</td>
+          <td class="ex-tempo">${esc(ex.tempo)}</td>
+          <td class="ex-rest">${esc(ex.rest)}</td>
+          <td><div class="niz-cells">${nizCells}</div></td>
+        </tr>`;
+      }).join("");
+
+      const nizHeader = nizCols > 0
+        ? `<th colspan="${nizCols}">Nizi (${nizCols})</th>`
+        : "";
+
+      htm("training-content",`
+        <div class="workout-block">
+          <div class="workout-header">
+            <h3>${tabName}</h3>
+            <span class="workout-num">Trening #${esc(workoutNum)}${workoutDate?" · "+esc(workoutDate):""}</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="workout-table">
+              <thead><tr>
+                <th></th>
+                <th>Vaja</th>
+                <th>Nizi</th>
+                <th>Ponov.</th>
+                <th>Tempo</th>
+                <th>Odmor</th>
+                ${nizHeader}
+              </tr></thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </div>
+        </div>
+      `);
+
+    } catch(e) {
+      htm("training-content",`<div class='no-sheet-msg'>
+        <h3>Napaka pri nalaganju</h3>
+        <p>${esc(e.message)}</p>
+        <p style="margin-top:.5rem;font-size:.8rem">Preveri, da je tvoj Google Sheet nastavljen na "Vsi z linkom lahko vidijo".</p>
+      </div>`);
+    }
+  },
+
+  /* ── FEED ── */
+  async _loadFeed() {
+    if (IS_ADMIN && g("new-post-box")) g("new-post-box").style.display = "";
+    htm("feed-list","");
+    const snap = await getDocs(query(collection(db,"feed"), orderBy("pinned","desc"), orderBy("createdAt","desc")));
+    if (snap.empty) {
+      htm("feed-list",`<div class="feed-empty">
+        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <p>Še ni objav. Admin bo kmalu kaj objavil! 🏔️</p>
+      </div>`);
+      return;
+    }
+    const container = document.createElement("div");
+    container.className = "feed-wrap";
+    for (const d of snap.docs) {
+      const p = {id:d.id,...d.data()};
+      container.appendChild(this._buildPostCard(p));
+    }
+    g("feed-list").appendChild(container);
+  },
+
+  _buildPostCard(p) {
+    const el = document.createElement("div");
+    el.className = "post-card";
+    el.id = "post-"+p.id;
+    const initials = (p.authorEmail||"?").slice(0,2).toUpperCase();
+    const typeClass = "type-"+(p.type||"novica");
+    const typeLabel = {novica:"📢 Novica", aktivnost:"🏔️ Aktivnost", zabava:"😄 Zabava"}[p.type||"novica"] || "Novica";
+    const timeStr = p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleDateString("sl-SI",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "";
+    const deleteBtn = IS_ADMIN ? `<button class="post-delete-btn" title="Izbriši" onclick="APP.deletePost('${p.id}')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>` : "";
+    const pinBtn = IS_ADMIN ? `<button class="post-delete-btn" title="${p.pinned?'Odpni':'Pripni'}" onclick="APP.togglePin('${p.id}',${!!p.pinned})">
+      ${p.pinned ? "📌" : "📍"}
+    </button>` : "";
+    const pinnedBanner = p.pinned ? `<div class="pinned-banner"><span>📌</span> Pripnjeno</div>` : "";
+    const imgHtml = p.imageUrl ? `<div class="post-image-wrap"><img src="${esc(p.imageUrl)}" class="post-image" alt="" onerror="this.style.display='none'"></div>` : "";
+    const likes = p.likes || 0;
+    const userLiked = (p.likedBy||[]).includes(currentUser?.email||"");
+
+    el.innerHTML = `
+      ${pinnedBanner}
+      <div class="post-header">
+        <div class="post-avatar">${initials}</div>
+        <div class="post-meta">
+          <div class="post-author">${esc(p.authorEmail||"")}</div>
+          <div class="post-time">${timeStr}</div>
+        </div>
+        <span class="post-type-badge ${typeClass}">${typeLabel}</span>
+        ${pinBtn}${deleteBtn}
+      </div>
+      ${imgHtml}
+      <div class="post-body">${esc(p.text||"")}</div>
+      <div class="post-footer">
+        <button class="react-btn ${userLiked?"reacted":""}" id="like-btn-${p.id}" onclick="APP.toggleLike('${p.id}')">
+          👍 <span class="react-count" id="like-count-${p.id}">${likes}</span>
+        </button>
+        <button class="comment-toggle" onclick="APP.toggleComments('${p.id}')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Komentarji <span id="ccount-${p.id}">${p.commentCount||0}</span>
+        </button>
+      </div>
+      <div class="comments-area" id="comments-${p.id}" style="display:none">
+        <div id="comments-list-${p.id}"><p class="muted" style="font-size:.82rem">Nalaganje…</p></div>
+        <div class="comment-input-row">
+          <input type="text" id="comment-inp-${p.id}" placeholder="Napiši komentar…" maxlength="400">
+          <button class="comment-send-btn" onclick="APP.sendComment('${p.id}')">Pošlji</button>
+        </div>
+      </div>
+    `;
+    // enter to send comment
+    setTimeout(()=>{
+      const inp = document.getElementById("comment-inp-"+p.id);
+      if(inp) inp.addEventListener("keydown", e=>{ if(e.key==="Enter") APP.sendComment(p.id); });
+    },0);
+    return el;
+  },
+
+  async submitPost() {
+    const text = g("post-text").value.trim();
+    if (!text) { toast("Napiši besedilo objave.","err"); return; }
+    const btn = g("post-submit-btn");
+    btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+    try {
+      await addDoc(collection(db,"feed"),{
+        text,
+        type: g("post-type").value,
+        imageUrl: g("post-img").value.trim(),
+        authorEmail: currentUser.email,
+        createdAt: serverTimestamp(),
+        likes: 0, likedBy: [], commentCount: 0, pinned: false
+      });
+      g("post-text").value=""; g("post-img").value="";
+      toast("Objavljeno! 🎉");
+      this._loadFeed();
+    } catch(e){ toast("Napaka: "+e.message,"err"); }
+    btn.disabled=false; btn.innerHTML="Objavi";
+  },
+
+  async deletePost(postId) {
+    if (!confirm("Izbrisati objavo?")) return;
+    // delete comments subcollection
+    const cs = await getDocs(collection(db,"feed",postId,"comments"));
+    for (const c of cs.docs) await deleteDoc(c.ref);
+    await deleteDoc(doc(db,"feed",postId));
+    toast("Objava izbrisana.");
+    this._loadFeed();
+  },
+
+  async togglePin(postId, currentlyPinned) {
+    await updateDoc(doc(db,"feed",postId),{pinned:!currentlyPinned});
+    this._loadFeed();
+  },
+
+  async toggleLike(postId) {
+    const email = currentUser.email;
+    const ref = doc(db,"feed",postId);
+    const snap = await getDoc(ref);
+    const data = snap.data();
+    const liked = (data.likedBy||[]).includes(email);
+    const newLikedBy = liked ? data.likedBy.filter(e=>e!==email) : [...(data.likedBy||[]), email];
+    await updateDoc(ref,{ likes: newLikedBy.length, likedBy: newLikedBy });
+    // update UI instantly
+    const btn = g("like-btn-"+postId);
+    const cnt = g("like-count-"+postId);
+    if(btn) btn.classList.toggle("reacted", !liked);
+    if(cnt) cnt.textContent = newLikedBy.length;
+  },
+
+  async toggleComments(postId) {
+    const area = g("comments-"+postId);
+    if (!area) return;
+    const open = area.style.display !== "none";
+    area.style.display = open ? "none" : "";
+    if (!open) await this._loadComments(postId);
+  },
+
+  async _loadComments(postId) {
+    const list = g("comments-list-"+postId);
+    if (!list) return;
+    const snap = await getDocs(query(collection(db,"feed",postId,"comments"), orderBy("createdAt")));
+    if (snap.empty) { list.innerHTML="<p class='muted' style='font-size:.82rem;margin-bottom:.5rem'>Še ni komentarjev. Bodi prvi!</p>"; return; }
+    list.innerHTML = snap.docs.map(d=>{
+      const c=d.data();
+      const initials=(c.authorEmail||"?").slice(0,2).toUpperCase();
+      return `<div class="comment-item">
+        <div class="comment-avatar">${initials}</div>
+        <div class="comment-bubble">
+          <div class="comment-author">${esc(c.authorEmail||"")}</div>
+          <div class="comment-text">${esc(c.text||"")}</div>
+        </div>
+      </div>`;
+    }).join("");
+  },
+
+  async sendComment(postId) {
+    const inp = g("comment-inp-"+postId);
+    if (!inp) return;
+    const text = inp.value.trim();
+    if (!text) return;
+    inp.value=""; inp.disabled=true;
+    try {
+      await addDoc(collection(db,"feed",postId,"comments"),{
+        text, authorEmail: currentUser.email, createdAt: serverTimestamp()
+      });
+      // increment comment count
+      const ref = doc(db,"feed",postId);
+      const snap = await getDoc(ref);
+      await updateDoc(ref,{commentCount:(snap.data().commentCount||0)+1});
+      const cnt = g("ccount-"+postId);
+      if(cnt) cnt.textContent = (snap.data().commentCount||0)+1;
+      await this._loadComments(postId);
+    } catch(e){ toast("Napaka pri komentarju.","err"); }
+    inp.disabled=false; inp.focus();
+  },
+
   /* ── Drag & Drop ── */
   _initDragList(listId, onReorder) {
     const list = g(listId);
@@ -1037,6 +1542,11 @@ document.querySelectorAll(".modal-bg").forEach(m=>{
 function on(id, fn){ const el=document.getElementById(id); if(el) el.addEventListener("click", fn); }
 
 on("login-btn",   ()=> APP.login());
+on("post-submit-btn", ()=> APP.submitPost());
+on("nav-training",  ()=> APP.nav("training"));
+on("mnav-training", ()=> APP.nav("training"));
+on("nav-feed",    ()=> APP.nav("feed"));
+on("mnav-feed",   ()=> APP.nav("feed"));
 
 // mobile bottom nav
 on("mnav-dashboard", ()=> APP.nav("dashboard"));
