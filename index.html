@@ -225,6 +225,12 @@
   .niz-cell { background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:.2rem .45rem; font-size:.75rem; font-weight:500; white-space:nowrap; min-width:32px; text-align:center; }
   .niz-cell:not(:empty) { border-color:rgba(37,99,235,.3); }
   .no-sheet-msg { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:2rem; text-align:center; }
+  .workout-volume { display:flex; align-items:center; gap:.5rem; padding:.85rem 1.25rem; background:rgba(37,99,235,.08); border-top:1px solid rgba(37,99,235,.2); font-size:.88rem; color:var(--accent2); }
+  .workout-volume strong { color:var(--text); }
+  .workout-quote { padding:1rem 1.5rem; font-style:italic; color:var(--muted); font-size:.85rem; border-top:1px solid var(--border); text-align:center; line-height:1.6; }
+  .workout-count-banner { background:linear-gradient(135deg,#0a1628,#1e3a5f); border-radius:12px; padding:1rem 1.25rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:.75rem; }
+  .workout-count-banner .count-num { font-family:"DM Serif Display",serif; font-size:2rem; color:var(--accent2); font-weight:700; line-height:1; }
+  .workout-count-banner .count-label { font-size:.82rem; color:var(--muted); margin-top:.1rem; }
   .no-sheet-msg h3 { font-family:"DM Serif Display",serif; margin-bottom:.5rem; }
   .no-sheet-msg p { color:var(--muted); font-size:.88rem; }
 
@@ -1206,6 +1212,36 @@ const APP = window.APP = {
       `<button class="training-tab${i===0?" active":""}" data-tab="${t}" onclick="APP._showTrainingTab('${sheetId}','${t}',this)">${t}</button>`
     ).join("");
 
+    // Count total workouts: sum all cells in col A of Moč 1, 2, 3 that have a number
+    try {
+      let totalWorkouts = 0;
+      for (const tab of ["Moč 1","Moč 2","Moč 3"]) {
+        const r = encodeURIComponent(`'${tab}'!A:A`);
+        const u = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${r}?key=${SHEETS_API_KEY}`;
+        const res = await fetch(u);
+        if (!res.ok) continue;
+        const d = await res.json();
+        (d.values||[]).forEach(row => {
+          const val = (row[0]||"").trim();
+          if (val && !isNaN(parseFloat(val.replace(",",".")))) totalWorkouts++;
+        });
+      }
+      if (totalWorkouts > 0) {
+        const banner = document.createElement("div");
+        banner.className = "workout-count-banner";
+        banner.innerHTML = `
+          <div>
+            <div class="count-num">${totalWorkouts}</div>
+          </div>
+          <div>
+            <div style="font-weight:600;color:var(--text)">Skupaj treningov 💪</div>
+            <div class="count-label">Odlično — vsak trening šteje!</div>
+          </div>`;
+        const trainingWrap = g("training-wrap");
+        if (trainingWrap) trainingWrap.insertBefore(banner, g("training-tabs"));
+      }
+    } catch(e) { /* silently ignore count errors */ }
+
     // load first tab
     await this._showTrainingTab(sheetId, TABS[0], tabsEl.querySelector(".training-tab"));
   },
@@ -1251,15 +1287,31 @@ const APP = window.APP = {
       const workoutDate = (headerRow[1]||"").trim();
 
       // Collect exercise rows after the header until empty/quote row
+      // Also grab volume (col Q) and quote (col C) from the last row of the block
       const exercises = [];
+      let volumeKg = "";
+      let motivQuote = "";
       for (let i = lastHeaderIdx+1; i < rows.length; i++) {
         const row = rows[i];
         const code = (row[1]||"").trim();
         const name = (row[2]||"").trim();
+        const colQ = (row[16]||"").trim();
+        const colC = (row[2]||"").trim();
+        // detect quote row (col C starts with " or special quote, col B empty)
+        if (!code && name && (name.startsWith('"') || name.charCodeAt(0)===8220 || name.startsWith('“'))) {
+          motivQuote = name;
+          // volume is in col Q of this same row (11 rows after header = quote row)
+          if (colQ) volumeKg = colQ;
+          break;
+        }
         // stop at empty row
-        if (!code && !name) break;
-        // stop at quote row
-        if (!code && name && (name.startsWith('"') || name.charCodeAt(0)===8220)) break;
+        if (!code && !name) {
+          // check if next non-empty row has volume in Q
+          for (let j = i; j < Math.min(i+3, rows.length); j++) {
+            if ((rows[j]||[])[16]) { volumeKg = (rows[j][16]||"").trim(); break; }
+          }
+          break;
+        }
         if (code && name && name !== "Vaja") {
           exercises.push({
             code,
@@ -1271,6 +1323,8 @@ const APP = window.APP = {
             rest:  (row[7]||"").trim(),
             nizi:  [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]].map(v=>(v||"").trim()).filter(v=>v)
           });
+          // also check col Q on exercise rows
+          if (colQ && !volumeKg) volumeKg = colQ;
         }
       }
 
@@ -1286,7 +1340,7 @@ const APP = window.APP = {
       // Desktop table rows
       const tableRows = exercises.map(ex => {
         const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>
-          `<span class="niz-cell">${ex.nizi[i]||""}</span>`
+          ex.nizi[i] ? `<span class="niz-cell"><span style="font-size:.65rem;color:var(--muted);display:block">Niz ${i+1}</span>${ex.nizi[i]}</span>` : `<span class="niz-cell" style="opacity:.3">—</span>`
         ).join("");
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
@@ -1301,10 +1355,10 @@ const APP = window.APP = {
 
       // Mobile card rows
       const cardRows = exercises.map(ex => {
-        const nizBadges = ex.nizi.map(n=>`<span class="niz-cell">${n}</span>`).join("");
+        const nizBadges = ex.nizi.map((n,i)=>n?`<span class="niz-cell"><span style="font-size:.6rem;color:var(--muted);display:block">Niz ${i+1}</span>${n}</span>`:"").filter(Boolean).join("");
         const stats = [
           ex.sets   ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val">${esc(ex.sets)}</span></div>` : "",
-          ex.reps   ? `<div class="ex-stat"><span class="ex-stat-label">Ponov.</span><span class="ex-stat-val">${esc(ex.reps)}</span></div>` : "",
+          ex.reps   ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val">${esc(ex.reps)}</span></div>` : "",
           ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${esc(ex.tempo)}</span></div>` : "",
           ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${esc(ex.rest)}</span></div>` : "",
         ].filter(Boolean).join("");
@@ -1328,6 +1382,15 @@ const APP = window.APP = {
         <span class="workout-num">Trening #${esc(workoutNum)}${workoutDate?" · "+esc(workoutDate):""}</span>
       </div>`;
 
+      const volumeBar = volumeKg ? `
+        <div class="workout-volume">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6l9-3 9 3M3 12l9-3 9 3M3 18l9-3 9 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Skupni volumen: <strong>${parseFloat(String(volumeKg).replace(",",".")).toLocaleString("sl-SI")} kg</strong>
+        </div>` : "";
+
+      const quoteBar = motivQuote ? `
+        <div class="workout-quote">${esc(motivQuote)}</div>` : "";
+
       htm("training-content",`
         <div class="workout-block">
           ${header}
@@ -1337,15 +1400,17 @@ const APP = window.APP = {
                 <th></th>
                 <th>Vaja</th>
                 <th>Nizi</th>
-                <th>Ponov.</th>
+                <th>Ponovitve</th>
                 <th>Tempo</th>
                 <th>Odmor</th>
-                ${nizHeader}
+                <th>Breme po nizih</th>
               </tr></thead>
               <tbody>${tableRows}</tbody>
             </table>
           </div>
           <div class="ex-cards">${cardRows}</div>
+          ${volumeBar}
+          ${quoteBar}
         </div>
       `);
 
