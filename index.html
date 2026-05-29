@@ -617,7 +617,7 @@
 
 <script type="module">
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged }
                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
          addDoc, updateDoc, deleteDoc, query, orderBy, where, serverTimestamp }
@@ -775,16 +775,14 @@ const APP = window.APP = {
     const btn = g("forgot-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
     try {
-      const resp = await fetch(RESET_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-      if (!resp.ok) throw new Error("Server error");
-      showAuthOk("E-pošta za ponastavitev je poslana! Preverite nabiralnik.");
+      await sendPasswordResetEmail(auth, email);
+      showAuthOk("E-pošta za ponastavitev je poslana! Preverite nabiralnik (in neželeno pošto).");
       g("forgot-email").value="";
-    } catch(e){ showAuthErr("Pošiljanje ni uspelo. Poskusite pozneje."); }
-    btn.innerHTML="Send Reset Email"; btn.disabled=false;
+    } catch(e){
+      const msg = e.code==="auth/user-not-found" ? "Ni računa s tem e-poštnim naslovom." : "Pošiljanje ni uspelo: "+e.message;
+      showAuthErr(msg);
+    }
+    btn.innerHTML="Pošlji e-pošto za ponastavitev"; btn.disabled=false;
   },
 
   logout: ()=>signOut(auth),
@@ -1182,6 +1180,8 @@ const APP = window.APP = {
 
   /* ── TRAINING PLAN ── */
   async _loadTraining() {
+    // always remove any existing banner first
+    document.querySelectorAll(".workout-count-banner").forEach(b => b.remove());
     const wrap = g("training-content");
     const tabsEl = g("training-tabs");
     htm("training-content", "<div class='training-empty'><svg width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' viewBox='0 0 24 24'><path d='M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z' stroke-linecap='round' stroke-linejoin='round'/></svg><p>Nalaganje…</p></div>");
