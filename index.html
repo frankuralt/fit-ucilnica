@@ -1227,6 +1227,9 @@ const APP = window.APP = {
         });
       }
       if (totalWorkouts > 0) {
+        // remove existing banner first to prevent duplicates
+        const existing = document.querySelector(".workout-count-banner");
+        if (existing) existing.remove();
         const banner = document.createElement("div");
         banner.className = "workout-count-banner";
         banner.innerHTML = `
@@ -1247,11 +1250,15 @@ const APP = window.APP = {
   },
 
   async _showTrainingTab(sheetId, tabName, btnEl) {
-    // update active tab button
     document.querySelectorAll(".training-tab").forEach(b=>b.classList.remove("active"));
     if(btnEl) btnEl.classList.add("active");
+    htm("training-content",`<div class='training-empty'><p>Nalaganje ${tabName}…</p></div>`);
 
-    htm("training-content","<div class='training-empty'><p>Nalaganje ${tabName}…</p></div>");
+    // Ogrevanje has completely different structure — use separate parser
+    if (tabName === "Ogrevanje") {
+      await this._showOgrevanje(sheetId);
+      return;
+    }
 
     try {
       // Fetch full column range — A through Q, all rows
@@ -1419,6 +1426,176 @@ const APP = window.APP = {
         <h3>Napaka pri nalaganju</h3>
         <p>${esc(e.message)}</p>
         <p style="margin-top:.5rem;font-size:.8rem">Preveri, da je tvoj Google Sheet nastavljen na "Vsi z linkom lahko vidijo".</p>
+      </div>`);
+    }
+  },
+
+  /* ── OGREVANJE PARSER ── */
+  async _showOgrevanje(sheetId) {
+    try {
+      const range = encodeURIComponent("'Ogrevanje'!A:O");
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
+      const data = await resp.json();
+      const rows = data.values || [];
+
+      if (!rows.length) {
+        htm("training-content","<div class='training-empty'><p>V Ogrevanje listu ni podatkov.</p></div>");
+        return;
+      }
+
+      // Get name from row 7 (index 6), col B (index 1)
+      const clientName = (rows[6]||[])[1] || "";
+      // Get date from row 6 (index 5), col B (index 1)
+      const sessionDate = (rows[5]||[])[1] || "";
+
+      // Find "Osnovno" section — row where col A = "Osnovno" (index ~9)
+      let osnovnoIdx = -1, specialnoIdx = -1;
+      rows.forEach((row, i) => {
+        const a = (row[0]||"").trim();
+        if (a === "Osnovno") osnovnoIdx = i;
+        if (a === "Specialno") specialnoIdx = i;
+      });
+
+      // Parse Osnovno exercises (rows between osnovnoIdx+1 and specialnoIdx)
+      // Cols: A=code(1,2), B=name, skipping to: E=Čas(4), F=Naklo(5), G=Hitrost(6), then Opombe is further right
+      const osnovnoExercises = [];
+      if (osnovnoIdx >= 0) {
+        const endIdx = specialnoIdx >= 0 ? specialnoIdx : osnovnoIdx + 10;
+        for (let i = osnovnoIdx + 1; i < endIdx; i++) {
+          const row = rows[i] || [];
+          const code = (row[0]||"").trim();
+          const name = (row[1]||"").trim();
+          if (!code && !name) continue;
+          if (code && name) {
+            // Find Čas col — search for non-empty value in cols C-H
+            // Structure: A=code, B=name, then C-D merged/empty, E=Čas, F=Naklo, G=Hitrost, then big gap, last col=Opombe
+            osnovnoExercises.push({
+              code,
+              name,
+              cas:    (row[4]||"").trim(),
+              naklo:  (row[5]||"").trim(),
+              hitrost:(row[6]||"").trim(),
+              opombe: (row[row.length-1]||"").trim()
+            });
+          }
+        }
+      }
+
+      // Parse Specialno exercises (rows after specialnoIdx+1)
+      // Cols: A=code, B=name, C-D=merged, then S(col after name), P, Čas, Razdalj, Opomba
+      const specialnoExercises = [];
+      if (specialnoIdx >= 0) {
+        for (let i = specialnoIdx + 1; i < rows.length; i++) {
+          const row = rows[i] || [];
+          const code = (row[0]||"").trim();
+          const name = (row[1]||"").trim();
+          if (!code && !name) continue;
+          if (code) {
+            specialnoExercises.push({
+              code,
+              name,
+              s:      (row[4]||"").trim(),
+              p:      (row[5]||"").trim(),
+              cas:    (row[6]||"").trim(),
+              razdalj:(row[7]||"").trim(),
+              opomba: (row[row.length-1]||"").trim()
+            });
+          }
+        }
+      }
+
+      // Build HTML
+      const nameHtml = clientName
+        ? `<div style="font-size:.82rem;color:var(--accent2);margin-bottom:.25rem">👤 ${esc(clientName)}${sessionDate?" · "+esc(sessionDate):""}</div>` : "";
+
+      const osnovnoRows = osnovnoExercises.map(ex => `
+        <tr>
+          <td><span class="ex-code">${esc(ex.code)}</span></td>
+          <td><div class="ex-name">${esc(ex.name)}</div></td>
+          <td class="ex-sets">${esc(ex.cas)}</td>
+          <td class="ex-reps">${esc(ex.naklo)}</td>
+          <td class="ex-tempo">${esc(ex.hitrost)}</td>
+          <td>${esc(ex.opombe)}</td>
+        </tr>`).join("");
+
+      const specialnoRows = specialnoExercises.map(ex => `
+        <tr>
+          <td><span class="ex-code">${esc(ex.code)}</span></td>
+          <td><div class="ex-name">${esc(ex.name)}</div></td>
+          <td class="ex-sets">${esc(ex.s)}</td>
+          <td class="ex-reps">${esc(ex.p)}</td>
+          <td class="ex-tempo">${esc(ex.cas)}</td>
+          <td>${esc(ex.razdalj)}</td>
+          <td>${esc(ex.opomba)}</td>
+        </tr>`).join("");
+
+      // Mobile cards
+      const osnovnoCards = osnovnoExercises.map(ex => `
+        <div class="ex-card">
+          <div class="ex-card-top">
+            <span class="ex-card-code">${esc(ex.code)}</span>
+            <span class="ex-card-name">${esc(ex.name)}</span>
+          </div>
+          <div class="ex-card-stats">
+            ${ex.cas    ? `<div class="ex-stat"><span class="ex-stat-label">Čas</span><span class="ex-stat-val">${esc(ex.cas)}</span></div>` : ""}
+            ${ex.naklo  ? `<div class="ex-stat"><span class="ex-stat-label">Naklo</span><span class="ex-stat-val">${esc(ex.naklo)}</span></div>` : ""}
+            ${ex.hitrost? `<div class="ex-stat"><span class="ex-stat-label">Hitrost</span><span class="ex-stat-val">${esc(ex.hitrost)}</span></div>` : ""}
+          </div>
+          ${ex.opombe ? `<div class="ex-card-note">${esc(ex.opombe)}</div>` : ""}
+        </div>`).join("");
+
+      const specialnoCards = specialnoExercises.map(ex => `
+        <div class="ex-card">
+          <div class="ex-card-top">
+            <span class="ex-card-code">${esc(ex.code)}</span>
+            <span class="ex-card-name">${esc(ex.name)}</span>
+          </div>
+          <div class="ex-card-stats">
+            ${ex.s ? `<div class="ex-stat"><span class="ex-stat-label">S</span><span class="ex-stat-val">${esc(ex.s)}</span></div>` : ""}
+            ${ex.p ? `<div class="ex-stat"><span class="ex-stat-label">P</span><span class="ex-stat-val">${esc(ex.p)}</span></div>` : ""}
+            ${ex.cas ? `<div class="ex-stat"><span class="ex-stat-label">Čas</span><span class="ex-stat-val">${esc(ex.cas)}</span></div>` : ""}
+            ${ex.razdalj ? `<div class="ex-stat"><span class="ex-stat-label">Razdalj</span><span class="ex-stat-val">${esc(ex.razdalj)}</span></div>` : ""}
+          </div>
+          ${ex.opomba ? `<div class="ex-card-note">${esc(ex.opomba)}</div>` : ""}
+        </div>`).join("");
+
+      htm("training-content", `
+        <div class="workout-block">
+          <div class="workout-header">
+            <h3>Ogrevanje</h3>
+          </div>
+          ${nameHtml ? `<div style="padding:.6rem 1.25rem;border-bottom:1px solid var(--border)">${nameHtml}</div>` : ""}
+
+          ${osnovnoExercises.length ? `
+          <div style="padding:.6rem 1.25rem .3rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent2);font-weight:600">Osnovno</div>
+          <div style="overflow-x:auto">
+            <table class="workout-table">
+              <thead><tr><th></th><th>Vaja</th><th>Čas</th><th>Naklo/wati</th><th>Hitrost</th><th>Opombe</th></tr></thead>
+              <tbody>${osnovnoRows}</tbody>
+            </table>
+          </div>
+          <div class="ex-cards">${osnovnoCards}</div>
+          ` : ""}
+
+          ${specialnoExercises.length ? `
+          <div style="padding:.6rem 1.25rem .3rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent2);font-weight:600;border-top:1px solid var(--border)">Specialno</div>
+          <div style="overflow-x:auto">
+            <table class="workout-table">
+              <thead><tr><th></th><th>Vaja</th><th>S</th><th>P</th><th>Čas</th><th>Razdalj</th><th>Opomba</th></tr></thead>
+              <tbody>${specialnoRows}</tbody>
+            </table>
+          </div>
+          <div class="ex-cards">${specialnoCards}</div>
+          ` : ""}
+        </div>
+      `);
+
+    } catch(e) {
+      htm("training-content",`<div class='no-sheet-msg'>
+        <h3>Napaka pri nalaganju Ogrevanje</h3>
+        <p>${esc(e.message)}</p>
       </div>`);
     }
   },
