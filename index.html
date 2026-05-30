@@ -1846,7 +1846,7 @@ const APP = window.APP = {
       // Col index: A=0,B=1,C=2,D=3,E=4,F=5,G=6,H=7,I=8..P=15,Q=16
       const headerRowIdxs = [];
       rows.forEach((row,i) => {
-        if ((row[2]||"").trim() === "Vaja") headerRowIdxs.push(i);
+        if (String(row[2]||"").trim() === "Vaja") headerRowIdxs.push(i);
       });
 
       if (!headerRowIdxs.length) {
@@ -1858,8 +1858,8 @@ const APP = window.APP = {
       const lastHeaderIdx = headerRowIdxs[headerRowIdxs.length-1];
       // Number in col A, date in col B — same row as "Vaja" header
       const headerRow = rows[lastHeaderIdx];
-      const workoutNum = (headerRow[0]||"").trim();
-      const workoutDate = (headerRow[1]||"").trim();
+      const workoutNum = String(headerRow[0]||"").trim();
+      const workoutDate = String(headerRow[1]||"").trim();
 
       // Collect exercise rows after the header until empty/quote row
       // Also grab volume (col Q) and quote (col C) from the last row of the block
@@ -1868,12 +1868,15 @@ const APP = window.APP = {
       let motivQuote = "";
       for (let i = lastHeaderIdx+1; i < rows.length; i++) {
         const row = rows[i];
-        const code = (row[1]||"").trim();
-        const name = (row[2]||"").trim();
-        const colQ = (row[16]||"").trim();
+        const code = String(row[1]||"").trim();
+        const rawCell2 = String(row[2]||"").trim();
+        const nameCell2 = parseHyperlink(rawCell2);
+        const name = nameCell2.name || rawCell2;
+        const videoUrl = nameCell2.url || "";
+        const colQ = String(row[16]||"").trim();
         const colC = (row[2]||"").trim();
         // detect quote row (col C starts with " or special quote, col B empty)
-        if (!code && name && (name.startsWith('"') || name.charCodeAt(0)===8220 || name.startsWith('“'))) {
+        if (!code && name && (rawCell2.startsWith('"') || rawCell2.charCodeAt(0)===8220 || rawCell2.startsWith('“'))) {
           motivQuote = name;
           // volume is in col Q of this same row (11 rows after header = quote row)
           if (colQ) volumeKg = colQ;
@@ -1889,19 +1892,17 @@ const APP = window.APP = {
         }
         if (code && name && name !== "Vaja") {
           // Parse hyperlink from formula in col C (exercise name)
-          const nameCell2 = parseHyperlink((row[2]||"").trim());
-          const videoUrl = nameCell2.url || "";
-          const parsedName = nameCell2.name || name;
+          // videoUrl already set above
           exercises.push({
             code,
             name: parsedName || name,
             videoUrl,
-            note:  (row[3]||"").trim(),
-            sets:  (row[4]||"").trim(),
-            reps:  (row[5]||"").trim(),
-            tempo: (row[6]||"").trim(),
-            rest:  (row[7]||"").trim(),
-            nizi:  [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]].map(v=>(v||"").trim()).filter(v=>v)
+            note:  String(row[3]||"").trim(),
+            sets:  String(row[4]||"").trim(),
+            reps:  String(row[5]||"").trim(),
+            tempo: String(row[6]||"").trim(),
+            rest:  String(row[7]||"").trim(),
+            nizi:  [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]].map(v=>String(v||"").trim()).filter(v=>v)
           });
           // also check col Q on exercise rows
           if (colQ && !volumeKg) volumeKg = colQ;
