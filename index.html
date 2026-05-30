@@ -1764,6 +1764,29 @@ const APP = window.APP = {
       return;
     }
 
+    // Get client name from Google Sheet filename (metadata)
+    let clientSheetName = "";
+    try {
+      const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=properties.title&key=${SHEETS_API_KEY}`;
+      const metaResp = await fetch(metaUrl);
+      if (metaResp.ok) {
+        const metaData = await metaResp.json();
+        clientSheetName = metaData.properties?.title || "";
+      }
+    } catch(e) {}
+
+    // Show greeting if we got a name
+    const existingGreeting = document.getElementById("training-greeting");
+    if (existingGreeting) existingGreeting.remove();
+    if (clientSheetName) {
+      const greeting = document.createElement("div");
+      greeting.id = "training-greeting";
+      greeting.style.cssText = "background:linear-gradient(135deg,#0a1628,#1e3a5f);border-radius:12px;padding:.85rem 1.25rem;margin-bottom:1.25rem;border:1px solid rgba(37,99,235,.25);font-size:.95rem;color:var(--accent2)";
+      const firstName = clientSheetName.split(" ")[0];
+greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firstName)}</strong>! Tukaj je tvoj trenutni vadbeni načrt.`;
+      g("training-wrap").insertBefore(greeting, tabsEl);
+    }
+
     // tabs for the 4 sheet names
     const TABS = ["Ogrevanje","Moč 1","Moč 2","Moč 3"];
     tabsEl.innerHTML = TABS.map((t,i)=>
