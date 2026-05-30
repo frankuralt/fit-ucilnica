@@ -1788,11 +1788,20 @@ const APP = window.APP = {
     try {
       // Fetch full column range — A through Q, all rows
       const range = encodeURIComponent(`'${tabName}'!A:Q`);
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
+      // Fetch values normally
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
       const data = await resp.json();
       const rows = data.values || [];
+      // Fetch formulas separately for hyperlinks (col B and C only)
+      let formulaRows = [];
+      try {
+        const fRange = encodeURIComponent(`'${tabName}'!B:C`);
+        const fUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${fRange}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
+        const fResp = await fetch(fUrl);
+        if (fResp.ok) formulaRows = (await fResp.json()).values || [];
+      } catch(e) { /* hyperlinks optional */ }
 
       if (!rows.length) {
         htm("training-content","<div class='training-empty'><p>V tem listu ni podatkov.</p></div>");
@@ -1845,7 +1854,11 @@ const APP = window.APP = {
           break;
         }
         if (code && name && name !== "Vaja") {
-          const nameCell = parseHyperlink(row[2]);
+          // Get video URL from formula rows using row index
+          const rowIdx = rows.indexOf(row);
+          const fRowData = rowIdx >= 0 && rowIdx < formulaRows.length ? formulaRows[rowIdx] : [];
+          const nameFormula = fRowData[1] || row[2] || "";
+          const nameCell = parseHyperlink(nameFormula);
           const videoUrl = nameCell.url || "";
           const displayName = nameCell.name || name;
           exercises.push({
@@ -1972,6 +1985,14 @@ const APP = window.APP = {
       if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
       const data = await resp.json();
       const rows = data.values || [];
+      // Fetch formulas for hyperlinks in col B
+      let ogFormulaRows = [];
+      try {
+        const fRange = encodeURIComponent("'Ogrevanje'!B1:B25");
+        const fUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${fRange}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
+        const fResp = await fetch(fUrl);
+        if (fResp.ok) ogFormulaRows = (await fResp.json()).values || [];
+      } catch(e) {}
 
       if (!rows.length) {
         htm("training-content","<div class='training-empty'><p>V Ogrevanje listu ni podatkov.</p></div>");
@@ -2022,13 +2043,16 @@ const APP = window.APP = {
           const name = (row[1]||"").trim();
           if (!code && !name) continue;
           if (code) {
+            const ogFormula = i < ogFormulaRows.length ? (ogFormulaRows[i]||[])[0] : row[1];
+            const ogNameCell = parseHyperlink(ogFormula || row[1]);
             specialnoExercises.push({
               code,
-              name,
-              serije: (row[13]||"").trim(),  // N = Serije
-              ponov:  (row[15]||"").trim(),  // P = Ponovitve
-              cas:    (row[17]||"").trim(),  // R = Čas
-              opomba: (row[22]||"").trim()   // W = Opomba
+              name: ogNameCell.name || name,
+              videoUrl: ogNameCell.url || "",
+              serije: (row[13]||"").trim(),
+              ponov:  (row[15]||"").trim(),
+              cas:    (row[17]||"").trim(),
+              opomba: (row[22]||"").trim()
             });
           }
         }
