@@ -761,6 +761,17 @@
   </div>
 </div>
 
+<!-- YouTube Video Popup -->
+<div id="yt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;padding:1rem">
+  <div style="width:100%;max-width:720px;position:relative">
+    <button onclick="APP.closeYT()" style="position:absolute;top:-2.5rem;right:0;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:.5rem">✕</button>
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000">
+      <iframe id="yt-iframe" src="" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none"></iframe>
+    </div>
+    <div id="yt-title" style="color:#e8e8f0;font-size:.95rem;margin-top:.75rem;text-align:center;font-weight:500"></div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
@@ -1388,6 +1399,28 @@ const APP = window.APP = {
 
   closeViewer() { g("course-viewer").classList.remove("open"); },
 
+  openYT(url, title) {
+    // Convert YouTube URL to embed URL
+    let embedUrl = url;
+    if (url.includes("youtu.be/")) {
+      const vid = url.split("youtu.be/")[1].split("?")[0];
+      embedUrl = `https://www.youtube.com/embed/${vid}?autoplay=1`;
+    } else if (url.includes("youtube.com/watch")) {
+      try { const vid = new URL(url).searchParams.get("v"); embedUrl = `https://www.youtube.com/embed/${vid}?autoplay=1`; } catch(e){}
+    }
+    const modal = g("yt-modal");
+    g("yt-iframe").src = embedUrl;
+    if(g("yt-title")) g("yt-title").textContent = title || "";
+    modal.style.display = "flex";
+    // close on backdrop click
+    modal.onclick = e => { if(e.target===modal) APP.closeYT(); };
+  },
+
+  closeYT() {
+    g("yt-modal").style.display = "none";
+    g("yt-iframe").src = ""; // stop video
+  },
+
   async showStep(courseId, stepId, stepIndex, totalSteps) {
     document.querySelectorAll(".step-row").forEach(r=>r.classList.remove("active"));
     const row = g("sr-"+stepId); if(row) row.classList.add("active");
@@ -1804,7 +1837,10 @@ const APP = window.APP = {
           const fData = (await fResp.json()).values || [];
           fData.forEach((fRow, idx) => {
             const parsed = parseHyperlink((fRow||[])[0]||"");
-            if (parsed.url) videoUrlMap[idx] = parsed.url;
+            if (parsed.url) {
+              videoUrlMap[idx] = parsed.url;
+              if (parsed.name) videoUrlMap["name_"+idx] = parsed.name;
+            }
           });
         }
       } catch(e) { /* video links are optional */ }
@@ -1862,9 +1898,11 @@ const APP = window.APP = {
         if (code && name && name !== "Vaja") {
           const rowIdx2 = rows.indexOf(row);
           const videoUrl = videoUrlMap[rowIdx2] || "";
+          // name from row[2] might be raw formula if FORMULA fetch bled through — use parsed name
+          const parsedName = videoUrlMap["name_"+rowIdx2] || name;
           exercises.push({
             code,
-            name,
+            name: parsedName,
             videoUrl,
             note:  (row[3]||"").trim(),
             sets:  (row[4]||"").trim(),
@@ -1892,7 +1930,7 @@ const APP = window.APP = {
         const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>
           ex.nizi[i] ? `<span class="niz-cell"><span style="font-size:.65rem;color:var(--muted);display:block">Niz ${i+1}</span>${ex.nizi[i]}</span>` : `<span class="niz-cell" style="opacity:.3">—</span>`
         ).join("");
-        const videoLink = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.15rem;font-size:.65rem;color:var(--muted);text-decoration:none;margin-left:.35rem;opacity:.6;border:1px solid var(--border);border-radius:4px;padding:.1rem .35rem" title="Poglej video vaje">▶</a>` : "";
+        const videoLink = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.15rem;font-size:.65rem;color:var(--muted);text-decoration:none;margin-left:.35rem;opacity:.65;border:1px solid var(--border);border-radius:4px;padding:.1rem .35rem;cursor:pointer;background:none" title="Poglej video vaje" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
           <td><div class="ex-name">${esc(ex.name)}${videoLink}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
@@ -1913,7 +1951,7 @@ const APP = window.APP = {
           ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${esc(ex.tempo)}</span></div>` : "",
           ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${esc(ex.rest)}</span></div>` : "",
         ].filter(Boolean).join("");
-        const mVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.2rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.2rem .5rem;font-size:.72rem;color:var(--muted);text-decoration:none;opacity:.7" title="Video vaje">▶</a>` : "";
+        const mVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.2rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.25rem .6rem;font-size:.78rem;color:var(--muted);text-decoration:none;opacity:.75;cursor:pointer" title="Poglej video" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
