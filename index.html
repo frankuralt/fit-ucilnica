@@ -762,13 +762,16 @@
 </div>
 
 <!-- YouTube Video Popup -->
-<div id="yt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;padding:1rem">
-  <div style="width:100%;max-width:720px;position:relative">
-    <button onclick="APP.closeYT()" style="position:absolute;top:-2.5rem;right:0;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:.5rem">✕</button>
-    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000">
-      <iframe id="yt-iframe" src="" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none"></iframe>
+<div id="yt-modal" style="display:none;position:fixed;bottom:1rem;right:1rem;z-index:500;width:320px;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.8);border:1px solid #333;transition:all .3s">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .75rem;background:#111">
+    <div id="yt-title" style="color:#e8e8f0;font-size:.82rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:.5rem"></div>
+    <div style="display:flex;gap:.35rem;flex-shrink:0">
+      <button onclick="APP.expandYT()" id="yt-expand-btn" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:1rem;padding:.2rem .4rem" title="Povečaj">⛶</button>
+      <button onclick="APP.closeYT()" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:1rem;padding:.2rem .4rem" title="Zapri">✕</button>
     </div>
-    <div id="yt-title" style="color:#e8e8f0;font-size:.95rem;margin-top:.75rem;text-align:center;font-weight:500"></div>
+  </div>
+  <div style="position:relative;padding-top:56.25%">
+    <iframe id="yt-iframe" src="" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none"></iframe>
   </div>
 </div>
 
@@ -1407,8 +1410,10 @@ const APP = window.APP = {
 
   closeViewer() { g("course-viewer").classList.remove("open"); },
 
+  _ytExpanded: false,
+
   openYT(url, title) {
-    // Convert YouTube URL to embed URL
+    if (!url) return;
     let embedUrl = url;
     if (url.includes("youtu.be/")) {
       const vid = url.split("youtu.be/")[1].split("?")[0];
@@ -1419,14 +1424,32 @@ const APP = window.APP = {
     const modal = g("yt-modal");
     g("yt-iframe").src = embedUrl;
     if(g("yt-title")) g("yt-title").textContent = title || "";
-    modal.style.display = "flex";
-    // close on backdrop click
-    modal.onclick = e => { if(e.target===modal) APP.closeYT(); };
+    // start small
+    this._ytExpanded = false;
+    modal.style.cssText = "display:block;position:fixed;bottom:1rem;right:1rem;z-index:500;width:320px;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.8);border:1px solid #333;transition:all .3s";
+    if(g("yt-expand-btn")) g("yt-expand-btn").textContent = "⛶";
+  },
+
+  expandYT() {
+    const modal = g("yt-modal");
+    if (!modal) return;
+    this._ytExpanded = !this._ytExpanded;
+    if (this._ytExpanded) {
+      // fullscreen overlay
+      modal.style.cssText = "display:block;position:fixed;inset:1rem;z-index:500;width:auto;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.9);border:1px solid #333;transition:all .3s;max-width:900px;margin:auto";
+      if(g("yt-expand-btn")) g("yt-expand-btn").textContent = "⊡";
+    } else {
+      // back to small
+      modal.style.cssText = "display:block;position:fixed;bottom:1rem;right:1rem;z-index:500;width:320px;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.8);border:1px solid #333;transition:all .3s";
+      if(g("yt-expand-btn")) g("yt-expand-btn").textContent = "⛶";
+    }
   },
 
   closeYT() {
-    g("yt-modal").style.display = "none";
-    g("yt-iframe").src = ""; // stop video
+    const modal = g("yt-modal");
+    if(modal) modal.style.display = "none";
+    g("yt-iframe").src = "";
+    this._ytExpanded = false;
   },
 
   async showStep(courseId, stepId, stepIndex, totalSteps) {
