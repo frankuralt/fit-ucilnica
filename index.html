@@ -290,6 +290,16 @@
   .show-more-comments { background:none; border:none; color:var(--accent2); font-family:inherit; font-size:.8rem; cursor:pointer; padding:.25rem 0; display:block; margin-bottom:.5rem; }
   .show-more-comments:hover { text-decoration:underline; }
 
+  /* ── PROFILE STATS ── */
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.75rem; margin-top:.75rem; }
+  .stat-box { background:var(--bg3); border-radius:12px; padding:1rem; text-align:center; border:1px solid var(--border); }
+  .stat-box .stat-val { font-family:"DM Serif Display",serif; font-size:1.6rem; color:var(--accent2); font-weight:700; }
+  .stat-box .stat-lbl { font-size:.75rem; color:var(--muted); margin-top:.2rem; }
+  .kcal-row { display:flex; justify-content:space-between; align-items:center; padding:.6rem 0; border-bottom:1px solid var(--border); font-size:.88rem; }
+  .kcal-row:last-child { border-bottom:none; }
+  .kcal-val { font-weight:700; color:var(--accent2); font-size:1rem; }
+  .kcal-note { font-size:.75rem; color:var(--muted); }
+
   /* ── WEIGHT TRACKING ── */
   .week-row { display:flex; justify-content:space-between; align-items:center; padding:.5rem 0; border-bottom:1px solid var(--border); font-size:.85rem; }
   .week-row:last-child { border-bottom:none; }
@@ -608,6 +618,18 @@
           <!-- Weekly summary -->
           <div id="weight-weekly" style="margin-top:1.25rem"></div>
         </div>
+      </div>
+
+      <!-- Stats from sheet -->
+      <div class="card-form" id="profile-stats-card" style="display:none">
+        <h3>Statistika treningov 🏋️</h3>
+        <div id="profile-stats-content"></div>
+      </div>
+
+      <!-- Kcal calculator -->
+      <div class="card-form" id="profile-kcal-card" style="display:none">
+        <h3>Ocenjena kalorična poraba 🔥</h3>
+        <div id="profile-kcal-content"></div>
       </div>
 
       <!-- Full graph -->
@@ -1102,6 +1124,106 @@ const APP = window.APP = {
     } else {
       // First time — show expanded
       this.toggleProfileEdit(true);
+    }
+
+    // ── Fetch training stats from sheet ──
+    const sheetIdForStats = profileData.sheetId || null;
+    if (sheetIdForStats) {
+      try {
+        // Get total tonnage from Reference!F5
+        const refUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetIdForStats}/values/${encodeURIComponent("'Reference'!F5")}?key=${SHEETS_API_KEY}`;
+        const refResp = await fetch(refUrl);
+        if (refResp.ok) {
+          const refData = await refResp.json();
+          const tonnage = ((refData.values||[])[0]||[])[0] || "";
+          if (tonnage) {
+            const tonNum = parseFloat(String(tonnage).replace(",","."));
+            // Count workouts from Moč 1+2+3 col A
+            let totalW = 0;
+            for (const tab of ["Moč 1","Moč 2","Moč 3"]) {
+              try {
+                const r2 = encodeURIComponent(`'${tab}'!A:A`);
+                const r2Resp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetIdForStats}/values/${r2}?key=${SHEETS_API_KEY}`);
+                if (r2Resp.ok) {
+                  const r2Data = await r2Resp.json();
+                  (r2Data.values||[]).forEach(row => {
+                    const v = (row[0]||"").trim();
+                    if (v && !isNaN(parseFloat(v.replace(",",".")))) totalW++;
+                  });
+                }
+              } catch(e){}
+            }
+            const statsCard = g("profile-stats-card");
+            const statsContent = g("profile-stats-content");
+            if (statsCard && statsContent) {
+              statsCard.style.display = "";
+              statsContent.innerHTML = `<div class="stat-grid">
+                <div class="stat-box">
+                  <div class="stat-val">${totalW}</div>
+                  <div class="stat-lbl">Skupaj treningov</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-val">${!isNaN(tonNum) ? (tonNum/1000).toLocaleString("sl-SI",{maximumFractionDigits:1})+"t" : tonnage}</div>
+                  <div class="stat-lbl">Skupna tonaža</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-val">${totalW > 0 && !isNaN(tonNum) ? Math.round(tonNum/totalW).toLocaleString("sl-SI") : "—"}</div>
+                  <div class="stat-lbl">Povp. kg/trening</div>
+                </div>
+              </div>`;
+            }
+          }
+        }
+      } catch(e){}
+    }
+
+    // ── Calculate TDEE (kcal) ──
+    const weight = profileData.weight || null;
+    const height = parseFloat(profileData.height||0);
+    const gender = profileData.gender || "";
+    const activity = parseFloat(profileData.activity||0);
+    // Get latest weight from weight entries
+    let latestWeight = weight;
+    try {
+      const wSnap = await getDocs(query(collection(db,"weights"), where("email","==",currentUser.email), orderBy("date","desc")));
+      if (!wSnap.empty) latestWeight = wSnap.docs[0].data().weight;
+    } catch(e){}
+
+    const kcalCard = g("profile-kcal-card");
+    const kcalContent = g("profile-kcal-content");
+    if (kcalCard && kcalContent && latestWeight && height && gender && activity) {
+      // Mifflin-St Jeor BMR formula
+      const w = parseFloat(latestWeight);
+      const bmr = gender === "m"
+        ? 10*w + 6.25*height - 5*30 + 5      // approx age 30 for males
+        : 10*w + 6.25*height - 5*30 - 161;   // approx age 30 for females
+      const tdee = Math.round(bmr * activity);
+      const cut  = Math.round(tdee - 400);
+      const bulk = Math.round(tdee + 300);
+      const actLabels = {"1.2":"Sedeče","1.375":"Malo aktivno","1.55":"Zmerno aktivno","1.725":"Zelo aktivno","1.9":"Izjemno aktivno"};
+      kcalCard.style.display = "";
+      kcalContent.innerHTML = `
+        <p class="muted" style="font-size:.82rem;margin-bottom:1rem">Izračun temelji na Mifflin-St Jeor formuli. Teža: <strong>${w} kg</strong> · Višina: <strong>${height} cm</strong> · ${actLabels[String(activity)]||""}</p>
+        <div class="kcal-row">
+          <div><div style="font-weight:500">BMR (bazalna presnova)</div><div class="kcal-note">Kalorije v mirovanju</div></div>
+          <div class="kcal-val">${Math.round(bmr)} kcal</div>
+        </div>
+        <div class="kcal-row">
+          <div><div style="font-weight:500">TDEE (skupna poraba)</div><div class="kcal-note">Vzdrževanje trenutne teže</div></div>
+          <div class="kcal-val" style="color:#60a5fa">${tdee} kcal</div>
+        </div>
+        <div class="kcal-row">
+          <div><div style="font-weight:500">Hujšanje</div><div class="kcal-note">Deficit ~400 kcal/dan</div></div>
+          <div class="kcal-val" style="color:#4ade80">${cut} kcal</div>
+        </div>
+        <div class="kcal-row">
+          <div><div style="font-weight:500">Pridobivanje mišic</div><div class="kcal-note">Suficit ~300 kcal/dan</div></div>
+          <div class="kcal-val" style="color:#fb923c">${bulk} kcal</div>
+        </div>
+        <p class="muted" style="font-size:.75rem;margin-top:.75rem">⚠️ Ocena je orientacijska. Za natančen izračun upoštevajte starost in se posvetujte s strokovnjakom.</p>`;
+    } else if (kcalCard) {
+      kcalCard.style.display = "";
+      kcalContent.innerHTML = `<p class="muted" style="font-size:.85rem">Za izračun izpolnite: višino, spol in nivo aktivnosti v osebnih podatkih ter vsaj eno tehtanje.</p>`;
     }
 
     // Load today's weight entry
