@@ -1821,28 +1821,21 @@ const APP = window.APP = {
     try {
       // Fetch full column range — A through Q, all rows
       const range = encodeURIComponent(`'${tabName}'!A:Q`);
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
+      // Fetch with FORMULA render so we can extract hyperlinks from exercise name cells
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
       const resp = await fetch(url);
-      if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
-      const data = await resp.json();
-      const rows = data.values || [];
-      // Fetch video links separately — col C only with FORMULA render
-      // Build a map: rowIndex → videoUrl
-      const videoUrlMap = {};
-      try {
-        const fRange = encodeURIComponent(`'${tabName}'!C:C`);
-        const fUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${fRange}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
-        const fResp = await fetch(fUrl);
-        if (fResp.ok) {
-          const fData = (await fResp.json()).values || [];
-          fData.forEach((fRow, idx) => {
-            const parsed = parseHyperlink((fRow||[])[0]||"");
-            if (parsed.url) {
-              videoUrlMap[idx] = parsed.url;
-            }
-          });
-        }
-      } catch(e) { /* video links are optional */ }
+      if (!resp.ok) {
+        // fallback to plain values if FORMULA not allowed
+        const url2 = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
+        const resp2 = await fetch(url2);
+        if (!resp2.ok) throw new Error("Sheets API napaka: "+resp2.status);
+        const data2 = await resp2.json();
+        var rows = data2.values || [];
+      } else {
+        const data = await resp.json();
+        var rows = data.values || [];
+      }
+      const videoUrlMap = {}; // kept for compatibility
 
       if (!rows.length) {
         htm("training-content","<div class='training-empty'><p>V tem listu ni podatkov.</p></div>");
@@ -1895,9 +1888,10 @@ const APP = window.APP = {
           break;
         }
         if (code && name && name !== "Vaja") {
-          // Use absolute row index i for videoUrlMap lookup
-          const videoUrl = videoUrlMap[i] || parseHyperlink((row[2]||"").trim()).url || "";
-          const parsedName = parseHyperlink((row[2]||"").trim()).name || name;
+          // Parse hyperlink from formula in col C (exercise name)
+          const nameCell2 = parseHyperlink((row[2]||"").trim());
+          const videoUrl = nameCell2.url || "";
+          const parsedName = nameCell2.name || name;
           exercises.push({
             code,
             name: parsedName || name,
