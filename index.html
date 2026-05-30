@@ -421,6 +421,10 @@
     <!-- SIGN UP -->
     <div id="panel-signup" style="display:none">
       <p class="auth-hint">Registracija je mogoča samo z e-poštnimi naslovi, ki jih odobri skrbnik.</p>
+      <label>Ime</label>
+      <input id="signup-name" type="text" class="inp" placeholder="Janez">
+      <label>Priimek</label>
+      <input id="signup-surname" type="text" class="inp" placeholder="Novak">
       <label>E-pošta</label>
       <input id="signup-email" type="email" class="inp" placeholder="vi@primer.com">
       <label>Geslo</label>
@@ -524,8 +528,15 @@
             <option value="aktivnost">🏔️ Aktivnost</option>
             <option value="zabava">😄 Zabava</option>
           </select>
-          <input id="post-img" type="url" placeholder="URL slike (neobvezno)">
+          <label class="btn btn-ghost btn-sm" for="post-img-file" style="cursor:pointer">
+            📷 Dodaj sliko
+          </label>
+          <input id="post-img-file" type="file" accept="image/*" style="display:none">
           <button class="btn" id="post-submit-btn">Objavi</button>
+        </div>
+        <div id="post-img-preview" style="margin-top:.5rem;display:none">
+          <img id="post-img-thumb" style="max-height:120px;border-radius:8px;max-width:100%">
+          <button onclick="APP.clearPostImage()" style="background:none;border:none;color:var(--danger);cursor:pointer;margin-left:.5rem">✕ Odstrani</button>
         </div>
       </div>
       <div id="feed-list" class="feed-wrap"></div>
@@ -627,6 +638,7 @@
 
 <script type="module">
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode, signOut, onAuthStateChanged }
                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
@@ -645,9 +657,10 @@ const firebaseConfig = {
   appId:             "1:702377248893:web:161eecf07a69570fe68914"
 };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
+const storage = getStorage(app);
 
 // ╔══════════════════════════════════════════════╗
 // ║  YOUR CONFIGURATION — fill these in         ║
@@ -722,6 +735,8 @@ async function emailExistsInCollection(colName, email) {
 let IS_ADMIN = false;
 let CURRENT_COURSE_ID = "";
 let currentUser = null;
+let currentDisplayName = "";
+let currentCanPost = false;
 
 /* ── auth ── */
 onAuthStateChanged(auth, async user => {
@@ -732,8 +747,19 @@ onAuthStateChanged(auth, async user => {
     if (!allowed) { await signOut(auth); showLoginErr("Vaš e-poštni naslov ni odobren. Obrnite se na skrbnika."); return; }
     IS_ADMIN = await emailExistsInCollection("admins", user.email);
   } catch(e) { await signOut(auth); showLoginErr("Preverjanje dostopa ni uspelo: "+e.message); return; }
-  g("user-label").textContent = user.email;
-  if(g("mobile-user-label")) g("mobile-user-label").textContent = user.email;
+  // Load display name and canPost from allowedUsers
+  try {
+    const userSnap2 = await getDocs(collection(db,"allowedUsers"));
+    for (const d of userSnap2.docs) {
+      if ((d.data().email||"").toLowerCase().trim() === user.email.toLowerCase().trim()) {
+        currentDisplayName = d.data().displayName || user.email;
+        currentCanPost = d.data().canPost || false;
+        break;
+      }
+    }
+  } catch(e) { currentDisplayName = user.email; }
+  g("user-label").textContent = currentDisplayName;
+  if(g("mobile-user-label")) g("mobile-user-label").textContent = currentDisplayName;
   g("nav-admin").style.display = IS_ADMIN ? "" : "none";
   if(g("mnav-admin")) g("mnav-admin").style.display = IS_ADMIN ? "" : "none";
   switchScreen("app");
@@ -811,21 +837,25 @@ const APP = window.APP = {
   },
 
   signup: async () => {
-    const email = g("signup-email").value.trim().toLowerCase();
-    const pass  = g("signup-pass").value;
-    const pass2 = g("signup-pass2").value;
-    if (!email||!pass){ showAuthErr("Izpolnite vsa polja."); return; }
+    const ime     = g("signup-name").value.trim();
+    const priimek = g("signup-surname").value.trim();
+    const email   = g("signup-email").value.trim().toLowerCase();
+    const pass    = g("signup-pass").value;
+    const pass2   = g("signup-pass2").value;
+    if (!ime||!priimek||!email||!pass){ showAuthErr("Izpolnite vsa polja."); return; }
     if (pass !== pass2){ showAuthErr("Gesli se ne ujemata."); return; }
     if (pass.length < 6){ showAuthErr("Geslo mora imeti vsaj 6 znakov."); return; }
     const btn = g("signup-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
     try {
       const allowed = await emailExistsInCollection("allowedUsers", email);
-      if (!allowed){ showAuthErr("Ta e-poštni naslov ni odobren. Prosite skrbnika, da vas doda."); btn.innerHTML="Create Account"; btn.disabled=false; return; }
+      if (!allowed){ showAuthErr("Ta e-poštni naslov ni odobren. Prosite skrbnika, da vas doda."); btn.innerHTML="Ustvari račun"; btn.disabled=false; return; }
       await createUserWithEmailAndPassword(auth, email, pass);
+      // Save display name to allowedUsers
+      await updateDoc(doc(db,"allowedUsers",ekey(email)),{ displayName: ime+" "+priimek });
       clearAuthMsg();
     } catch(e){ showAuthErr(ERRORS[e.code]||"Registracija ni uspela: "+e.message); }
-    btn.innerHTML="Create Account"; btn.disabled=false;
+    btn.innerHTML="Ustvari račun"; btn.disabled=false;
   },
 
   forgotPassword: async () => {
@@ -1036,18 +1066,33 @@ const APP = window.APP = {
       const sheetBadge = sheetId
         ? `<span class="badge" title="${esc(sheetId)}" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">📊 Sheet</span>`
         : `<span style="font-size:.75rem;color:var(--muted)">Brez sheet-a</span>`;
+      const canPost = data.canPost || false;
+      const postBadge = canPost
+        ? `<span class="badge" style="background:rgba(34,197,94,.15);color:#4ade80">✓ Može objavljati</span>`
+        : `<span style="font-size:.75rem;color:var(--muted)">Ne more objavljati</span>`;
+      const displayName = data.displayName || email;
       return `<div class="list-row" style="flex-wrap:wrap;gap:.4rem">
         <div style="flex:1;min-width:160px">
-          <div style="font-weight:500">${esc(email)}</div>
-          <div style="display:flex;align-items:center;gap:.4rem;margin-top:.2rem">${sheetBadge}</div>
+          <div style="font-weight:500">${esc(displayName)}</div>
+          <div style="font-size:.78rem;color:var(--muted)">${esc(email)}</div>
+          <div style="display:flex;align-items:center;gap:.4rem;margin-top:.3rem">${sheetBadge} ${postBadge}</div>
         </div>
         <div class="btn-row">
+          <button class="btn btn-sm btn-ghost" onclick="APP.toggleCanPost('${esc(email)}',${canPost})">
+            ${canPost ? "🚫 Odvzemi objavljanje" : "✅ Dovoli objavljanje"}
+          </button>
           <button class="btn btn-sm btn-ghost" onclick="APP.editUserSheet('${esc(email)}','${esc(sheetId)}')">✏️ Sheet ID</button>
           <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button>
         </div>
       </div>`;
     });
     htm("users-list", rows.length ? rows.join("") : "<p class='muted'>Še ni uporabnikov.</p>");
+  },
+
+  async toggleCanPost(email, currentValue) {
+    await updateDoc(doc(db,"allowedUsers",ekey(email)),{canPost: !currentValue});
+    toast(!currentValue ? "Objavljanje dovoljeno." : "Objavljanje onemogočeno.");
+    this._loadUsers();
   },
 
   async editUserSheet(email, currentSheetId) {
@@ -1649,7 +1694,7 @@ const APP = window.APP = {
 
   /* ── FEED ── */
   async _loadFeed() {
-    if (IS_ADMIN && g("new-post-box")) g("new-post-box").style.display = "";
+    if ((IS_ADMIN || currentCanPost) && g("new-post-box")) g("new-post-box").style.display = "";
     htm("feed-list","");
     const snap = await getDocs(query(collection(db,"feed"), orderBy("pinned","desc"), orderBy("createdAt","desc")));
     if (snap.empty) {
@@ -1672,7 +1717,8 @@ const APP = window.APP = {
     const el = document.createElement("div");
     el.className = "post-card";
     el.id = "post-"+p.id;
-    const initials = (p.authorEmail||"?").slice(0,2).toUpperCase();
+    const displayName = p.authorName || p.authorEmail || "?";
+    const initials = displayName.slice(0,2).toUpperCase();
     const typeClass = "type-"+(p.type||"novica");
     const typeLabel = {novica:"📢 Novica", aktivnost:"🏔️ Aktivnost", zabava:"😄 Zabava"}[p.type||"novica"] || "Novica";
     const timeStr = p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleDateString("sl-SI",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "";
@@ -1692,7 +1738,7 @@ const APP = window.APP = {
       <div class="post-header">
         <div class="post-avatar">${initials}</div>
         <div class="post-meta">
-          <div class="post-author">${esc(p.authorEmail||"")}</div>
+          <div class="post-author">${esc(displayName)}</div>
           <div class="post-time">${timeStr}</div>
         </div>
         <span class="post-type-badge ${typeClass}">${typeLabel}</span>
@@ -1725,21 +1771,38 @@ const APP = window.APP = {
     return el;
   },
 
+  _postImageFile: null,
+
+  clearPostImage() {
+    this._postImageFile = null;
+    g("post-img-preview").style.display="none";
+    g("post-img-file").value="";
+  },
+
   async submitPost() {
     const text = g("post-text").value.trim();
     if (!text) { toast("Napiši besedilo objave.","err"); return; }
     const btn = g("post-submit-btn");
     btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
     try {
+      let imageUrl = "";
+      // Upload image if selected
+      if (this._postImageFile) {
+        const fileRef = ref(storage, `feed/${Date.now()}_${this._postImageFile.name}`);
+        await uploadBytes(fileRef, this._postImageFile);
+        imageUrl = await getDownloadURL(fileRef);
+      }
       await addDoc(collection(db,"feed"),{
         text,
         type: g("post-type").value,
-        imageUrl: g("post-img").value.trim(),
+        imageUrl,
         authorEmail: currentUser.email,
+        authorName: currentDisplayName || currentUser.email,
         createdAt: serverTimestamp(),
         likes: 0, likedBy: [], commentCount: 0, pinned: false
       });
-      g("post-text").value=""; g("post-img").value="";
+      g("post-text").value="";
+      this.clearPostImage();
       toast("Objavljeno! 🎉");
       this._loadFeed();
     } catch(e){ toast("Napaka: "+e.message,"err"); }
@@ -1795,7 +1858,7 @@ const APP = window.APP = {
       return `<div class="comment-item">
         <div class="comment-avatar">${initials}</div>
         <div class="comment-bubble">
-          <div class="comment-author">${esc(c.authorEmail||"")}</div>
+          <div class="comment-author">${esc(c.authorName||c.authorEmail||"")}</div>
           <div class="comment-text">${esc(c.text||"")}</div>
         </div>
       </div>`;
@@ -1810,7 +1873,10 @@ const APP = window.APP = {
     inp.value=""; inp.disabled=true;
     try {
       await addDoc(collection(db,"feed",postId,"comments"),{
-        text, authorEmail: currentUser.email, createdAt: serverTimestamp()
+        text,
+        authorEmail: currentUser.email,
+        authorName: currentDisplayName || currentUser.email,
+        createdAt: serverTimestamp()
       });
       // increment comment count
       const ref = doc(db,"feed",postId);
@@ -1873,6 +1939,20 @@ function on(id, fn){ const el=document.getElementById(id); if(el) el.addEventLis
 
 on("login-btn",   ()=> APP.login());
 on("newpass-btn", ()=> APP.setNewPassword());
+
+// image preview for post
+const imgInput = document.getElementById("post-img-file");
+if(imgInput) imgInput.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  APP._postImageFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    g("post-img-thumb").src = ev.target.result;
+    g("post-img-preview").style.display = "";
+  };
+  reader.readAsDataURL(file);
+});
 on("post-submit-btn", ()=> APP.submitPost());
 on("nav-training",  ()=> APP.nav("training"));
 on("mnav-training", ()=> APP.nav("training"));
