@@ -290,6 +290,17 @@
   .show-more-comments { background:none; border:none; color:var(--accent2); font-family:inherit; font-size:.8rem; cursor:pointer; padding:.25rem 0; display:block; margin-bottom:.5rem; }
   .show-more-comments:hover { text-decoration:underline; }
 
+  /* ── WEIGHT TRACKING ── */
+  .week-row { display:flex; justify-content:space-between; align-items:center; padding:.5rem 0; border-bottom:1px solid var(--border); font-size:.85rem; }
+  .week-row:last-child { border-bottom:none; }
+  .week-label { color:var(--muted); font-size:.78rem; }
+  .week-avg { font-weight:600; font-size:1rem; }
+  .week-change { font-size:.78rem; font-weight:600; padding:.15rem .5rem; border-radius:20px; }
+  .change-down { background:rgba(34,197,94,.15); color:#4ade80; }
+  .change-up   { background:rgba(224,85,85,.15);  color:#f09090; }
+  .change-same { background:var(--bg3); color:var(--muted); }
+  .today-logged { background:rgba(37,99,235,.1); border:1px solid rgba(37,99,235,.25); border-radius:10px; padding:.65rem .9rem; font-size:.85rem; color:var(--accent2); }
+
   /* ── TRAINING MOBILE ── */
   @media (max-width: 640px) {
     .training-tabs { gap:.3rem; }
@@ -366,6 +377,7 @@
     .inp { font-size:16px; } /* prevents iOS zoom on focus */
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -389,6 +401,10 @@
     <button class="mobile-nav-btn" id="mnav-feed">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Skupnost
+    </button>
+    <button class="mobile-nav-btn" id="mnav-profile">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
+      Profil
     </button>
     <button class="mobile-nav-btn" id="mnav-training">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -489,6 +505,10 @@
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Moj trening
     </button>
+    <button class="nav-item" id="nav-profile">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
+      Moj profil
+    </button>
     <button class="nav-item" id="nav-admin" style="display:none">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Skrbnik
@@ -511,6 +531,66 @@
     <div id="sec-courses" class="section">
       <div class="page-header"><h2>Vsi tečaji</h2></div>
       <div id="courses-list"></div>
+    </div>
+
+    <div id="sec-profile" class="section">
+      <div class="page-header"><h2>Moj profil 👤</h2><p>Osebni podatki in telesna teža.</p></div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem;margin-bottom:1.5rem">
+        <!-- Personal info -->
+        <div class="card-form">
+          <h3>Osebni podatki</h3>
+          <p class="muted" style="margin-bottom:1rem;font-size:.83rem">Ime bo vidno pri objavah in komentarjih.</p>
+          <label>Ime</label>
+          <input id="profile-name" type="text" class="inp" placeholder="Janez">
+          <label>Priimek</label>
+          <input id="profile-surname" type="text" class="inp" placeholder="Novak">
+          <label>Višina (cm)</label>
+          <input id="profile-height" type="number" class="inp" placeholder="175">
+          <label>Spol</label>
+          <select id="profile-gender" class="inp">
+            <option value="">— izberi —</option>
+            <option value="m">Moški</option>
+            <option value="f">Ženski</option>
+          </select>
+          <label>Nivo aktivnosti čez dan</label>
+          <select id="profile-activity" class="inp">
+            <option value="">— izberi —</option>
+            <option value="1.2">Sedeče delo (pisarna)</option>
+            <option value="1.375">Malo aktivno (1-2x/teden)</option>
+            <option value="1.55">Zmerno aktivno (3-5x/teden)</option>
+            <option value="1.725">Zelo aktivno (6-7x/teden)</option>
+            <option value="1.9">Izjemno aktivno (fizično delo + šport)</option>
+          </select>
+          <button id="save-profile-btn" class="btn">Shrani profil</button>
+          <div id="profile-msg" style="margin-top:.75rem;font-size:.85rem;display:none"></div>
+        </div>
+
+        <!-- Daily weight entry -->
+        <div class="card-form">
+          <h3>Jutranja teža ⚖️</h3>
+          <p class="muted" style="margin-bottom:1rem;font-size:.83rem">Tehtajte se vsak dan ob isti uri, pred zajtrkom.</p>
+          <div id="today-weight-status" style="margin-bottom:1rem"></div>
+          <label>Teža danes (kg)</label>
+          <div style="display:flex;gap:.5rem">
+            <input id="weight-input" type="number" step="0.1" class="inp" style="margin:0;flex:1" placeholder="npr. 82.5">
+            <button id="save-weight-btn" class="btn" style="white-space:nowrap">Shrani</button>
+          </div>
+          <div id="weight-msg" style="margin-top:.5rem;font-size:.83rem;display:none"></div>
+
+          <!-- Weekly summary -->
+          <div id="weight-weekly" style="margin-top:1.25rem"></div>
+        </div>
+      </div>
+
+      <!-- Full graph -->
+      <div class="card-form">
+        <h3>Graf telesne teže 📈</h3>
+        <div id="weight-graph-wrap">
+          <canvas id="weight-chart" style="width:100%;max-height:320px"></canvas>
+          <div id="weight-trend-msg" style="margin-top:.75rem;font-size:.88rem;color:var(--muted);text-align:center"></div>
+        </div>
+      </div>
     </div>
 
     <div id="sec-training" class="section">
@@ -903,23 +983,247 @@ const APP = window.APP = {
   logout: ()=>signOut(auth),
 
   nav(section) {
-    // update active nav button — desktop sidebar
     document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
     const btn = g("nav-"+section);
     if (btn) btn.classList.add("active");
-    // update mobile bottom nav
     document.querySelectorAll(".mobile-nav-btn").forEach(b=>b.classList.remove("active"));
     const mbtn = g("mnav-"+section);
     if (mbtn) mbtn.classList.add("active");
-    // show correct section
     document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
     g("sec-"+section).classList.add("active");
-    // load data
     if (section==="dashboard") this._loadDomov();
     if (section==="courses")   this._loadCoursesList();
     if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); this._loadTopics(); }
-    if (section==="feed") this._loadFeed();
+    if (section==="feed")     this._loadFeed();
     if (section==="training") this._loadTraining();
+    if (section==="profile")  this._loadProfile();
+  },
+
+  _weightChart: null,
+
+  async _loadProfile() {
+    // Load profile data from Firestore
+    try {
+      const snap = await getDocs(collection(db,"allowedUsers"));
+      for (const d of snap.docs) {
+        if ((d.data().email||"").toLowerCase().trim() === currentUser.email.toLowerCase().trim()) {
+          const data = d.data();
+          const parts = (data.displayName||"").split(" ");
+          if(g("profile-name"))     g("profile-name").value     = parts[0]||"";
+          if(g("profile-surname"))  g("profile-surname").value  = parts.slice(1).join(" ")||"";
+          if(g("profile-height"))   g("profile-height").value   = data.height||"";
+          if(g("profile-gender"))   g("profile-gender").value   = data.gender||"";
+          if(g("profile-activity")) g("profile-activity").value = data.activity||"";
+          break;
+        }
+      }
+    } catch(e){}
+
+    // Load today's weight entry
+    const today = new Date().toISOString().slice(0,10);
+    const todayRef = doc(db,"weights",currentUser.email+"_"+today);
+    try {
+      const todaySnap = await getDoc(todayRef);
+      if(todaySnap.exists()) {
+        const w = todaySnap.data().weight;
+        htm("today-weight-status", `<div class="today-logged">✓ Danes že zabeleženo: <strong>${w} kg</strong></div>`);
+        if(g("weight-input")) g("weight-input").value = w;
+      } else {
+        htm("today-weight-status","");
+      }
+    } catch(e){}
+
+    // Load all weight entries and build chart
+    await this._loadWeightData();
+  },
+
+  async saveProfile() {
+    const ime     = (g("profile-name").value||"").trim();
+    const priimek = (g("profile-surname").value||"").trim();
+    if (!ime||!priimek){
+      const m=g("profile-msg"); m.textContent="Vnesite ime in priimek."; m.style.display=""; m.style.color="var(--danger)";
+      return;
+    }
+    const fullName = ime+" "+priimek;
+    try {
+      await updateDoc(doc(db,"allowedUsers",ekey(currentUser.email)),{
+        displayName: fullName,
+        height:   g("profile-height").value||"",
+        gender:   g("profile-gender").value||"",
+        activity: g("profile-activity").value||""
+      });
+      currentDisplayName = fullName;
+      g("user-label").textContent = fullName;
+      if(g("mobile-user-label")) g("mobile-user-label").textContent = fullName;
+      const m=g("profile-msg"); m.textContent="✓ Shranjeno!"; m.style.display=""; m.style.color="var(--accent2)";
+      setTimeout(()=>{ if(g("profile-msg")) g("profile-msg").style.display="none"; },2500);
+    } catch(e){
+      const m=g("profile-msg"); m.textContent="Napaka: "+e.message; m.style.display=""; m.style.color="var(--danger)";
+    }
+  },
+
+  async saveWeight() {
+    const w = parseFloat((g("weight-input").value||"").replace(",","."));
+    if (!w || w < 20 || w > 400){ 
+      const m=g("weight-msg"); m.textContent="Vnesite veljavno težo (kg)."; m.style.display=""; m.style.color="var(--danger)";
+      return;
+    }
+    const today = new Date().toISOString().slice(0,10);
+    try {
+      await setDoc(doc(db,"weights",currentUser.email+"_"+today),{
+        email: currentUser.email, date: today, weight: w, ts: serverTimestamp()
+      });
+      htm("today-weight-status",`<div class="today-logged">✓ Danes zabeleženo: <strong>${w} kg</strong></div>`);
+      const m=g("weight-msg"); m.textContent="✓ Teža shranjena!"; m.style.display=""; m.style.color="var(--accent2)";
+      setTimeout(()=>{ if(g("weight-msg")) g("weight-msg").style.display="none"; },2000);
+      await this._loadWeightData();
+    } catch(e){
+      const m=g("weight-msg"); m.textContent="Napaka: "+e.message; m.style.display=""; m.style.color="var(--danger)";
+    }
+  },
+
+  async _loadWeightData() {
+    // Fetch all weight entries for this user
+    try {
+      const snap = await getDocs(query(
+        collection(db,"weights"),
+        where("email","==",currentUser.email),
+        orderBy("date","asc")
+      ));
+      if (snap.empty) {
+        htm("weight-weekly","<p class='muted' style='font-size:.83rem'>Še ni vpisanih tehtanj.</p>");
+        if(g("weight-trend-msg")) g("weight-trend-msg").textContent="";
+        return;
+      }
+
+      const entries = snap.docs.map(d=>d.data()).sort((a,b)=>a.date.localeCompare(b.date));
+
+      // Group by ISO week
+      const weekMap = {};
+      for (const e of entries) {
+        const d = new Date(e.date);
+        // Get Monday of that week
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day===0?-6:1);
+        const mon = new Date(d.setDate(diff));
+        const weekKey = mon.toISOString().slice(0,10);
+        if(!weekMap[weekKey]) weekMap[weekKey] = [];
+        weekMap[weekKey].push(e.weight);
+      }
+
+      const weeks = Object.keys(weekMap).sort();
+      const weekAvgs = weeks.map(w => {
+        const vals = weekMap[w];
+        return +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+      });
+
+      // Weekly summary table (last 4 weeks)
+      const last4 = weeks.slice(-4);
+      const last4avgs = weekAvgs.slice(-4);
+      let weekHtml = "<div style='margin-top:.5rem'>";
+      for (let i=0; i<last4.length; i++) {
+        const wk = last4[i];
+        const avg = last4avgs[i];
+        const prev = i>0 ? last4avgs[i-1] : null;
+        const diff = prev !== null ? (avg-prev).toFixed(2) : null;
+        const diffHtml = diff===null ? "" :
+          diff < 0 ? `<span class="week-change change-down">↓ ${Math.abs(diff)} kg</span>` :
+          diff > 0 ? `<span class="week-change change-up">↑ ${diff} kg</span>` :
+                     `<span class="week-change change-same">= 0</span>`;
+        const weekNum = i===last4.length-1 ? "Ta teden" : `Teden ${i+1} nazaj`;
+        weekHtml += `<div class="week-row">
+          <span class="week-label">${weekNum}</span>
+          <span class="week-avg">${avg} kg</span>
+          ${diffHtml}
+        </div>`;
+      }
+      weekHtml += "</div>";
+      htm("weight-weekly", weekHtml);
+
+      // ── CHART ──
+      const chartEl = g("weight-chart");
+      if(!chartEl) return;
+
+      // All individual entries for the line
+      const allDates  = entries.map(e=>e.date.slice(5)); // MM-DD
+      const allWeights = entries.map(e=>e.weight);
+
+      // Trend line (linear regression)
+      const n = allWeights.length;
+      const sumX = allWeights.reduce((_,__,i)=>_+i,0);
+      const sumY = allWeights.reduce((a,b)=>a+b,0);
+      const sumXY = allWeights.reduce((a,b,i)=>a+i*b,0);
+      const sumX2 = allWeights.reduce((a,_,i)=>a+i*i,0);
+      const slope = (n*sumXY - sumX*sumY)/(n*sumX2 - sumX*sumX);
+      const intercept = (sumY - slope*sumX)/n;
+
+      // Trend points (only at start and end + 90 days projection)
+      const trendData = allWeights.map((_,i)=>+(intercept+slope*i).toFixed(2));
+
+      // Projection: 90 days = ~13 weeks
+      const projDays = 90;
+      const projWeight = +(intercept + slope*(n-1+projDays)).toFixed(1);
+      const projDate = new Date();
+      projDate.setDate(projDate.getDate()+projDays);
+      const projLabel = projDate.toLocaleDateString("sl-SI",{day:"numeric",month:"short",year:"numeric"});
+
+      // Destroy old chart
+      if(this._weightChart) { this._weightChart.destroy(); this._weightChart=null; }
+
+      this._weightChart = new Chart(chartEl, {
+        type: "line",
+        data: {
+          labels: allDates,
+          datasets: [
+            {
+              label: "Teža (kg)",
+              data: allWeights,
+              borderColor: "#2563eb",
+              backgroundColor: "rgba(37,99,235,.08)",
+              borderWidth: 2,
+              pointRadius: 3,
+              pointBackgroundColor: "#2563eb",
+              tension: 0.3,
+              fill: true,
+            },
+            {
+              label: "Trend",
+              data: trendData,
+              borderColor: "#60a5fa",
+              borderWidth: 1.5,
+              borderDash: [5,4],
+              pointRadius: 0,
+              tension: 0,
+              fill: false,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode:"index", intersect:false },
+          plugins: {
+            legend: { labels:{ color:"#9090b0", font:{size:12} } },
+            tooltip: { callbacks:{ label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y} kg` } }
+          },
+          scales: {
+            x: { ticks:{ color:"#7070a0", maxTicksLimit:10 }, grid:{ color:"#2e2e3f" } },
+            y: { ticks:{ color:"#7070a0", callback:v=>v+" kg" }, grid:{ color:"#2e2e3f" } }
+          }
+        }
+      });
+
+      // Trend message
+      if(g("weight-trend-msg")) {
+        const totalChange = (slope*(n-1)).toFixed(1);
+        const direction = slope < -0.01 ? "pada" : slope > 0.01 ? "narašča" : "je stabilna";
+        const arrow = slope < -0.01 ? "📉" : slope > 0.01 ? "📈" : "➡️";
+        g("weight-trend-msg").innerHTML = `${arrow} Teža ${direction} za ~${Math.abs(slope*7).toFixed(2)} kg/teden &nbsp;·&nbsp; 
+          Čez 3 mesece (~${projLabel}): <strong style="color:${slope<0?"#4ade80":"#f09090"}">${projWeight} kg</strong>`;
+      }
+
+    } catch(e) {
+      htm("weight-weekly",`<p class='muted' style='font-size:.83rem'>Napaka: ${esc(e.message)}</p>`);
+    }
   },
 
   /* ── Domov ── */
@@ -1329,8 +1633,8 @@ const APP = window.APP = {
 
     if (!sheetId) {
       htm("training-content", `<div class='no-sheet-msg'>
-        <h3>Vadbeni načrt ni nastavljen</h3>
-        <p>Tvoj trener še ni dodal tvojega Google Sheet-a. Javi se mu!</p>
+        <h3>Dostop še ni aktiviran</h3>
+        <p>Trener še ni odobril dostopa do tvojega vadbenegačrta. Javi se mu!</p>
       </div>`);
       htm("training-tabs","");
       return;
@@ -2065,6 +2369,10 @@ if(imgInput) imgInput.addEventListener("change", e => {
 });
 on("post-submit-btn", ()=> APP.submitPost());
 on("nav-training",  ()=> APP.nav("training"));
+on("nav-profile",   ()=> APP.nav("profile"));
+on("mnav-profile",  ()=> APP.nav("profile"));
+on("save-profile-btn", ()=> APP.saveProfile());
+on("save-weight-btn",  ()=> APP.saveWeight());
 on("mnav-training", ()=> APP.nav("training"));
 on("nav-feed",    ()=> APP.nav("feed"));
 on("mnav-feed",   ()=> APP.nav("feed"));
