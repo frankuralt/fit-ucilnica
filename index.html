@@ -537,33 +537,47 @@
       <div class="page-header"><h2>Moj profil 👤</h2><p>Osebni podatki in telesna teža.</p></div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem;margin-bottom:1.5rem">
-        <!-- Personal info -->
-        <div class="card-form">
-          <h3>Osebni podatki</h3>
-          <p class="muted" style="margin-bottom:1rem;font-size:.83rem">Ime bo vidno pri objavah in komentarjih.</p>
-          <label>Ime</label>
-          <input id="profile-name" type="text" class="inp" placeholder="Janez">
-          <label>Priimek</label>
-          <input id="profile-surname" type="text" class="inp" placeholder="Novak">
-          <label>Višina (cm)</label>
-          <input id="profile-height" type="number" class="inp" placeholder="175">
-          <label>Spol</label>
-          <select id="profile-gender" class="inp">
-            <option value="">— izberi —</option>
-            <option value="m">Moški</option>
-            <option value="f">Ženski</option>
-          </select>
-          <label>Nivo aktivnosti čez dan</label>
-          <select id="profile-activity" class="inp">
-            <option value="">— izberi —</option>
-            <option value="1.2">Sedeče delo (pisarna)</option>
-            <option value="1.375">Malo aktivno (1-2x/teden)</option>
-            <option value="1.55">Zmerno aktivno (3-5x/teden)</option>
-            <option value="1.725">Zelo aktivno (6-7x/teden)</option>
-            <option value="1.9">Izjemno aktivno (fizično delo + šport)</option>
-          </select>
-          <button id="save-profile-btn" class="btn">Shrani profil</button>
-          <div id="profile-msg" style="margin-top:.75rem;font-size:.85rem;display:none"></div>
+        <!-- Personal info — collapsible -->
+        <div class="card-form" id="profile-card">
+          <div id="profile-collapsed" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-weight:600;font-size:1rem" id="profile-summary-name">—</div>
+                <div style="font-size:.8rem;color:var(--muted)" id="profile-summary-detail">—</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="APP.toggleProfileEdit(true)">✏️ Uredi</button>
+            </div>
+          </div>
+          <div id="profile-expanded">
+            <h3>Osebni podatki</h3>
+            <p class="muted" style="margin-bottom:1rem;font-size:.83rem">Ime bo vidno pri objavah in komentarjih.</p>
+            <label>Ime *</label>
+            <input id="profile-name" type="text" class="inp" placeholder="Janez">
+            <label>Priimek</label>
+            <input id="profile-surname" type="text" class="inp" placeholder="Novak (neobvezno)">
+            <label>Višina (cm)</label>
+            <input id="profile-height" type="number" class="inp" placeholder="175">
+            <label>Spol</label>
+            <select id="profile-gender" class="inp">
+              <option value="">— izberi —</option>
+              <option value="m">Moški</option>
+              <option value="f">Ženski</option>
+            </select>
+            <label>Nivo aktivnosti čez dan</label>
+            <select id="profile-activity" class="inp">
+              <option value="">— izberi —</option>
+              <option value="1.2">Sedeče delo (pisarna)</option>
+              <option value="1.375">Malo aktivno (1-2x/teden)</option>
+              <option value="1.55">Zmerno aktivno (3-5x/teden)</option>
+              <option value="1.725">Zelo aktivno (6-7x/teden)</option>
+              <option value="1.9">Izjemno aktivno (fizično delo + šport)</option>
+            </select>
+            <div class="btn-row mt">
+              <button id="save-profile-btn" class="btn">Shrani profil</button>
+              <button class="btn btn-ghost" id="cancel-profile-btn">Prekliči</button>
+            </div>
+            <div id="profile-msg" style="margin-top:.75rem;font-size:.85rem;display:none"></div>
+          </div>
         </div>
 
         <!-- Daily weight entry -->
@@ -1001,23 +1015,49 @@ const APP = window.APP = {
 
   _weightChart: null,
 
+  toggleProfileEdit(open) {
+    const expanded  = g("profile-expanded");
+    const collapsed = g("profile-collapsed");
+    if(!expanded || !collapsed) return;
+    expanded.style.display  = open ? "" : "none";
+    collapsed.style.display = open ? "none" : "";
+  },
+
   async _loadProfile() {
     // Load profile data from Firestore
+    let profileData = {};
     try {
       const snap = await getDocs(collection(db,"allowedUsers"));
       for (const d of snap.docs) {
         if ((d.data().email||"").toLowerCase().trim() === currentUser.email.toLowerCase().trim()) {
-          const data = d.data();
-          const parts = (data.displayName||"").split(" ");
+          profileData = d.data();
+          const parts = (profileData.displayName||"").split(" ");
           if(g("profile-name"))     g("profile-name").value     = parts[0]||"";
           if(g("profile-surname"))  g("profile-surname").value  = parts.slice(1).join(" ")||"";
-          if(g("profile-height"))   g("profile-height").value   = data.height||"";
-          if(g("profile-gender"))   g("profile-gender").value   = data.gender||"";
-          if(g("profile-activity")) g("profile-activity").value = data.activity||"";
+          if(g("profile-height"))   g("profile-height").value   = profileData.height||"";
+          if(g("profile-gender"))   g("profile-gender").value   = profileData.gender||"";
+          if(g("profile-activity")) g("profile-activity").value = profileData.activity||"";
           break;
         }
       }
     } catch(e){}
+
+    // If name already saved → show collapsed view
+    const hasName = (profileData.displayName||"").trim().length > 0;
+    if (hasName) {
+      const genderLabel = {m:"Moški",f:"Ženski"}[profileData.gender||""] || "";
+      const actLabel = {
+        "1.2":"Sedeče delo","1.375":"Malo aktivno","1.55":"Zmerno aktivno",
+        "1.725":"Zelo aktivno","1.9":"Izjemno aktivno"
+      }[profileData.activity||""] || "";
+      const detail = [profileData.height ? profileData.height+"cm" : "", genderLabel, actLabel].filter(Boolean).join(" · ");
+      if(g("profile-summary-name")) g("profile-summary-name").textContent = profileData.displayName;
+      if(g("profile-summary-detail")) g("profile-summary-detail").textContent = detail || "Kliknite Uredi za dopolnitev podatkov";
+      this.toggleProfileEdit(false);
+    } else {
+      // First time — show expanded
+      this.toggleProfileEdit(true);
+    }
 
     // Load today's weight entry
     const today = new Date().toISOString().slice(0,10);
@@ -1040,11 +1080,11 @@ const APP = window.APP = {
   async saveProfile() {
     const ime     = (g("profile-name").value||"").trim();
     const priimek = (g("profile-surname").value||"").trim();
-    if (!ime||!priimek){
-      const m=g("profile-msg"); m.textContent="Vnesite ime in priimek."; m.style.display=""; m.style.color="var(--danger)";
+    if (!ime){
+      const m=g("profile-msg"); m.textContent="Vnesite vsaj ime."; m.style.display=""; m.style.color="var(--danger)";
       return;
     }
-    const fullName = ime+" "+priimek;
+    const fullName = priimek ? ime+" "+priimek : ime;
     try {
       await updateDoc(doc(db,"allowedUsers",ekey(currentUser.email)),{
         displayName: fullName,
@@ -1055,8 +1095,14 @@ const APP = window.APP = {
       currentDisplayName = fullName;
       g("user-label").textContent = fullName;
       if(g("mobile-user-label")) g("mobile-user-label").textContent = fullName;
-      const m=g("profile-msg"); m.textContent="✓ Shranjeno!"; m.style.display=""; m.style.color="var(--accent2)";
-      setTimeout(()=>{ if(g("profile-msg")) g("profile-msg").style.display="none"; },2500);
+      // Update collapsed summary
+      const gLabel = {m:"Moški",f:"Ženski"}[g("profile-gender").value||""]||"";
+      const aLabel = {"1.2":"Sedeče delo","1.375":"Malo aktivno","1.55":"Zmerno aktivno","1.725":"Zelo aktivno","1.9":"Izjemno aktivno"}[g("profile-activity").value||""]||"";
+      const det = [g("profile-height").value ? g("profile-height").value+"cm" : "", gLabel, aLabel].filter(Boolean).join(" · ");
+      if(g("profile-summary-name")) g("profile-summary-name").textContent = fullName;
+      if(g("profile-summary-detail")) g("profile-summary-detail").textContent = det || "Kliknite Uredi za dopolnitev podatkov";
+      APP.toggleProfileEdit(false);
+      toast("Profil shranjen! ✓");
     } catch(e){
       const m=g("profile-msg"); m.textContent="Napaka: "+e.message; m.style.display=""; m.style.color="var(--danger)";
     }
@@ -2373,6 +2419,7 @@ on("nav-profile",   ()=> APP.nav("profile"));
 on("mnav-profile",  ()=> APP.nav("profile"));
 on("save-profile-btn", ()=> APP.saveProfile());
 on("save-weight-btn",  ()=> APP.saveWeight());
+on("cancel-profile-btn", ()=> APP.toggleProfileEdit(false));
 on("mnav-training", ()=> APP.nav("training"));
 on("nav-feed",    ()=> APP.nav("feed"));
 on("mnav-feed",   ()=> APP.nav("feed"));
