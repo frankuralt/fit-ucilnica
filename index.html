@@ -1788,20 +1788,26 @@ const APP = window.APP = {
     try {
       // Fetch full column range — A through Q, all rows
       const range = encodeURIComponent(`'${tabName}'!A:Q`);
-      // Fetch values normally
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
       const data = await resp.json();
       const rows = data.values || [];
-      // Fetch formulas separately for hyperlinks (col B and C only)
-      let formulaRows = [];
+      // Fetch video links separately — col C only with FORMULA render
+      // Build a map: rowIndex → videoUrl
+      const videoUrlMap = {};
       try {
-        const fRange = encodeURIComponent(`'${tabName}'!B:C`);
+        const fRange = encodeURIComponent(`'${tabName}'!C:C`);
         const fUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${fRange}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
         const fResp = await fetch(fUrl);
-        if (fResp.ok) formulaRows = (await fResp.json()).values || [];
-      } catch(e) { /* hyperlinks optional */ }
+        if (fResp.ok) {
+          const fData = (await fResp.json()).values || [];
+          fData.forEach((fRow, idx) => {
+            const parsed = parseHyperlink((fRow||[])[0]||"");
+            if (parsed.url) videoUrlMap[idx] = parsed.url;
+          });
+        }
+      } catch(e) { /* video links are optional */ }
 
       if (!rows.length) {
         htm("training-content","<div class='training-empty'><p>V tem listu ni podatkov.</p></div>");
@@ -1854,16 +1860,11 @@ const APP = window.APP = {
           break;
         }
         if (code && name && name !== "Vaja") {
-          // Get video URL from formula rows using row index
-          const rowIdx = rows.indexOf(row);
-          const fRowData = rowIdx >= 0 && rowIdx < formulaRows.length ? formulaRows[rowIdx] : [];
-          const nameFormula = fRowData[1] || row[2] || "";
-          const nameCell = parseHyperlink(nameFormula);
-          const videoUrl = nameCell.url || "";
-          const displayName = nameCell.name || name;
+          const rowIdx2 = rows.indexOf(row);
+          const videoUrl = videoUrlMap[rowIdx2] || "";
           exercises.push({
             code,
-            name: displayName || name,
+            name,
             videoUrl,
             note:  (row[3]||"").trim(),
             sets:  (row[4]||"").trim(),
@@ -1891,7 +1892,7 @@ const APP = window.APP = {
         const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>
           ex.nizi[i] ? `<span class="niz-cell"><span style="font-size:.65rem;color:var(--muted);display:block">Niz ${i+1}</span>${ex.nizi[i]}</span>` : `<span class="niz-cell" style="opacity:.3">—</span>`
         ).join("");
-        const videoLink = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.2rem;font-size:.72rem;color:var(--accent2);text-decoration:none;margin-left:.4rem" title="Poglej video">▶ video</a>` : "";
+        const videoLink = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.15rem;font-size:.65rem;color:var(--muted);text-decoration:none;margin-left:.35rem;opacity:.6;border:1px solid var(--border);border-radius:4px;padding:.1rem .35rem" title="Poglej video vaje">▶</a>` : "";
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
           <td><div class="ex-name">${esc(ex.name)}${videoLink}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
@@ -1912,7 +1913,7 @@ const APP = window.APP = {
           ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${esc(ex.tempo)}</span></div>` : "",
           ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${esc(ex.rest)}</span></div>` : "",
         ].filter(Boolean).join("");
-        const mVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);border-radius:6px;padding:.2rem .55rem;font-size:.75rem;color:var(--accent2);text-decoration:none">▶ Video</a>` : "";
+        const mVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.2rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.2rem .5rem;font-size:.72rem;color:var(--muted);text-decoration:none;opacity:.7" title="Video vaje">▶</a>` : "";
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
