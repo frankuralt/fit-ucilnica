@@ -2015,9 +2015,18 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         ? `<th colspan="${nizCols}">Nizi (${nizCols})</th>`
         : "";
 
+      // Convert Sheets serial date number to readable date
+      let displayDate = workoutDate;
+      const serialNum = parseFloat(workoutDate);
+      if (!isNaN(serialNum) && serialNum > 1000) {
+        // Google Sheets epoch: Dec 30, 1899
+        const d = new Date((serialNum - 25569) * 86400 * 1000);
+        displayDate = d.toLocaleDateString("sl-SI", {day:"numeric", month:"numeric", year:"numeric"});
+      }
+
       const header = `<div class="workout-header">
         <h3>${tabName}</h3>
-        <span class="workout-num">Trening #${esc(workoutNum)}${workoutDate?" · "+esc(workoutDate):""}</span>
+        <span class="workout-num">Trening #${esc(workoutNum)}${displayDate?" · "+esc(displayDate):""}</span>
       </div>`;
 
       const volumeBar = volumeKg ? `
