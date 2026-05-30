@@ -1923,7 +1923,7 @@ const APP = window.APP = {
         const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>
           ex.nizi[i] ? `<span class="niz-cell"><span style="font-size:.65rem;color:var(--muted);display:block">Niz ${i+1}</span>${ex.nizi[i]}</span>` : `<span class="niz-cell" style="opacity:.3">—</span>`
         ).join("");
-        const videoLink = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:var(--accent2);text-decoration:none;margin-left:.5rem;border:1px solid rgba(37,99,235,.4);border-radius:5px;padding:.15rem .5rem;cursor:pointer;background:rgba(37,99,235,.1)" title="Poglej video" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
+        const videoLink = `<button style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};margin-left:.5rem;border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:5px;padding:.15rem .5rem;cursor:${ex.videoUrl?'pointer':'default'};background:${ex.videoUrl?'rgba(37,99,235,.1)':'transparent'};opacity:${ex.videoUrl?'1':'.35'}" title="${ex.videoUrl?'Poglej video':'Video ni na voljo'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
           <td><div class="ex-name">${esc(ex.name)}${videoLink}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
@@ -1944,7 +1944,7 @@ const APP = window.APP = {
           ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${esc(ex.tempo)}</span></div>` : "",
           ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${esc(ex.rest)}</span></div>` : "",
         ].filter(Boolean).join("");
-        const mVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.4);border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:var(--accent2);text-decoration:none;cursor:pointer;font-weight:500" title="Poglej video" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
+        const mVideoBtn = `<button style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:${ex.videoUrl?'rgba(37,99,235,.15)':'var(--bg3)'};border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};cursor:${ex.videoUrl?'pointer':'default'};font-weight:500;opacity:${ex.videoUrl?'1':'.4'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
@@ -2122,7 +2122,7 @@ const APP = window.APP = {
 
       // Specialno — table on desktop, cards on mobile
       const specialnoRows = specialnoExercises.map(ex => {
-        const ogDesktopBtn = ex.videoUrl ? `<a style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:var(--accent2);text-decoration:none;margin-left:.5rem;border:1px solid rgba(37,99,235,.4);border-radius:5px;padding:.15rem .5rem;cursor:pointer;background:rgba(37,99,235,.1)" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
+        const ogDesktopBtn = `<button style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};margin-left:.5rem;border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:5px;padding:.15rem .5rem;cursor:${ex.videoUrl?'pointer':'default'};background:${ex.videoUrl?'rgba(37,99,235,.1)':'transparent'};opacity:${ex.videoUrl?'1':'.35'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
           <td><div class="ex-name">${esc(ex.name)}${ogDesktopBtn}</div>${ex.opomba?`<div class="ex-note">${esc(ex.opomba)}</div>`:""}</td>
@@ -2133,7 +2133,7 @@ const APP = window.APP = {
       }).join("");
 
       const specialnoCards = specialnoExercises.map(ex => {
-        const ogVideoBtn = ex.videoUrl ? `<a style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.4);border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:var(--accent2);text-decoration:none;cursor:pointer;font-weight:500" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶ Video</a>` : "";
+        const ogVideoBtn = `<button style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:${ex.videoUrl?'rgba(37,99,235,.15)':'var(--bg3)'};border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};cursor:${ex.videoUrl?'pointer':'default'};font-weight:500;opacity:${ex.videoUrl?'1':'.4'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
