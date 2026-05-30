@@ -438,6 +438,16 @@
       <button id="forgot-btn" class="btn btn-full">Pošlji e-pošto za ponastavitev</button>
     </div>
 
+    <!-- NEW PASSWORD (shown when reset link is clicked) -->
+    <div id="panel-newpass" style="display:none">
+      <p class="auth-hint">Vnesite novo geslo za vaš račun.</p>
+      <label>Novo geslo</label>
+      <input id="newpass-pass" type="password" class="inp" placeholder="najmanj 6 znakov">
+      <label>Ponovite geslo</label>
+      <input id="newpass-pass2" type="password" class="inp" placeholder="ponovite geslo">
+      <button id="newpass-btn" class="btn btn-full">Nastavi novo geslo</button>
+    </div>
+
   </div>
 </div>
 
@@ -617,7 +627,7 @@
 
 <script type="module">
 import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged }
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode, signOut, onAuthStateChanged }
                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc,
          addDoc, updateDoc, deleteDoc, query, orderBy, where, serverTimestamp }
@@ -642,7 +652,7 @@ const db   = getFirestore(app);
 // ╔══════════════════════════════════════════════╗
 // ║  YOUR CONFIGURATION — fill these in         ║
 // ╚══════════════════════════════════════════════╝
-const RESET_API_URL  = "https://YOUR_VERCEL_APP.vercel.app/api/send-reset";
+const RESET_API_URL  = "https://fit-ucilnica-reset.vercel.app/api/send-reset";
 const SHEETS_API_KEY = "AIzaSyDTuMXsRd4Rv_oi3eNgRb9MYG9RwokiS9M";
 
 /* ── tiny helpers ── */
@@ -681,6 +691,32 @@ async function emailExistsInCollection(colName, email) {
   } catch(err2) { throw err2; }
   return false;
 }
+
+/* ── handle password reset URL params ── */
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("mode");
+  const oobCode = params.get("oobCode");
+  if (mode === "resetPassword" && oobCode) {
+    document.querySelectorAll(".auth-tab").forEach(t => t.style.display="none");
+    ["panel-signin","panel-signup","panel-forgot"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display="none";
+    });
+    const np = document.getElementById("panel-newpass");
+    if(np) np.style.display="";
+    window._resetOobCode = oobCode;
+    try {
+      const auth2 = getAuth();
+      await verifyPasswordResetCode(auth2, oobCode);
+    } catch(e) {
+      const errEl = document.getElementById("auth-err");
+      if(errEl){ errEl.textContent="Povezava za ponastavitev je potekla ali neveljavna. Zahtevajte novo."; errEl.style.display="block"; }
+      const np2 = document.getElementById("panel-newpass");
+      if(np2) np2.style.display="none";
+    }
+  }
+})();
 
 /* ── state ── */
 let IS_ADMIN = false;
@@ -730,6 +766,29 @@ function switchScreen(name){
 /* ── APP namespace exposed to HTML ── */
 const APP = window.APP = {
 
+  setNewPassword: async () => {
+    const pass  = g("newpass-pass").value;
+    const pass2 = g("newpass-pass2").value;
+    if (!pass || pass.length < 6){ showAuthErr("Geslo mora imeti vsaj 6 znakov."); return; }
+    if (pass !== pass2){ showAuthErr("Gesli se ne ujemata."); return; }
+    const btn = g("newpass-btn");
+    btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+    try {
+      await confirmPasswordReset(auth, window._resetOobCode, pass);
+      showAuthOk("Geslo je bilo uspešno nastavljeno! Sedaj se lahko prijavite.");
+      // Clean up URL and show login after 2 seconds
+      setTimeout(()=>{
+        window.history.replaceState({}, "", window.location.pathname);
+        document.querySelectorAll(".auth-tab").forEach(t => t.style.display="");
+        g("panel-newpass").style.display="none";
+        APP.switchTab("signin");
+      }, 2000);
+    } catch(e){
+      showAuthErr("Napaka: "+e.message);
+    }
+    btn.innerHTML="Nastavi novo geslo"; btn.disabled=false;
+  },
+
   switchTab(tab) {
     ["signin","signup","forgot"].forEach(t=>{
       g("tab-"+t).classList.toggle("active", t===tab);
@@ -775,12 +834,20 @@ const APP = window.APP = {
     const btn = g("forgot-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
     try {
-      await sendPasswordResetEmail(auth, email);
+      // Call Vercel function which uses Firebase Admin to generate link + sends via Resend
+      const resp = await fetch(RESET_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(()=>({}));
+        throw new Error(err.error || "Server error");
+      }
       showAuthOk("E-pošta za ponastavitev je poslana! Preverite nabiralnik (in neželeno pošto).");
       g("forgot-email").value="";
     } catch(e){
-      const msg = e.code==="auth/user-not-found" ? "Ni računa s tem e-poštnim naslovom." : "Pošiljanje ni uspelo: "+e.message;
-      showAuthErr(msg);
+      showAuthErr("Pošiljanje ni uspelo: "+e.message);
     }
     btn.innerHTML="Pošlji e-pošto za ponastavitev"; btn.disabled=false;
   },
@@ -1433,7 +1500,8 @@ const APP = window.APP = {
   /* ── OGREVANJE PARSER ── */
   async _showOgrevanje(sheetId) {
     try {
-      const range = encodeURIComponent("'Ogrevanje'!A:O");
+      // Fetch wide enough — cols A through W (col 23)
+      const range = encodeURIComponent("'Ogrevanje'!A1:W25");
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
@@ -1445,46 +1513,42 @@ const APP = window.APP = {
         return;
       }
 
-      // Get name from row 7 (index 6), col B (index 1)
-      const clientName = (rows[6]||[])[1] || "";
-      // Get date from row 6 (index 5), col B (index 1)
-      const sessionDate = (rows[5]||[])[1] || "";
+      // F6 = date (row index 5, col F = index 5)
+      // F7 = name (row index 6, col F = index 5)
+      const sessionDate = (rows[5]||[])[5] || "";
+      const clientName  = (rows[6]||[])[5] || "";
 
-      // Find "Osnovno" section — row where col A = "Osnovno" (index ~9)
+      // Find "Osnovno" and "Specialno" section header rows
       let osnovnoIdx = -1, specialnoIdx = -1;
       rows.forEach((row, i) => {
         const a = (row[0]||"").trim();
-        if (a === "Osnovno") osnovnoIdx = i;
+        if (a === "Osnovno")   osnovnoIdx  = i;
         if (a === "Specialno") specialnoIdx = i;
       });
 
-      // Parse Osnovno exercises (rows between osnovnoIdx+1 and specialnoIdx)
-      // Cols: A=code(1,2), B=name, skipping to: E=Čas(4), F=Naklo(5), G=Hitrost(6), then Opombe is further right
+      // ── OSNOVNO ──
+      // Row after Osnovno header has:
+      // A = number (1, 2...), B = name (Razgibavanje...), E = "Vse po 6" (čas/reps instruction), W = opombe (comma-separated exercises)
       const osnovnoExercises = [];
       if (osnovnoIdx >= 0) {
-        const endIdx = specialnoIdx >= 0 ? specialnoIdx : osnovnoIdx + 10;
+        const endIdx = specialnoIdx >= 0 ? specialnoIdx : Math.min(osnovnoIdx + 6, rows.length);
         for (let i = osnovnoIdx + 1; i < endIdx; i++) {
           const row = rows[i] || [];
           const code = (row[0]||"").trim();
           const name = (row[1]||"").trim();
           if (!code && !name) continue;
-          if (code && name) {
-            // Find Čas col — search for non-empty value in cols C-H
-            // Structure: A=code, B=name, then C-D merged/empty, E=Čas, F=Naklo, G=Hitrost, then big gap, last col=Opombe
-            osnovnoExercises.push({
-              code,
-              name,
-              cas:    (row[4]||"").trim(),
-              naklo:  (row[5]||"").trim(),
-              hitrost:(row[6]||"").trim(),
-              opombe: (row[row.length-1]||"").trim()
-            });
+          // N col = index 13 = reps instruction ("Vse po 6")
+          const repsInstr = (row[13]||"").trim();
+          // W col = index 22 = comma-separated exercises list (opombe)
+          const opombe = (row[22]||"").trim();
+          if (name) {
+            osnovnoExercises.push({ code, name, repsInstr, opombe });
           }
         }
       }
 
-      // Parse Specialno exercises (rows after specialnoIdx+1)
-      // Cols: A=code, B=name, C-D=merged, then S(col after name), P, Čas, Razdalj, Opomba
+      // ── SPECIALNO ──
+      // A=code(0), B=name(1), N=Serije(13), P=Ponovitve(15), R=Čas(17), W=Opomba(22)
       const specialnoExercises = [];
       if (specialnoIdx >= 0) {
         for (let i = specialnoIdx + 1; i < rows.length; i++) {
@@ -1496,55 +1560,47 @@ const APP = window.APP = {
             specialnoExercises.push({
               code,
               name,
-              s:      (row[4]||"").trim(),
-              p:      (row[5]||"").trim(),
-              cas:    (row[6]||"").trim(),
-              razdalj:(row[7]||"").trim(),
-              opomba: (row[row.length-1]||"").trim()
+              serije: (row[13]||"").trim(),  // N = Serije
+              ponov:  (row[15]||"").trim(),  // P = Ponovitve
+              cas:    (row[17]||"").trim(),  // R = Čas
+              opomba: (row[22]||"").trim()   // W = Opomba
             });
           }
         }
       }
 
-      // Build HTML
-      const nameHtml = clientName
-        ? `<div style="font-size:.82rem;color:var(--accent2);margin-bottom:.25rem">👤 ${esc(clientName)}${sessionDate?" · "+esc(sessionDate):""}</div>` : "";
+      // ── BUILD HTML ──
+      const infoBar = (clientName || sessionDate) ? `
+        <div style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border);display:flex;gap:1rem;flex-wrap:wrap">
+          ${clientName  ? `<span style="font-size:.85rem;color:var(--text)">👤 <strong>${esc(clientName)}</strong></span>` : ""}
+          ${sessionDate ? `<span style="font-size:.85rem;color:var(--muted)">📅 ${esc(sessionDate)}</span>` : ""}
+        </div>` : "";
 
-      const osnovnoRows = osnovnoExercises.map(ex => `
-        <tr>
-          <td><span class="ex-code">${esc(ex.code)}</span></td>
-          <td><div class="ex-name">${esc(ex.name)}</div></td>
-          <td class="ex-sets">${esc(ex.cas)}</td>
-          <td class="ex-reps">${esc(ex.naklo)}</td>
-          <td class="ex-tempo">${esc(ex.hitrost)}</td>
-          <td>${esc(ex.opombe)}</td>
-        </tr>`).join("");
+      // Osnovno — show as a simple block with exercise list from opombe
+      const osnovnoHtml = osnovnoExercises.map(ex => {
+        // Split opombe by comma to show as pills
+        const items = ex.opombe ? ex.opombe.split(",").map(s=>s.trim()).filter(Boolean) : [];
+        const pills = items.map(it=>`<span style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:.15rem .6rem;font-size:.78rem;white-space:nowrap">${esc(it)}</span>`).join("");
+        return `
+          <div style="padding:.85rem 1.25rem;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
+              <span class="ex-code">${esc(ex.code)}</span>
+              <span class="ex-name">${esc(ex.name)}</span>
+              ${ex.repsInstr ? `<span style="margin-left:auto;font-size:.8rem;color:var(--accent2);font-weight:600">${esc(ex.repsInstr)}</span>` : ""}
+            </div>
+            ${pills ? `<div style="display:flex;gap:.35rem;flex-wrap:wrap">${pills}</div>` : ""}
+          </div>`;
+      }).join("");
 
+      // Specialno — table on desktop, cards on mobile
       const specialnoRows = specialnoExercises.map(ex => `
         <tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
-          <td><div class="ex-name">${esc(ex.name)}</div></td>
-          <td class="ex-sets">${esc(ex.s)}</td>
-          <td class="ex-reps">${esc(ex.p)}</td>
+          <td><div class="ex-name">${esc(ex.name)}</div>${ex.opomba?`<div class="ex-note">${esc(ex.opomba)}</div>`:""}</td>
+          <td class="ex-sets">${esc(ex.serije)}</td>
+          <td class="ex-reps">${esc(ex.ponov)}</td>
           <td class="ex-tempo">${esc(ex.cas)}</td>
-          <td>${esc(ex.razdalj)}</td>
-          <td>${esc(ex.opomba)}</td>
         </tr>`).join("");
-
-      // Mobile cards
-      const osnovnoCards = osnovnoExercises.map(ex => `
-        <div class="ex-card">
-          <div class="ex-card-top">
-            <span class="ex-card-code">${esc(ex.code)}</span>
-            <span class="ex-card-name">${esc(ex.name)}</span>
-          </div>
-          <div class="ex-card-stats">
-            ${ex.cas    ? `<div class="ex-stat"><span class="ex-stat-label">Čas</span><span class="ex-stat-val">${esc(ex.cas)}</span></div>` : ""}
-            ${ex.naklo  ? `<div class="ex-stat"><span class="ex-stat-label">Naklo</span><span class="ex-stat-val">${esc(ex.naklo)}</span></div>` : ""}
-            ${ex.hitrost? `<div class="ex-stat"><span class="ex-stat-label">Hitrost</span><span class="ex-stat-val">${esc(ex.hitrost)}</span></div>` : ""}
-          </div>
-          ${ex.opombe ? `<div class="ex-card-note">${esc(ex.opombe)}</div>` : ""}
-        </div>`).join("");
 
       const specialnoCards = specialnoExercises.map(ex => `
         <div class="ex-card">
@@ -1552,42 +1608,33 @@ const APP = window.APP = {
             <span class="ex-card-code">${esc(ex.code)}</span>
             <span class="ex-card-name">${esc(ex.name)}</span>
           </div>
-          <div class="ex-card-stats">
-            ${ex.s ? `<div class="ex-stat"><span class="ex-stat-label">S</span><span class="ex-stat-val">${esc(ex.s)}</span></div>` : ""}
-            ${ex.p ? `<div class="ex-stat"><span class="ex-stat-label">P</span><span class="ex-stat-val">${esc(ex.p)}</span></div>` : ""}
-            ${ex.cas ? `<div class="ex-stat"><span class="ex-stat-label">Čas</span><span class="ex-stat-val">${esc(ex.cas)}</span></div>` : ""}
-            ${ex.razdalj ? `<div class="ex-stat"><span class="ex-stat-label">Razdalj</span><span class="ex-stat-val">${esc(ex.razdalj)}</span></div>` : ""}
-          </div>
           ${ex.opomba ? `<div class="ex-card-note">${esc(ex.opomba)}</div>` : ""}
+          <div class="ex-card-stats">
+            ${ex.serije ? `<div class="ex-stat"><span class="ex-stat-label">Serije</span><span class="ex-stat-val">${esc(ex.serije)}</span></div>` : ""}
+            ${ex.ponov  ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val">${esc(ex.ponov)}</span></div>` : ""}
+            ${ex.cas    ? `<div class="ex-stat"><span class="ex-stat-label">Čas</span><span class="ex-stat-val">${esc(ex.cas)}</span></div>` : ""}
+          </div>
         </div>`).join("");
 
       htm("training-content", `
         <div class="workout-block">
-          <div class="workout-header">
-            <h3>Ogrevanje</h3>
-          </div>
-          ${nameHtml ? `<div style="padding:.6rem 1.25rem;border-bottom:1px solid var(--border)">${nameHtml}</div>` : ""}
+          <div class="workout-header"><h3>Ogrevanje</h3></div>
+          ${infoBar}
 
           ${osnovnoExercises.length ? `
-          <div style="padding:.6rem 1.25rem .3rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent2);font-weight:600">Osnovno</div>
-          <div style="overflow-x:auto">
-            <table class="workout-table">
-              <thead><tr><th></th><th>Vaja</th><th>Čas</th><th>Naklo/wati</th><th>Hitrost</th><th>Opombe</th></tr></thead>
-              <tbody>${osnovnoRows}</tbody>
-            </table>
-          </div>
-          <div class="ex-cards">${osnovnoCards}</div>
+            <div style="padding:.5rem 1.25rem .2rem;font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent2);font-weight:600">Razgibavanje — Osnovno</div>
+            ${osnovnoHtml}
           ` : ""}
 
           ${specialnoExercises.length ? `
-          <div style="padding:.6rem 1.25rem .3rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent2);font-weight:600;border-top:1px solid var(--border)">Specialno</div>
-          <div style="overflow-x:auto">
-            <table class="workout-table">
-              <thead><tr><th></th><th>Vaja</th><th>S</th><th>P</th><th>Čas</th><th>Razdalj</th><th>Opomba</th></tr></thead>
-              <tbody>${specialnoRows}</tbody>
-            </table>
-          </div>
-          <div class="ex-cards">${specialnoCards}</div>
+            <div style="padding:.65rem 1.25rem .3rem;font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent2);font-weight:600">Specialno ogrevanje</div>
+            <div style="overflow-x:auto">
+              <table class="workout-table">
+                <thead><tr><th></th><th>Vaja</th><th>Serije</th><th>Ponovitve</th><th>Čas</th></tr></thead>
+                <tbody>${specialnoRows}</tbody>
+              </table>
+            </div>
+            <div class="ex-cards">${specialnoCards}</div>
           ` : ""}
         </div>
       `);
@@ -1825,6 +1872,7 @@ document.querySelectorAll(".modal-bg").forEach(m=>{
 function on(id, fn){ const el=document.getElementById(id); if(el) el.addEventListener("click", fn); }
 
 on("login-btn",   ()=> APP.login());
+on("newpass-btn", ()=> APP.setNewPassword());
 on("post-submit-btn", ()=> APP.submitPost());
 on("nav-training",  ()=> APP.nav("training"));
 on("mnav-training", ()=> APP.nav("training"));
