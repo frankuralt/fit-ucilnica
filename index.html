@@ -1930,7 +1930,7 @@ const APP = window.APP = {
         const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>
           ex.nizi[i] ? `<span class="niz-cell"><span style="font-size:.65rem;color:var(--muted);display:block">Niz ${i+1}</span>${ex.nizi[i]}</span>` : `<span class="niz-cell" style="opacity:.3">—</span>`
         ).join("");
-        const videoLink = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.15rem;font-size:.65rem;color:var(--muted);text-decoration:none;margin-left:.35rem;opacity:.65;border:1px solid var(--border);border-radius:4px;padding:.1rem .35rem;cursor:pointer;background:none" title="Poglej video vaje" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
+        const videoLink = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:var(--accent2);text-decoration:none;margin-left:.5rem;border:1px solid rgba(37,99,235,.4);border-radius:5px;padding:.15rem .5rem;cursor:pointer;background:rgba(37,99,235,.1)" title="Poglej video" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
           <td><div class="ex-name">${esc(ex.name)}${videoLink}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
@@ -1951,7 +1951,7 @@ const APP = window.APP = {
           ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${esc(ex.tempo)}</span></div>` : "",
           ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${esc(ex.rest)}</span></div>` : "",
         ].filter(Boolean).join("");
-        const mVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.2rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.25rem .6rem;font-size:.78rem;color:var(--muted);text-decoration:none;opacity:.75;cursor:pointer" title="Poglej video" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
+        const mVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.4);border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:var(--accent2);text-decoration:none;cursor:pointer;font-weight:500" title="Poglej video" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
@@ -2024,13 +2024,19 @@ const APP = window.APP = {
       if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
       const data = await resp.json();
       const rows = data.values || [];
-      // Fetch formulas for hyperlinks in col B
-      let ogFormulaRows = [];
+      // Fetch formulas for hyperlinks in col B — build videoUrlMap for ogrevanje
+      const ogVideoMap = {};
       try {
         const fRange = encodeURIComponent("'Ogrevanje'!B1:B25");
         const fUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${fRange}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
         const fResp = await fetch(fUrl);
-        if (fResp.ok) ogFormulaRows = (await fResp.json()).values || [];
+        if (fResp.ok) {
+          const fData = (await fResp.json()).values || [];
+          fData.forEach((fRow, idx) => {
+            const parsed = parseHyperlink((fRow||[])[0]||"");
+            if (parsed.url) { ogVideoMap[idx] = {url: parsed.url, name: parsed.name}; }
+          });
+        }
       } catch(e) {}
 
       if (!rows.length) {
@@ -2082,12 +2088,11 @@ const APP = window.APP = {
           const name = (row[1]||"").trim();
           if (!code && !name) continue;
           if (code) {
-            const ogFormula = i < ogFormulaRows.length ? (ogFormulaRows[i]||[])[0] : row[1];
-            const ogNameCell = parseHyperlink(ogFormula || row[1]);
+            const ogEntry = ogVideoMap[i] || {};
             specialnoExercises.push({
               code,
-              name: ogNameCell.name || name,
-              videoUrl: ogNameCell.url || "",
+              name: ogEntry.name || name,
+              videoUrl: ogEntry.url || "",
               serije: (row[13]||"").trim(),
               ponov:  (row[15]||"").trim(),
               cas:    (row[17]||"").trim(),
@@ -2131,7 +2136,7 @@ const APP = window.APP = {
         </tr>`).join("");
 
       const specialnoCards = specialnoExercises.map(ex => {
-        const ogVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);border-radius:6px;padding:.2rem .55rem;font-size:.75rem;color:var(--accent2);text-decoration:none">▶ Video</a>` : "";
+        const ogVideoBtn = ex.videoUrl ? `<a style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.4);border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:var(--accent2);text-decoration:none;cursor:pointer;font-weight:500" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶ Video</a>` : "";
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
