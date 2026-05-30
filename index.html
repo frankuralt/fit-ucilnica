@@ -1839,7 +1839,6 @@ const APP = window.APP = {
             const parsed = parseHyperlink((fRow||[])[0]||"");
             if (parsed.url) {
               videoUrlMap[idx] = parsed.url;
-              if (parsed.name) videoUrlMap["name_"+idx] = parsed.name;
             }
           });
         }
@@ -1896,13 +1895,12 @@ const APP = window.APP = {
           break;
         }
         if (code && name && name !== "Vaja") {
-          const rowIdx2 = rows.indexOf(row);
-          const videoUrl = videoUrlMap[rowIdx2] || "";
-          // name from row[2] might be raw formula if FORMULA fetch bled through — use parsed name
-          const parsedName = videoUrlMap["name_"+rowIdx2] || name;
+          // Use absolute row index i for videoUrlMap lookup
+          const videoUrl = videoUrlMap[i] || parseHyperlink((row[2]||"").trim()).url || "";
+          const parsedName = parseHyperlink((row[2]||"").trim()).name || name;
           exercises.push({
             code,
-            name: parsedName,
+            name: parsedName || name,
             videoUrl,
             note:  (row[3]||"").trim(),
             sets:  (row[4]||"").trim(),
@@ -2024,16 +2022,18 @@ const APP = window.APP = {
       if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
       const data = await resp.json();
       const rows = data.values || [];
-      // Fetch formulas for hyperlinks in col B — build videoUrlMap for ogrevanje
+      // Fetch full sheet with FORMULA to get hyperlinks from merged B-M cells
       const ogVideoMap = {};
       try {
-        const fRange = encodeURIComponent("'Ogrevanje'!B1:B25");
-        const fUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${fRange}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
-        const fResp = await fetch(fUrl);
-        if (fResp.ok) {
-          const fData = (await fResp.json()).values || [];
-          fData.forEach((fRow, idx) => {
-            const parsed = parseHyperlink((fRow||[])[0]||"");
+        const fRange2 = encodeURIComponent("'Ogrevanje'!A1:W25");
+        const fUrl2 = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${fRange2}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
+        const fResp2 = await fetch(fUrl2);
+        if (fResp2.ok) {
+          const fData2 = (await fResp2.json()).values || [];
+          fData2.forEach((fRow, idx) => {
+            // Col B = index 1 — contains HYPERLINK formula for exercise name
+            const cell = (fRow||[])[1]||"";
+            const parsed = parseHyperlink(cell);
             if (parsed.url) { ogVideoMap[idx] = {url: parsed.url, name: parsed.name}; }
           });
         }
