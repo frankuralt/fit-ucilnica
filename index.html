@@ -1895,7 +1895,7 @@ const APP = window.APP = {
           // videoUrl already set above
           exercises.push({
             code,
-            name: parsedName || name,
+            name: name,
             videoUrl,
             note:  String(row[3]||"").trim(),
             sets:  String(row[4]||"").trim(),
@@ -2121,14 +2121,16 @@ const APP = window.APP = {
       }).join("");
 
       // Specialno — table on desktop, cards on mobile
-      const specialnoRows = specialnoExercises.map(ex => `
-        <tr>
+      const specialnoRows = specialnoExercises.map(ex => {
+        const ogDesktopBtn = ex.videoUrl ? `<a style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:var(--accent2);text-decoration:none;margin-left:.5rem;border:1px solid rgba(37,99,235,.4);border-radius:5px;padding:.15rem .5rem;cursor:pointer;background:rgba(37,99,235,.1)" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶</a>` : "";
+        return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
-          <td><div class="ex-name">${esc(ex.name)}</div>${ex.opomba?`<div class="ex-note">${esc(ex.opomba)}</div>`:""}</td>
+          <td><div class="ex-name">${esc(ex.name)}${ogDesktopBtn}</div>${ex.opomba?`<div class="ex-note">${esc(ex.opomba)}</div>`:""}</td>
           <td class="ex-sets">${esc(ex.serije)}</td>
           <td class="ex-reps">${esc(ex.ponov)}</td>
           <td class="ex-tempo">${esc(ex.cas)}</td>
-        </tr>`).join("");
+        </tr>`;
+      }).join("");
 
       const specialnoCards = specialnoExercises.map(ex => {
         const ogVideoBtn = ex.videoUrl ? `<a style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.4);border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:var(--accent2);text-decoration:none;cursor:pointer;font-weight:500" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false">▶ Video</a>` : "";
