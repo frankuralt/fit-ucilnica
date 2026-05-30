@@ -371,10 +371,23 @@
     .dash-hero { padding:1.25rem 1.1rem; margin-bottom:1.25rem; }
     .dash-hero h2 { font-size:1.25rem; }
 
-    /* bigger tap targets */
-    .btn-sm { padding:.5rem .9rem; font-size:.83rem; }
-    .step-row { padding:.85rem 1rem; }
-    .inp { font-size:16px; } /* prevents iOS zoom on focus */
+    /* bigger fonts & tap targets */
+    body { font-size:16px; }
+    .btn-sm { padding:.5rem .9rem; font-size:.85rem; }
+    .step-row { padding:.85rem 1rem; font-size:.95rem; }
+    .inp { font-size:16px; }
+    .ex-card-name { font-size:1rem; }
+    .ex-card-note { font-size:.85rem; }
+    .ex-stat-label { font-size:.68rem; }
+    .ex-stat-val { font-size:.9rem; }
+    .niz-cell { font-size:.82rem; }
+    .post-body { font-size:1rem; }
+    .comment-text { font-size:.92rem; }
+    .card-body h3 { font-size:1.1rem; }
+    .card-body p { font-size:.9rem; }
+    .page-header h2 { font-size:1.5rem; }
+    .training-tab { font-size:.85rem; padding:.5rem 1rem; }
+    .week-avg { font-size:1.1rem; }
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -784,6 +797,16 @@ const SHEETS_API_KEY = "AIzaSyDTuMXsRd4Rv_oi3eNgRb9MYG9RwokiS9M";
 const g   = id => document.getElementById(id);
 const htm = (id, h) => { g(id).innerHTML = h; };
 const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+// Parse Google Sheets HYPERLINK formula: =HYPERLINK("url","name") → {url, name}
+function parseHyperlink(val) {
+  if (!val) return {url:"", name:""};
+  const s = String(val);
+  // =HYPERLINK("url","name") or =HYPERLINK("url")
+  const m = s.match(/=HYPERLINK\("([^"]+)"(?:,"([^"]*)")?\)/i);
+  if (m) return {url: m[1], name: m[2]||""};
+  return {url:"", name:s};
+}
 
 function toast(msg, type="ok") {
   const d = document.createElement("div");
@@ -1337,13 +1360,30 @@ const APP = window.APP = {
           <svg class="step-done-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>`).join("")
       : "<p class='muted' style='padding:1rem'>No lessons yet.</p>");
-    htm("viewer-content",`<div class="step-content-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1rem;text-align:center">
-      <svg width="48" height="48" fill="none" stroke="var(--accent2)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <p style="color:var(--muted);font-size:.95rem">Izberite lekcijo in začnite z učenjem</p>
-    </div>`);
     if(g("viewer-progress")) g("viewer-progress").style.width = "0%";
     if(g("viewer-step-counter")) g("viewer-step-counter").textContent = "";
     g("course-viewer").classList.add("open");
+
+    // Check for saved progress — if found resume, else open first lesson
+    try {
+      const progSnap = await getDoc(doc(db,"progress",currentUser.email+"_"+courseId));
+      if (progSnap.exists() && steps.length) {
+        const saved = progSnap.data();
+        const savedIdx = steps.findIndex(s=>s.id===saved.stepId);
+        const idx = savedIdx >= 0 ? savedIdx : 0;
+        await this.showStep(courseId, steps[idx].id, idx, steps.length);
+      } else if (steps.length) {
+        // No progress — open first lesson automatically
+        await this.showStep(courseId, steps[0].id, 0, steps.length);
+      } else {
+        htm("viewer-content",`<div class="step-content-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1rem;text-align:center">
+          <svg width="48" height="48" fill="none" stroke="var(--accent2)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p style="color:var(--muted);font-size:.95rem">Še ni lekcij v tem tečaju.</p>
+        </div>`);
+      }
+    } catch(e) {
+      if (steps.length) await this.showStep(courseId, steps[0].id, 0, steps.length);
+    }
   },
 
   closeViewer() { g("course-viewer").classList.remove("open"); },
@@ -1351,11 +1391,16 @@ const APP = window.APP = {
   async showStep(courseId, stepId, stepIndex, totalSteps) {
     document.querySelectorAll(".step-row").forEach(r=>r.classList.remove("active"));
     const row = g("sr-"+stepId); if(row) row.classList.add("active");
-    // mark as done
     if(row) row.classList.add("done");
-    // auto-close lesson sidebar on mobile after selecting
     const sb = document.querySelector(".steps-sidebar");
     if (sb && window.innerWidth <= 640) sb.classList.remove("open");
+    // Save progress to Firestore
+    try {
+      await setDoc(doc(db,"progress",currentUser.email+"_"+courseId),{
+        email: currentUser.email, courseId, stepId, stepIndex: stepIndex||0,
+        updatedAt: serverTimestamp()
+      });
+    } catch(e){}
 
     // update progress bar + counter
     if(g("viewer-progress") && totalSteps){
@@ -1743,7 +1788,7 @@ const APP = window.APP = {
     try {
       // Fetch full column range — A through Q, all rows
       const range = encodeURIComponent(`'${tabName}'!A:Q`);
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error("Sheets API napaka: "+resp.status);
       const data = await resp.json();
@@ -1800,9 +1845,13 @@ const APP = window.APP = {
           break;
         }
         if (code && name && name !== "Vaja") {
+          const nameCell = parseHyperlink(row[2]);
+          const videoUrl = nameCell.url || "";
+          const displayName = nameCell.name || name;
           exercises.push({
             code,
-            name,
+            name: displayName || name,
+            videoUrl,
             note:  (row[3]||"").trim(),
             sets:  (row[4]||"").trim(),
             reps:  (row[5]||"").trim(),
@@ -1829,9 +1878,10 @@ const APP = window.APP = {
         const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>
           ex.nizi[i] ? `<span class="niz-cell"><span style="font-size:.65rem;color:var(--muted);display:block">Niz ${i+1}</span>${ex.nizi[i]}</span>` : `<span class="niz-cell" style="opacity:.3">—</span>`
         ).join("");
+        const videoLink = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.2rem;font-size:.72rem;color:var(--accent2);text-decoration:none;margin-left:.4rem" title="Poglej video">▶ video</a>` : "";
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
-          <td><div class="ex-name">${esc(ex.name)}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
+          <td><div class="ex-name">${esc(ex.name)}${videoLink}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
           <td class="ex-sets">${esc(ex.sets)}</td>
           <td class="ex-reps">${esc(ex.reps)}</td>
           <td class="ex-tempo">${esc(ex.tempo)}</td>
@@ -1849,10 +1899,12 @@ const APP = window.APP = {
           ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${esc(ex.tempo)}</span></div>` : "",
           ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${esc(ex.rest)}</span></div>` : "",
         ].filter(Boolean).join("");
+        const mVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);border-radius:6px;padding:.2rem .55rem;font-size:.75rem;color:var(--accent2);text-decoration:none">▶ Video</a>` : "";
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
             <span class="ex-card-name">${esc(ex.name)}</span>
+            ${mVideoBtn}
           </div>
           ${ex.note ? `<div class="ex-card-note">${esc(ex.note)}</div>` : ""}
           <div class="ex-card-stats">${stats}</div>
@@ -2015,11 +2067,13 @@ const APP = window.APP = {
           <td class="ex-tempo">${esc(ex.cas)}</td>
         </tr>`).join("");
 
-      const specialnoCards = specialnoExercises.map(ex => `
-        <div class="ex-card">
+      const specialnoCards = specialnoExercises.map(ex => {
+        const ogVideoBtn = ex.videoUrl ? `<a href="${esc(ex.videoUrl)}" target="_blank" rel="noopener" style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);border-radius:6px;padding:.2rem .55rem;font-size:.75rem;color:var(--accent2);text-decoration:none">▶ Video</a>` : "";
+        return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
             <span class="ex-card-name">${esc(ex.name)}</span>
+            ${ogVideoBtn}
           </div>
           ${ex.opomba ? `<div class="ex-card-note">${esc(ex.opomba)}</div>` : ""}
           <div class="ex-card-stats">
@@ -2027,7 +2081,8 @@ const APP = window.APP = {
             ${ex.ponov  ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val">${esc(ex.ponov)}</span></div>` : ""}
             ${ex.cas    ? `<div class="ex-stat"><span class="ex-stat-label">Čas</span><span class="ex-stat-val">${esc(ex.cas)}</span></div>` : ""}
           </div>
-        </div>`).join("");
+        </div>`;
+      }).join("");
 
       htm("training-content", `
         <div class="workout-block">
