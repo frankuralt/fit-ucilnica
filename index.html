@@ -1198,8 +1198,8 @@ const APP = window.APP = {
           // 2*25 or 2x25 → multiply (total weight)
           const multi = s.match(/(\d+)[\*x]\s*(\d+[\.,]?\d*)/);
           if (multi) return parseFloat(multi[1]) * parseFloat(multi[2].replace(",","."));
-          // plain number
-          const plain = s.match(/^(\d+[\.,]?\d*)/);
+          // plain number — strip trailing ? and other chars
+          const plain = s.replace(/\?/g,"").match(/(\d+[\.,]?\d*)/);
           if (plain) return parseFloat(plain[1].replace(",","."));
           return null;
         }
