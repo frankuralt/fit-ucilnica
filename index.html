@@ -702,6 +702,15 @@
         <div id="users-list"></div>
       </div>
       <div class="card-form">
+        <h3>Sledene vaje (PR) 🏆</h3>
+        <p class="muted" style="margin-bottom:.75rem;font-size:.82rem">Vaje katerih osebne rekorde prikazujemo v profilu strank.</p>
+        <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+          <input id="new-pr-exercise" type="text" placeholder="Ime vaje (npr. Počep)" class="inp" style="margin:0;flex:1">
+          <button id="add-pr-btn" class="btn" style="white-space:nowrap">Dodaj</button>
+        </div>
+        <div id="pr-exercises-list"></div>
+      </div>
+      <div class="card-form">
         <h3>Tematike skupnosti</h3>
         <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
           <input id="new-topic-name" type="text" placeholder="Nova tematika (npr. 🏃 Tek)" class="inp" style="margin:0;flex:1">
@@ -1082,7 +1091,7 @@ const APP = window.APP = {
     g("sec-"+section).classList.add("active");
     if (section==="dashboard") this._loadDomov();
     if (section==="courses")   this._loadCoursesList();
-    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); this._loadTopics(); }
+    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); this._loadTopics(); this._loadPrExercises(); }
     if (section==="feed")     this._loadFeed();
     if (section==="training") this._loadTraining();
     if (section==="profile")  this._loadProfile();
@@ -1187,8 +1196,19 @@ const APP = window.APP = {
 
       // ── Fetch Personal Records (Počep & Mrtvi dvig) ──
       try {
-        const PR_EXERCISES = ["počep", "mrtvi dvig", "dead lift", "mrtvi", "počep"];
-        const prMap = {}; // exercise name → max weight
+        // Load tracked exercises from Firestore
+        const prExSnap = await getDocs(collection(db,"prExercises"));
+        const PR_EXERCISES = prExSnap.docs.map(d=>d.data().name||"");
+        const prMap = {}; // exercise name → {weight, sets, reps}
+        
+        if (PR_EXERCISES.length === 0) {
+          const prCard2 = g("profile-pr-card");
+          const prContent2 = g("profile-pr-content");
+          if (prCard2 && prContent2) {
+            prCard2.style.display = "";
+            prContent2.innerHTML = "<p class='muted' style='font-size:.85rem'>Trener še ni dodal sledenih vaj.</p>";
+          }
+        }
 
         function extractWeight(val) {
           if (!val) return null;
@@ -1219,18 +1239,36 @@ const APP = window.APP = {
               const name = (nameParsed.name || nameRaw).toLowerCase();
 
               // Check if this is one of our tracked exercises
-              const isPocep = name.includes("počep");
-              const isMrtvi = name.includes("mrtvi dvig") || name.includes("dead lift") || (name.includes("mrtvi") && name.includes("hrošč") === false);
-
-              if (!isPocep && !isMrtvi) continue;
-
-              const exKey = isPocep ? "Počep" : "Mrtvi dvig";
+              // Check against all tracked exercises (case-insensitive)
+              let exKey = null;
+              for (const prEx of PR_EXERCISES) {
+                if (prEx && name.includes(prEx.toLowerCase())) {
+                  exKey = prEx;
+                  break;
+                }
+              }
+              if (!exKey) continue;
 
               // Check nizi columns I-P (indices 8-15)
               for (let c = 8; c <= 15; c++) {
                 const w = extractWeight(row[c]);
                 if (w && w > 0) {
-                  if (!prMap[exKey] || w > prMap[exKey]) prMap[exKey] = w;
+                  if (!prMap[exKey] || w > prMap[exKey].weight) {
+                    // Get reps for this specific set (c-8 = set index 0,1,2...)
+                    const setIdx = c - 8;
+                    const repsRaw = String(row[5]||"").trim();
+                    // Parse reps — could be "10" or "8/10/10/6"
+                    let repsForSet = repsRaw;
+                    if (repsRaw.includes("/")) {
+                      const repParts = repsRaw.split("/");
+                      repsForSet = repParts[setIdx] || repParts[repParts.length-1] || repsRaw;
+                    }
+                    prMap[exKey] = {
+                      weight: w,
+                      sets:  String(row[4]||"").trim(),
+                      reps:  repsForSet.trim()
+                    };
+                  }
                 }
               }
             }
@@ -1242,11 +1280,11 @@ const APP = window.APP = {
         if (prCard && prContent && Object.keys(prMap).length > 0) {
           prCard.style.display = "";
           prContent.innerHTML = `<div class="stat-grid">
-            ${Object.entries(prMap).map(([ex, w]) => `
+            ${Object.entries(prMap).map(([ex, data]) => `
               <div class="stat-box">
                 <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem">${esc(ex)}</div>
-                <div class="stat-val">${w} <span style="font-size:1rem">kg</span></div>
-                <div class="stat-lbl">Osebni rekord</div>
+                <div class="stat-val">${data.weight} <span style="font-size:1rem">kg</span></div>
+                <div class="stat-lbl" style="margin-top:.3rem">${data.reps ? data.reps+" ponovitev" : "Osebni rekord"}</div>
               </div>`).join("")}
           </div>`;
         }
@@ -2561,6 +2599,35 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
     }
   },
 
+  async _loadPrExercises() {
+    const snap = await getDocs(collection(db,"prExercises"));
+    const list = g("pr-exercises-list");
+    if (!list) return;
+    if (snap.empty) { list.innerHTML="<p class='muted'>Še ni dodanih vaj.</p>"; return; }
+    list.innerHTML = snap.docs.map(d=>`
+      <div class="list-row">
+        <span style="font-weight:500">🏆 ${esc(d.data().name||"")}</span>
+        <button class="btn btn-sm btn-danger" onclick="APP.deletePrExercise('${d.id}')">Odstrani</button>
+      </div>`).join("");
+  },
+
+  async addPrExercise() {
+    const name = (g("new-pr-exercise").value||"").trim();
+    if (!name) { toast("Vnesite ime vaje.","err"); return; }
+    const id = name.toLowerCase().replace(/[^a-z0-9čšž]/g,"_");
+    await setDoc(doc(db,"prExercises",id),{name, createdAt: new Date().toISOString()});
+    g("new-pr-exercise").value="";
+    toast("Vaja dodana: "+name);
+    this._loadPrExercises();
+  },
+
+  async deletePrExercise(id) {
+    if (!confirm("Odstraniti sledeno vajo?")) return;
+    await deleteDoc(doc(db,"prExercises",id));
+    toast("Vaja odstranjena.");
+    this._loadPrExercises();
+  },
+
   async addTopic() {
     const label = g("new-topic-name").value.trim();
     if(!label){ toast("Vnesite ime tematike.","err"); return; }
@@ -2870,6 +2937,7 @@ document.querySelectorAll(".logout-btn").forEach(b=> b.addEventListener("click",
 // admin panel static buttons
 on("add-user-btn",    ()=> APP.addUser());
 on("add-topic-btn",   ()=> APP.addTopic());
+on("add-pr-btn",      ()=> APP.addPrExercise());
 on("open-add-course", ()=> APP.openAddCourse());
 on("save-course-btn", ()=> APP.saveCourse());
 on("cancel-add-course",()=>APP.closeModal("modal-add-course"));
