@@ -1928,16 +1928,10 @@ const APP = window.APP = {
         break;
       }
     }
-    const current = (userData?.prExercises || ["Počep","Mrtvi dvig oz. dead lift (DL)"]).join("
-");
-    const input = prompt(
-      `PR vaje za ${email}
-(vsaka vaja v novi vrstici — ime mora biti enako kot v sheetu):`,
-      current
-    );
+    const current = (userData?.prExercises || ["Počep","Mrtvi dvig oz. dead lift (DL)"]).join("\n");
+    const input = prompt("PR vaje za "+email+"\n(vsaka vaja v novi vrstici):", current);
     if (input === null) return;
-    const exercises = input.split("
-").map(s=>s.trim()).filter(Boolean);
+    const exercises = input.split("\n").map(s=>s.trim()).filter(Boolean);
     await updateDoc(doc(db,"allowedUsers",docId||ekey(email)),{prExercises: exercises});
     toast("PR vaje posodobljene za "+email);
   },
