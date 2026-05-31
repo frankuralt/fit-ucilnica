@@ -1182,21 +1182,35 @@ const APP = window.APP = {
 
     // ── Calculate TDEE (kcal) ──
     const height   = parseFloat(profileData.height||0);
-    const age      = parseFloat(profileData.age||30);
+    const age      = parseFloat(profileData.age||0);
     const gender   = profileData.gender || "";
     const activity = parseFloat(profileData.activity||0);
-    // Get latest weight from weight entries
+    // Get latest weight — fallback to manual scan if index missing
     let latestWeight = null;
     try {
       const wSnap = await getDocs(query(collection(db,"weights"), where("email","==",currentUser.email), orderBy("date","desc")));
       if (!wSnap.empty) latestWeight = wSnap.docs[0].data().weight;
-    } catch(e){}
+    } catch(e){
+      try {
+        const wSnap2 = await getDocs(query(collection(db,"weights"), where("email","==",currentUser.email)));
+        if (!wSnap2.empty) {
+          const sorted = wSnap2.docs.map(d=>d.data()).sort((a,b)=>b.date.localeCompare(a.date));
+          latestWeight = sorted[0].weight;
+        }
+      } catch(e2){}
+    }
 
     const kcalCard = g("profile-kcal-card");
     const kcalContent = g("profile-kcal-content");
     if (kcalCard && kcalContent) {
       kcalCard.style.display = "";
-      if (latestWeight && height && gender && activity) {
+      const missing = [];
+      if (!latestWeight) missing.push("tehtanje");
+      if (!height) missing.push("višina");
+      if (!gender) missing.push("spol");
+      if (!age) missing.push("starost");
+      if (!activity) missing.push("nivo aktivnosti");
+      if (latestWeight && height && gender && age && activity) {
       // Mifflin-St Jeor BMR formula
       const w = parseFloat(latestWeight);
       const bmr = gender === "m"
@@ -1227,7 +1241,7 @@ const APP = window.APP = {
         </div>
         <p class="muted" style="font-size:.75rem;margin-top:.75rem">⚠️ Ocena je orientacijska. Za natančen izračun upoštevajte starost in se posvetujte s strokovnjakom.</p>`;
       } else {
-        kcalContent.innerHTML = `<p class="muted" style="font-size:.85rem">Za izračun izpolnite: višino, spol, starost in nivo aktivnosti v osebnih podatkih ter vsaj eno tehtanje.</p>`;
+        kcalContent.innerHTML = `<p class="muted" style="font-size:.85rem">Za izračun manjka še: <strong>${missing.join(", ")}</strong>. Izpolnite v osebnih podatkih in dodajte vsaj eno tehtanje.</p>`;
       }
     }
 
