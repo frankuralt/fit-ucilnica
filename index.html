@@ -701,15 +701,7 @@
         <p class="muted" style="margin-bottom:.75rem;font-size:.78rem">Sheet ID najdeš v URL-ju Google Sheets: docs.google.com/spreadsheets/d/<strong>ID_JE_TU</strong>/edit</p>
         <div id="users-list"></div>
       </div>
-      <div class="card-form">
-        <h3>Sledene vaje (PR) 🏆</h3>
-        <p class="muted" style="margin-bottom:.75rem;font-size:.82rem">Vaje katerih osebne rekorde prikazujemo v profilu strank.</p>
-        <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
-          <input id="new-pr-exercise" type="text" placeholder="Ime vaje (npr. Počep)" class="inp" style="margin:0;flex:1">
-          <button id="add-pr-btn" class="btn" style="white-space:nowrap">Dodaj</button>
-        </div>
-        <div id="pr-exercises-list"></div>
-      </div>
+
       <div class="card-form">
         <h3>Tematike skupnosti</h3>
         <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
@@ -1091,7 +1083,7 @@ const APP = window.APP = {
     g("sec-"+section).classList.add("active");
     if (section==="dashboard") this._loadDomov();
     if (section==="courses")   this._loadCoursesList();
-    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); this._loadTopics(); this._loadPrExercises(); }
+    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); this._loadTopics(); }
     if (section==="feed")     this._loadFeed();
     if (section==="training") this._loadTraining();
     if (section==="profile")  this._loadProfile();
@@ -1196,19 +1188,9 @@ const APP = window.APP = {
 
       // ── Fetch Personal Records (Počep & Mrtvi dvig) ──
       try {
-        // Load tracked exercises from Firestore
-        const prExSnap = await getDocs(collection(db,"prExercises"));
-        const PR_EXERCISES = prExSnap.docs.map(d=>d.data().name||"");
+        // Load PR exercises for this specific user from their allowedUsers doc
+        const PR_EXERCISES = (profileData.prExercises || []).filter(Boolean);
         const prMap = {}; // exercise name → {weight, sets, reps}
-        
-        if (PR_EXERCISES.length === 0) {
-          const prCard2 = g("profile-pr-card");
-          const prContent2 = g("profile-pr-content");
-          if (prCard2 && prContent2) {
-            prCard2.style.display = "";
-            prContent2.innerHTML = "<p class='muted' style='font-size:.85rem'>Trener še ni dodal sledenih vaj.</p>";
-          }
-        }
 
         function extractWeight(val) {
           if (!val) return null;
@@ -1831,11 +1813,38 @@ const APP = window.APP = {
             ${canPost ? "🚫 Odvzemi objavljanje" : "✅ Dovoli objavljanje"}
           </button>
           <button class="btn btn-sm btn-ghost" onclick="APP.editUserSheet('${esc(email)}','${esc(sheetId)}')">✏️ Sheet ID</button>
+          <button class="btn btn-sm btn-ghost" onclick="APP.editUserPR('${esc(email)}')">🏆 PR vaje</button>
           <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button>
         </div>
       </div>`;
     });
     htm("users-list", rows.length ? rows.join("") : "<p class='muted'>Še ni uporabnikov.</p>");
+  },
+
+  async editUserPR(email) {
+    // Get current PR exercises for this user
+    const snap = await getDocs(collection(db,"allowedUsers"));
+    let userData = null;
+    let docId = null;
+    for (const d of snap.docs) {
+      if ((d.data().email||"").toLowerCase().trim() === email.toLowerCase().trim()) {
+        userData = d.data();
+        docId = d.id;
+        break;
+      }
+    }
+    const current = (userData?.prExercises || ["Počep","Mrtvi dvig oz. dead lift (DL)"]).join("
+");
+    const input = prompt(
+      `PR vaje za ${email}
+(vsaka vaja v novi vrstici — ime mora biti enako kot v sheetu):`,
+      current
+    );
+    if (input === null) return;
+    const exercises = input.split("
+").map(s=>s.trim()).filter(Boolean);
+    await updateDoc(doc(db,"allowedUsers",docId||ekey(email)),{prExercises: exercises});
+    toast("PR vaje posodobljene za "+email);
   },
 
   async toggleCanPost(email, currentValue) {
@@ -2937,7 +2946,6 @@ document.querySelectorAll(".logout-btn").forEach(b=> b.addEventListener("click",
 // admin panel static buttons
 on("add-user-btn",    ()=> APP.addUser());
 on("add-topic-btn",   ()=> APP.addTopic());
-on("add-pr-btn",      ()=> APP.addPrExercise());
 on("open-add-course", ()=> APP.openAddCourse());
 on("save-course-btn", ()=> APP.saveCourse());
 on("cancel-add-course",()=>APP.closeModal("modal-add-course"));
