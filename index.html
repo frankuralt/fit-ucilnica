@@ -846,6 +846,31 @@ const auth    = getAuth(app);
 const db      = getFirestore(app);
 const storage = getStorage(app);
 
+/* ── handle password reset URL params ── */
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("mode");
+  const oobCode = params.get("oobCode");
+  if (mode === "resetPassword" && oobCode) {
+    document.querySelectorAll(".auth-tab").forEach(t => t.style.display="none");
+    ["panel-signin","panel-signup","panel-forgot"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.style.display="none";
+    });
+    const np = document.getElementById("panel-newpass");
+    if(np) np.style.display="";
+    window._resetOobCode = oobCode;
+    try {
+      await verifyPasswordResetCode(auth, oobCode);
+    } catch(e) {
+      const errEl = document.getElementById("auth-err");
+      if(errEl){ errEl.textContent="Povezava za ponastavitev je potekla ali neveljavna. Zahtevajte novo."; errEl.style.display="block"; }
+      const np2 = document.getElementById("panel-newpass");
+      if(np2) np2.style.display="none";
+    }
+  }
+})();
+
 // ╔══════════════════════════════════════════════╗
 // ║  YOUR CONFIGURATION — fill these in         ║
 // ╚══════════════════════════════════════════════╝
@@ -906,32 +931,6 @@ async function emailExistsInCollection(colName, email) {
   } catch(err2) { throw err2; }
   return false;
 }
-
-/* ── handle password reset URL params ── */
-(async () => {
-  const params = new URLSearchParams(window.location.search);
-  const mode = params.get("mode");
-  const oobCode = params.get("oobCode");
-  if (mode === "resetPassword" && oobCode) {
-    document.querySelectorAll(".auth-tab").forEach(t => t.style.display="none");
-    ["panel-signin","panel-signup","panel-forgot"].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.style.display="none";
-    });
-    const np = document.getElementById("panel-newpass");
-    if(np) np.style.display="";
-    window._resetOobCode = oobCode;
-    try {
-      const auth2 = getAuth();
-      await verifyPasswordResetCode(auth2, oobCode);
-    } catch(e) {
-      const errEl = document.getElementById("auth-err");
-      if(errEl){ errEl.textContent="Povezava za ponastavitev je potekla ali neveljavna. Zahtevajte novo."; errEl.style.display="block"; }
-      const np2 = document.getElementById("panel-newpass");
-      if(np2) np2.style.display="none";
-    }
-  }
-})();
 
 /* ── state ── */
 let IS_ADMIN = false;
