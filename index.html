@@ -1424,13 +1424,24 @@ const APP = window.APP = {
     const fullName = priimek ? ime+" "+priimek : ime;
     try {
       const dobVal = g("profile-dob").value||"";
-      await updateDoc(doc(db,"allowedUsers",ekey(currentUser.email)),{
+      // Use setDoc with merge so it works even if doc ID differs
+      // First find the actual doc ID
+      let profileDocId = ekey(currentUser.email);
+      try {
+        const snap2 = await getDocs(collection(db,"allowedUsers"));
+        for (const d of snap2.docs) {
+          if ((d.data().email||"").toLowerCase().trim() === currentUser.email.toLowerCase().trim()) {
+            profileDocId = d.id; break;
+          }
+        }
+      } catch(e2){}
+      await setDoc(doc(db,"allowedUsers",profileDocId),{
         displayName: fullName,
         height:   g("profile-height").value||"",
         dob:      dobVal,
         gender:   g("profile-gender").value||"",
         activity: g("profile-activity").value||""
-      });
+      }, { merge: true });
       currentDisplayName = fullName;
       g("user-label").textContent = fullName;
       if(g("mobile-user-label")) g("mobile-user-label").textContent = fullName;
