@@ -184,6 +184,7 @@
   .toast-ok  { background:#1a3326; border:1px solid #2a6648; color:#7ee8a2; }
   .toast-err { background:#3a1f1f; border:1px solid #7a3030; color:#f09090; }
   @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+  @keyframes bounceIn { 0%{transform:scale(.5);opacity:0} 70%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
   .muted { color:var(--muted); font-size:.88rem; }
   hr { border:none; border-top:1px solid var(--border); margin:1.25rem 0; }
   .mt { margin-top:1rem; }
@@ -580,8 +581,8 @@
             <input id="profile-surname" type="text" class="inp" placeholder="Novak (neobvezno)">
             <label>Višina (cm)</label>
             <input id="profile-height" type="number" class="inp" placeholder="175">
-            <label>Starost</label>
-            <input id="profile-age" type="number" class="inp" placeholder="30">
+            <label>Datum rojstva</label>
+            <input id="profile-dob" type="date" class="inp">
             <label>Spol</label>
             <select id="profile-gender" class="inp">
               <option value="">— izberi —</option>
@@ -792,6 +793,19 @@
   </div>
 </div>
 
+<!-- Birthday Confetti -->
+<div id="birthday-modal" style="display:none;position:fixed;inset:0;z-index:600;pointer-events:none">
+  <canvas id="confetti-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:all">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2.5rem 2rem;text-align:center;max-width:340px;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:bounceIn .5s ease">
+      <div style="font-size:3rem;margin-bottom:.5rem">🎂</div>
+      <h2 style="font-family:'DM Serif Display',serif;font-size:1.8rem;margin-bottom:.5rem" id="bday-name"></h2>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Vse najboljše! 🎉<br>Na še mnoga aktivna in vedno bolj fit leta!</p>
+      <button class="btn btn-full" onclick="APP.closeBirthday()">Hvala! 💪</button>
+    </div>
+  </div>
+</div>
+
 <!-- YouTube Video Popup -->
 <div id="yt-modal" style="display:none;position:fixed;bottom:1rem;right:1rem;z-index:500;width:320px;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.8);border:1px solid #333;transition:all .3s">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .75rem;background:#111">
@@ -925,6 +939,7 @@ let CURRENT_COURSE_ID = "";
 let currentUser = null;
 let currentDisplayName = "";
 let currentCanPost = false;
+let currentUserData = {};
 
 /* ── auth ── */
 onAuthStateChanged(auth, async user => {
@@ -942,6 +957,7 @@ onAuthStateChanged(auth, async user => {
       if ((d.data().email||"").toLowerCase().trim() === user.email.toLowerCase().trim()) {
         currentDisplayName = d.data().displayName || user.email;
         currentCanPost = d.data().canPost || false;
+        currentUserData = d.data();
         break;
       }
     }
@@ -952,6 +968,15 @@ onAuthStateChanged(auth, async user => {
   if(g("mnav-admin")) g("mnav-admin").style.display = IS_ADMIN ? "" : "none";
   switchScreen("app");
   APP.nav("dashboard");
+
+  // Check birthday 🎂
+  if (currentUserData.dob) {
+    const now = new Date();
+    const bday = new Date(currentUserData.dob);
+    if (now.getDate()===bday.getDate() && now.getMonth()===bday.getMonth()) {
+      setTimeout(()=>APP.showBirthday(currentDisplayName), 800);
+    }
+  }
 });
 
 /* ── login ── */
@@ -1111,7 +1136,8 @@ const APP = window.APP = {
           if(g("profile-name"))     g("profile-name").value     = parts[0]||"";
           if(g("profile-surname"))  g("profile-surname").value  = parts.slice(1).join(" ")||"";
           if(g("profile-height"))   g("profile-height").value   = profileData.height||"";
-          if(g("profile-age"))      g("profile-age").value      = profileData.age||"";
+          if(g("profile-dob"))      g("profile-dob").value      = profileData.dob||"";
+          if(g("profile-dob"))      g("profile-dob").value      = profileData.dob||"";
           if(g("profile-gender"))   g("profile-gender").value   = profileData.gender||"";
           if(g("profile-activity")) g("profile-activity").value = profileData.activity||"";
           break;
@@ -1127,7 +1153,14 @@ const APP = window.APP = {
         "1.2":"Sedeče delo","1.375":"Malo aktivno","1.55":"Zmerno aktivno",
         "1.725":"Zelo aktivno","1.9":"Izjemno aktivno"
       }[profileData.activity||""] || "";
-      const detail = [profileData.height ? profileData.height+"cm" : "", profileData.age ? profileData.age+"let" : "", genderLabel, actLabel].filter(Boolean).join(" · ");
+      let ageStr = "";
+      if (profileData.dob) {
+        const now3 = new Date(); const b3 = new Date(profileData.dob);
+        let a3 = now3.getFullYear()-b3.getFullYear();
+        if (now3.getMonth()<b3.getMonth()||(now3.getMonth()===b3.getMonth()&&now3.getDate()<b3.getDate())) a3--;
+        ageStr = a3+" let";
+      }
+      const detail = [profileData.height ? profileData.height+"cm" : "", ageStr, genderLabel, actLabel].filter(Boolean).join(" · ");
       if(g("profile-summary-name")) g("profile-summary-name").textContent = profileData.displayName;
       if(g("profile-summary-detail")) g("profile-summary-detail").textContent = detail || "Kliknite Uredi za dopolnitev podatkov";
       this.toggleProfileEdit(false);
@@ -1275,7 +1308,14 @@ const APP = window.APP = {
 
     // ── Calculate TDEE (kcal) ──
     const height   = parseFloat(profileData.height||0);
-    const age      = parseFloat(profileData.age||0);
+    // Calculate age from DOB
+    let age = 0;
+    if (profileData.dob) {
+      const today2 = new Date();
+      const birth = new Date(profileData.dob);
+      age = today2.getFullYear() - birth.getFullYear();
+      if (today2.getMonth() < birth.getMonth() || (today2.getMonth()===birth.getMonth() && today2.getDate()<birth.getDate())) age--;
+    }
     const gender   = profileData.gender || "";
     const activity = parseFloat(profileData.activity||0);
     // Get latest weight — fallback to manual scan if index missing
@@ -1384,10 +1424,11 @@ const APP = window.APP = {
     }
     const fullName = priimek ? ime+" "+priimek : ime;
     try {
+      const dobVal = g("profile-dob").value||"";
       await updateDoc(doc(db,"allowedUsers",ekey(currentUser.email)),{
         displayName: fullName,
         height:   g("profile-height").value||"",
-        age:      g("profile-age").value||"",
+        dob:      dobVal,
         gender:   g("profile-gender").value||"",
         activity: g("profile-activity").value||""
       });
@@ -1397,7 +1438,15 @@ const APP = window.APP = {
       // Update collapsed summary
       const gLabel = {m:"Moški",f:"Ženski"}[g("profile-gender").value||""]||"";
       const aLabel = {"1.2":"Sedeče delo","1.375":"Malo aktivno","1.55":"Zmerno aktivno","1.725":"Zelo aktivno","1.9":"Izjemno aktivno"}[g("profile-activity").value||""]||"";
-      const det = [g("profile-height").value ? g("profile-height").value+"cm" : "", g("profile-age").value ? g("profile-age").value+"let" : "", gLabel, aLabel].filter(Boolean).join(" · ");
+      const dobVal2 = g("profile-dob") && g("profile-dob").value ? g("profile-dob").value : "";
+      let ageDisp2 = "";
+      if (dobVal2) {
+        const now2 = new Date(); const b2 = new Date(dobVal2);
+        let a2 = now2.getFullYear()-b2.getFullYear();
+        if (now2.getMonth()<b2.getMonth()||(now2.getMonth()===b2.getMonth()&&now2.getDate()<b2.getDate())) a2--;
+        ageDisp2 = a2+" let";
+      }
+      const det = [g("profile-height").value ? g("profile-height").value+"cm" : "", ageDisp2, gLabel, aLabel].filter(Boolean).join(" · ");
       if(g("profile-summary-name")) g("profile-summary-name").textContent = fullName;
       if(g("profile-summary-detail")) g("profile-summary-detail").textContent = det || "Kliknite Uredi za dopolnitev podatkov";
       APP.toggleProfileEdit(false);
@@ -1665,6 +1714,53 @@ const APP = window.APP = {
   closeViewer() { g("course-viewer").classList.remove("open"); },
 
   _ytExpanded: false,
+
+  showBirthday(name) {
+    const modal = g("birthday-modal");
+    if (!modal) return;
+    if (g("bday-name")) g("bday-name").textContent = (name||"").split(" ")[0] + "!";
+    modal.style.display = "block";
+    // Launch confetti
+    const canvas = g("confetti-canvas");
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext("2d");
+    const pieces = Array.from({length:150}, () => ({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height - canvas.height,
+      w: Math.random()*10+5,
+      h: Math.random()*6+4,
+      color: ["#2563eb","#60a5fa","#4ade80","#facc15","#f472b6","#fb923c"][Math.floor(Math.random()*6)],
+      rot: Math.random()*360,
+      speed: Math.random()*3+1,
+      spin: Math.random()*6-3
+    }));
+    let frame;
+    const draw = () => {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      pieces.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x+p.w/2, p.y+p.h/2);
+        ctx.rotate(p.rot*Math.PI/180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+        ctx.restore();
+        p.y += p.speed;
+        p.rot += p.spin;
+        if (p.y > canvas.height) { p.y = -p.h; p.x = Math.random()*canvas.width; }
+      });
+      frame = requestAnimationFrame(draw);
+    };
+    draw();
+    // Stop after 6 seconds
+    setTimeout(() => { cancelAnimationFrame(frame); ctx.clearRect(0,0,canvas.width,canvas.height); }, 6000);
+  },
+
+  closeBirthday() {
+    const modal = g("birthday-modal");
+    if (modal) modal.style.display = "none";
+  },
 
   openYT(url, title) {
     if (!url) return;
