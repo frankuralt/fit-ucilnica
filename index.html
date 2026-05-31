@@ -580,6 +580,8 @@
             <input id="profile-surname" type="text" class="inp" placeholder="Novak (neobvezno)">
             <label>Višina (cm)</label>
             <input id="profile-height" type="number" class="inp" placeholder="175">
+            <label>Starost</label>
+            <input id="profile-age" type="number" class="inp" placeholder="30">
             <label>Spol</label>
             <select id="profile-gender" class="inp">
               <option value="">— izberi —</option>
@@ -1102,6 +1104,7 @@ const APP = window.APP = {
           if(g("profile-name"))     g("profile-name").value     = parts[0]||"";
           if(g("profile-surname"))  g("profile-surname").value  = parts.slice(1).join(" ")||"";
           if(g("profile-height"))   g("profile-height").value   = profileData.height||"";
+          if(g("profile-age"))      g("profile-age").value      = profileData.age||"";
           if(g("profile-gender"))   g("profile-gender").value   = profileData.gender||"";
           if(g("profile-activity")) g("profile-activity").value = profileData.activity||"";
           break;
@@ -1117,7 +1120,7 @@ const APP = window.APP = {
         "1.2":"Sedeče delo","1.375":"Malo aktivno","1.55":"Zmerno aktivno",
         "1.725":"Zelo aktivno","1.9":"Izjemno aktivno"
       }[profileData.activity||""] || "";
-      const detail = [profileData.height ? profileData.height+"cm" : "", genderLabel, actLabel].filter(Boolean).join(" · ");
+      const detail = [profileData.height ? profileData.height+"cm" : "", profileData.age ? profileData.age+"let" : "", genderLabel, actLabel].filter(Boolean).join(" · ");
       if(g("profile-summary-name")) g("profile-summary-name").textContent = profileData.displayName;
       if(g("profile-summary-detail")) g("profile-summary-detail").textContent = detail || "Kliknite Uredi za dopolnitev podatkov";
       this.toggleProfileEdit(false);
@@ -1178,12 +1181,12 @@ const APP = window.APP = {
     }
 
     // ── Calculate TDEE (kcal) ──
-    const weight = profileData.weight || null;
-    const height = parseFloat(profileData.height||0);
-    const gender = profileData.gender || "";
+    const height   = parseFloat(profileData.height||0);
+    const age      = parseFloat(profileData.age||30);
+    const gender   = profileData.gender || "";
     const activity = parseFloat(profileData.activity||0);
     // Get latest weight from weight entries
-    let latestWeight = weight;
+    let latestWeight = null;
     try {
       const wSnap = await getDocs(query(collection(db,"weights"), where("email","==",currentUser.email), orderBy("date","desc")));
       if (!wSnap.empty) latestWeight = wSnap.docs[0].data().weight;
@@ -1191,12 +1194,14 @@ const APP = window.APP = {
 
     const kcalCard = g("profile-kcal-card");
     const kcalContent = g("profile-kcal-content");
-    if (kcalCard && kcalContent && latestWeight && height && gender && activity) {
+    if (kcalCard && kcalContent) {
+      kcalCard.style.display = "";
+      if (latestWeight && height && gender && activity) {
       // Mifflin-St Jeor BMR formula
       const w = parseFloat(latestWeight);
       const bmr = gender === "m"
-        ? 10*w + 6.25*height - 5*30 + 5      // approx age 30 for males
-        : 10*w + 6.25*height - 5*30 - 161;   // approx age 30 for females
+        ? 10*w + 6.25*height - 5*age + 5
+        : 10*w + 6.25*height - 5*age - 161;
       const tdee = Math.round(bmr * activity);
       const cut  = Math.round(tdee - 400);
       const bulk = Math.round(tdee + 300);
@@ -1221,9 +1226,9 @@ const APP = window.APP = {
           <div class="kcal-val" style="color:#fb923c">${bulk} kcal</div>
         </div>
         <p class="muted" style="font-size:.75rem;margin-top:.75rem">⚠️ Ocena je orientacijska. Za natančen izračun upoštevajte starost in se posvetujte s strokovnjakom.</p>`;
-    } else if (kcalCard) {
-      kcalCard.style.display = "";
-      kcalContent.innerHTML = `<p class="muted" style="font-size:.85rem">Za izračun izpolnite: višino, spol in nivo aktivnosti v osebnih podatkih ter vsaj eno tehtanje.</p>`;
+      } else {
+        kcalContent.innerHTML = `<p class="muted" style="font-size:.85rem">Za izračun izpolnite: višino, spol, starost in nivo aktivnosti v osebnih podatkih ter vsaj eno tehtanje.</p>`;
+      }
     }
 
     // Load today's weight entry
@@ -1256,6 +1261,7 @@ const APP = window.APP = {
       await updateDoc(doc(db,"allowedUsers",ekey(currentUser.email)),{
         displayName: fullName,
         height:   g("profile-height").value||"",
+        age:      g("profile-age").value||"",
         gender:   g("profile-gender").value||"",
         activity: g("profile-activity").value||""
       });
@@ -1265,7 +1271,7 @@ const APP = window.APP = {
       // Update collapsed summary
       const gLabel = {m:"Moški",f:"Ženski"}[g("profile-gender").value||""]||"";
       const aLabel = {"1.2":"Sedeče delo","1.375":"Malo aktivno","1.55":"Zmerno aktivno","1.725":"Zelo aktivno","1.9":"Izjemno aktivno"}[g("profile-activity").value||""]||"";
-      const det = [g("profile-height").value ? g("profile-height").value+"cm" : "", gLabel, aLabel].filter(Boolean).join(" · ");
+      const det = [g("profile-height").value ? g("profile-height").value+"cm" : "", g("profile-age").value ? g("profile-age").value+"let" : "", gLabel, aLabel].filter(Boolean).join(" · ");
       if(g("profile-summary-name")) g("profile-summary-name").textContent = fullName;
       if(g("profile-summary-detail")) g("profile-summary-detail").textContent = det || "Kliknite Uredi za dopolnitev podatkov";
       APP.toggleProfileEdit(false);
