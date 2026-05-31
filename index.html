@@ -628,6 +628,12 @@
         <div id="profile-stats-content"></div>
       </div>
 
+      <!-- Personal Records -->
+      <div class="card-form" id="profile-pr-card" style="display:none">
+        <h3>Osebni rekordi 🏆</h3>
+        <div id="profile-pr-content"></div>
+      </div>
+
       <!-- Kcal calculator -->
       <div class="card-form" id="profile-kcal-card" style="display:none">
         <h3>Ocenjena kalorična poraba 🔥</h3>
@@ -1176,6 +1182,73 @@ const APP = window.APP = {
               </div>`;
             }
           }
+        }
+      } catch(e){}
+
+      // ── Fetch Personal Records (Počep & Mrtvi dvig) ──
+      try {
+        const PR_EXERCISES = ["počep", "mrtvi dvig", "dead lift", "mrtvi", "počep"];
+        const prMap = {}; // exercise name → max weight
+
+        function extractWeight(val) {
+          if (!val) return null;
+          const s = String(val).trim().toLowerCase();
+          // skip non-numeric formats
+          if (s.includes("tt") || s.includes("el") || s.includes("cm") || s === "x" || s === "") return null;
+          // 2*25 or 2x25 → multiply (total weight)
+          const multi = s.match(/(\d+)[\*x]\s*(\d+[\.,]?\d*)/);
+          if (multi) return parseFloat(multi[1]) * parseFloat(multi[2].replace(",","."));
+          // plain number
+          const plain = s.match(/^(\d+[\.,]?\d*)/);
+          if (plain) return parseFloat(plain[1].replace(",","."));
+          return null;
+        }
+
+        for (const tab of ["Moč 1","Moč 2","Moč 3"]) {
+          try {
+            const tRange = encodeURIComponent(`'${tab}'!A:Q`);
+            const tUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetIdForStats}/values/${tRange}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
+            const tResp = await fetch(tUrl);
+            if (!tResp.ok) continue;
+            const tData = await tResp.json();
+            const tRows = tData.values || [];
+
+            for (const row of tRows) {
+              const nameRaw = String(row[2]||"").trim();
+              const nameParsed = parseHyperlink(nameRaw);
+              const name = (nameParsed.name || nameRaw).toLowerCase();
+
+              // Check if this is one of our tracked exercises
+              const isPocep = name.includes("počep");
+              const isMrtvi = name.includes("mrtvi dvig") || name.includes("dead lift") || (name.includes("mrtvi") && name.includes("hrošč") === false);
+
+              if (!isPocep && !isMrtvi) continue;
+
+              const exKey = isPocep ? "Počep" : "Mrtvi dvig";
+
+              // Check nizi columns I-P (indices 8-15)
+              for (let c = 8; c <= 15; c++) {
+                const w = extractWeight(row[c]);
+                if (w && w > 0) {
+                  if (!prMap[exKey] || w > prMap[exKey]) prMap[exKey] = w;
+                }
+              }
+            }
+          } catch(e2){}
+        }
+
+        const prCard = g("profile-pr-card");
+        const prContent = g("profile-pr-content");
+        if (prCard && prContent && Object.keys(prMap).length > 0) {
+          prCard.style.display = "";
+          prContent.innerHTML = `<div class="stat-grid">
+            ${Object.entries(prMap).map(([ex, w]) => `
+              <div class="stat-box">
+                <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem">${esc(ex)}</div>
+                <div class="stat-val">${w} <span style="font-size:1rem">kg</span></div>
+                <div class="stat-lbl">Osebni rekord</div>
+              </div>`).join("")}
+          </div>`;
         }
       } catch(e){}
     }
@@ -2081,6 +2154,7 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
       const exercises = [];
       let volumeKg = "";
       let motivQuote = "";
+      // Scan all rows — collect exercises, find quote+volume wherever they appear
       for (let i = lastHeaderIdx+1; i < rows.length; i++) {
         const row = rows[i];
         const code = String(row[1]||"").trim();
@@ -2089,28 +2163,32 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         const name = nameCell2.name || rawCell2;
         const videoUrl = nameCell2.url || "";
         const colQ = String(row[16]||"").trim();
-        const colC = (row[2]||"").trim();
-        // detect quote row (col C starts with " or special quote, col B empty)
-        if (!code && name && (rawCell2.startsWith('"') || rawCell2.charCodeAt(0)===8220 || rawCell2.startsWith('“'))) {
-          motivQuote = name;
-          // volume is in col Q of this same row (11 rows after header = quote row)
-          if (colQ) volumeKg = colQ;
-          break;
+
+        // Volume — any row where col Q is a number
+        if (colQ && !isNaN(parseFloat(colQ.replace(",",".")))) {
+          volumeKg = colQ;
         }
-        // stop at empty row
-        if (!code && !name) {
-          // check if next non-empty row has volume in Q
-          for (let j = i; j < Math.min(i+3, rows.length); j++) {
-            if ((rows[j]||[])[16]) { volumeKg = (rows[j][16]||"").trim(); break; }
-          }
-          break;
+
+        // Quote row — col B empty, col C starts with quote character
+        if (!code && rawCell2 && (rawCell2.startsWith('"') || rawCell2.charCodeAt(0)===8220 || rawCell2.charCodeAt(0)===8222 || rawCell2.startsWith('“') || rawCell2.startsWith('„'))) {
+          motivQuote = name || rawCell2;
+          continue;
         }
+
+        // Next workout header — stop
+        if (rawCell2 === "Vaja") break;
+
+        // Empty row after we already have exercises — stop
+        if (!code && !rawCell2) {
+          if (exercises.length > 0) break;
+          continue;
+        }
+
+        // Exercise row
         if (code && name && name !== "Vaja") {
-          // Parse hyperlink from formula in col C (exercise name)
-          // videoUrl already set above
           exercises.push({
             code,
-            name: name,
+            name,
             videoUrl,
             note:  String(row[3]||"").trim(),
             sets:  String(row[4]||"").trim(),
@@ -2119,8 +2197,6 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
             rest:  String(row[7]||"").trim(),
             nizi:  [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]].map(v=>String(v||"").trim()).filter(v=>v)
           });
-          // also check col Q on exercise rows
-          if (colQ && !volumeKg) volumeKg = colQ;
         }
       }
 
