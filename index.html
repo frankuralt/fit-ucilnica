@@ -223,6 +223,8 @@
   .ex-tempo { text-align:center; color:var(--muted); font-size:.78rem; }
   .ex-rest { text-align:center; }
   .niz-cells { display:flex; gap:.3rem; flex-wrap:wrap; }
+  .niz-cell.changed { border-color:#4ade80 !important; background:rgba(74,222,128,.15) !important; color:#4ade80 !important; }
+  .ex-card-nizi .niz-cell.changed { border-color:#4ade80 !important; background:rgba(74,222,128,.15) !important; color:#4ade80 !important; }
   .niz-cell { background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:.2rem .45rem; font-size:.75rem; font-weight:500; white-space:nowrap; min-width:32px; text-align:center; }
   .niz-cell:not(:empty) { border-color:rgba(37,99,235,.3); }
   .no-sheet-msg { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:2rem; text-align:center; }
@@ -2340,7 +2342,6 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
       }
 
       // Find all workout header rows (where col C === "Vaja")
-      // Col index: A=0,B=1,C=2,D=3,E=4,F=5,G=6,H=7,I=8..P=15,Q=16
       const headerRowIdxs = [];
       rows.forEach((row,i) => {
         if (String(row[2]||"").trim() === "Vaja") headerRowIdxs.push(i);
@@ -2351,8 +2352,10 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         return;
       }
 
-      // Take only the LAST workout block
+      // Take LAST workout block
       const lastHeaderIdx = headerRowIdxs[headerRowIdxs.length-1];
+      // Also get PREVIOUS workout block for comparison
+      const prevHeaderIdx = headerRowIdxs.length >= 2 ? headerRowIdxs[headerRowIdxs.length-2] : -1;
       // Number in col A, date in col B — same row as "Vaja" header
       const headerRow = rows[lastHeaderIdx];
       const workoutNum = String(headerRow[0]||"").trim();
@@ -2414,15 +2417,35 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         return;
       }
 
+      // Parse previous workout nizi for comparison
+      const prevNiziMap = {}; // code → nizi array
+      if (prevHeaderIdx >= 0) {
+        for (let i = prevHeaderIdx+1; i < lastHeaderIdx; i++) {
+          const row = rows[i];
+          const code = String(row[1]||"").trim();
+          const rawCell = String(row[2]||"").trim();
+          const name = parseHyperlink(rawCell).name || rawCell;
+          if (code && name && name !== "Vaja") {
+            prevNiziMap[code] = [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]]
+              .map(v=>String(v||"").trim()).filter(v=>v);
+          }
+        }
+      }
+
       // Build workout table HTML
       const nizHeaders = exercises.reduce((max,ex)=>Math.max(max,ex.nizi.length),0);
       const nizCols = Math.min(nizHeaders, 8);
 
       // Desktop table rows
       const tableRows = exercises.map(ex => {
-        const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>
-          ex.nizi[i] ? `<span class="niz-cell"><span style="font-size:.65rem;color:var(--muted);display:block">Niz ${i+1}</span>${ex.nizi[i]}</span>` : `<span class="niz-cell" style="opacity:.3">—</span>`
-        ).join("");
+        const prevNizi = prevNiziMap[ex.code] || [];
+        const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>{
+          const val = ex.nizi[i];
+          const prev = prevNizi[i];
+          const changed = val && prev && val !== prev;
+          if (!val) return `<span class="niz-cell" style="opacity:.3">—</span>`;
+          return `<span class="niz-cell${changed?" changed":""}"><span style="font-size:.65rem;color:${changed?"#4ade80":"var(--muted)"};display:block">Niz ${i+1}</span>${val}</span>`;
+        }).join("");
         const videoLink = `<button style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};margin-left:.5rem;border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:5px;padding:.15rem .5rem;cursor:${ex.videoUrl?'pointer':'default'};background:${ex.videoUrl?'rgba(37,99,235,.1)':'transparent'};opacity:${ex.videoUrl?'1':'.35'}" title="${ex.videoUrl?'Poglej video':'Video ni na voljo'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
@@ -2437,7 +2460,12 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
 
       // Mobile card rows
       const cardRows = exercises.map(ex => {
-        const nizBadges = ex.nizi.map((n,i)=>n?`<span class="niz-cell"><span style="font-size:.6rem;color:var(--muted);display:block">Niz ${i+1}</span>${n}</span>`:"").filter(Boolean).join("");
+        const prevNiziM = prevNiziMap[ex.code] || [];
+        const nizBadges = ex.nizi.map((n,i)=>{
+          if (!n) return "";
+          const changed = prevNiziM[i] && n !== prevNiziM[i];
+          return `<span class="niz-cell${changed?" changed":""}"><span style="font-size:.6rem;color:${changed?"#4ade80":"var(--muted)"};display:block">Niz ${i+1}</span>${n}</span>`;
+        }).filter(Boolean).join("");
         const stats = [
           ex.sets   ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val">${esc(ex.sets)}</span></div>` : "",
           ex.reps   ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val">${esc(ex.reps)}</span></div>` : "",
