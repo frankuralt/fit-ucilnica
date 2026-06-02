@@ -225,6 +225,7 @@
   .niz-cells { display:flex; gap:.3rem; flex-wrap:wrap; }
   .niz-cell.changed { border-color:#4ade80 !important; background:rgba(74,222,128,.15) !important; color:#4ade80 !important; }
   .ex-card-nizi .niz-cell.changed { border-color:#4ade80 !important; background:rgba(74,222,128,.15) !important; color:#4ade80 !important; }
+  .val-changed { color:#4ade80 !important; font-weight:600; }
   .niz-cell { background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:.2rem .45rem; font-size:.75rem; font-weight:500; white-space:nowrap; min-width:32px; text-align:center; }
   .niz-cell:not(:empty) { border-color:rgba(37,99,235,.3); }
   .no-sheet-msg { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:2rem; text-align:center; }
@@ -647,7 +648,7 @@
       <div class="card-form">
         <h3>Graf telesne teže 📈</h3>
         <div id="weight-graph-wrap">
-          <canvas id="weight-chart" style="width:100%;max-height:320px"></canvas>
+          <div style="position:relative;height:300px;width:100%"><canvas id="weight-chart"></canvas></div>
           <div id="weight-trend-msg" style="margin-top:.75rem;font-size:.88rem;color:var(--muted);text-align:center"></div>
         </div>
       </div>
@@ -1601,11 +1602,11 @@ const APP = window.APP = {
           labels: allDates,
           datasets: [
             {
-              label: "Teža (kg)",
+              label: "Teža",
               data: allWeights,
               borderColor: "#2563eb",
               backgroundColor: "rgba(37,99,235,.08)",
-              borderWidth: 2,
+              borderWidth: 2.5,
               pointRadius: 3,
               pointBackgroundColor: "#2563eb",
               tension: 0.3,
@@ -1625,24 +1626,48 @@ const APP = window.APP = {
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           interaction: { mode:"index", intersect:false },
           plugins: {
-            legend: { labels:{ color:"#9090b0", font:{size:12} } },
-            tooltip: { callbacks:{ label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y} kg` } }
+            legend: {
+              labels:{
+                color:"#9090b0",
+                font:{size:11},
+                boxWidth: 24,
+                boxHeight: 2,
+                usePointStyle: false,
+                padding: 12
+              }
+            },
+            tooltip: {
+              callbacks:{
+                label: ctx=>`${ctx.dataset.label}: ${parseFloat(ctx.parsed.y).toFixed(1)} kg`
+              }
+            }
           },
           scales: {
-            x: { ticks:{ color:"#7070a0", maxTicksLimit:10 }, grid:{ color:"#2e2e3f" } },
-            y: { ticks:{ color:"#7070a0", callback:v=>v+" kg" }, grid:{ color:"#2e2e3f" } }
+            x: {
+              ticks:{ color:"#7070a0", maxTicksLimit:8, font:{size:11} },
+              grid:{ color:"#2e2e3f" }
+            },
+            y: {
+              ticks:{
+                color:"#7070a0",
+                font:{size:11},
+                callback: v => parseFloat(v).toFixed(1)+" kg"
+              },
+              grid:{ color:"#2e2e3f" }
+            }
           }
         }
       });
 
       // Trend message
       if(g("weight-trend-msg")) {
-        const totalChange = (slope*(n-1)).toFixed(1);
+        const totalChange = Math.abs(slope*(n-1)).toFixed(1);
         const direction = slope < -0.01 ? "pada" : slope > 0.01 ? "narašča" : "je stabilna";
         const arrow = slope < -0.01 ? "📉" : slope > 0.01 ? "📈" : "➡️";
-        g("weight-trend-msg").innerHTML = `${arrow} Teža ${direction} za ~${Math.abs(slope*7).toFixed(2)} kg/teden &nbsp;·&nbsp; 
+        g("weight-trend-msg").innerHTML = `${arrow} Teža ${direction} za ~${Math.abs(slope*7).toFixed(1)} kg/teden &nbsp;·&nbsp; 
           Čez 3 mesece (~${projLabel}): <strong style="color:${slope<0?"#4ade80":"#f09090"}">${projWeight} kg</strong>`;
       }
 
@@ -2426,8 +2451,13 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
           const rawCell = String(row[2]||"").trim();
           const name = parseHyperlink(rawCell).name || rawCell;
           if (code && name && name !== "Vaja") {
-            prevNiziMap[code] = [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]]
-              .map(v=>String(v||"").trim()).filter(v=>v);
+            prevNiziMap[code] = {
+              nizi: [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]].map(v=>String(v||"").trim()),
+              sets:  String(row[4]||"").trim(),
+              reps:  String(row[5]||"").trim(),
+              tempo: String(row[6]||"").trim(),
+              rest:  String(row[7]||"").trim()
+            };
           }
         }
       }
@@ -2438,7 +2468,8 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
 
       // Desktop table rows
       const tableRows = exercises.map(ex => {
-        const prevNizi = prevNiziMap[ex.code] || [];
+        const prevData = prevNiziMap[ex.code] || {};
+        const prevNizi = prevData.nizi || [];
         const nizCells = Array.from({length:Math.max(nizCols,1)},(_,i)=>{
           const val = ex.nizi[i];
           const prev = prevNizi[i];
@@ -2447,30 +2478,37 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
           return `<span class="niz-cell${changed?" changed":""}"><span style="font-size:.65rem;color:${changed?"#4ade80":"var(--muted)"};display:block">Niz ${i+1}</span>${val}</span>`;
         }).join("");
         const videoLink = `<button style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};margin-left:.5rem;border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:5px;padding:.15rem .5rem;cursor:${ex.videoUrl?'pointer':'default'};background:${ex.videoUrl?'rgba(37,99,235,.1)':'transparent'};opacity:${ex.videoUrl?'1':'.35'}" title="${ex.videoUrl?'Poglej video':'Video ni na voljo'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
+        const pd = prevNiziMap[ex.code] || {};
+        const chSets  = pd.sets  && pd.sets  !== ex.sets  ? ' class="val-changed"' : '';
+        const chReps  = pd.reps  && pd.reps  !== ex.reps  ? ' class="val-changed"' : '';
+        const chTempo = pd.tempo && pd.tempo !== ex.tempo ? ' class="val-changed"' : '';
+        const chRest  = pd.rest  && pd.rest  !== ex.rest  ? ' class="val-changed"' : '';
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
           <td><div class="ex-name">${esc(ex.name)}${videoLink}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
-          <td class="ex-sets">${esc(ex.sets)}</td>
-          <td class="ex-reps">${esc(ex.reps)}</td>
-          <td class="ex-tempo">${esc(ex.tempo)}</td>
-          <td class="ex-rest">${esc(ex.rest)}</td>
+          <td class="ex-sets"><span${chSets}>${esc(ex.sets)}</span></td>
+          <td class="ex-reps"><span${chReps}>${esc(ex.reps)}</span></td>
+          <td class="ex-tempo"><span${chTempo}>${esc(ex.tempo)}</span></td>
+          <td class="ex-rest"><span${chRest}>${esc(ex.rest)}</span></td>
           <td><div class="niz-cells">${nizCells}</div></td>
         </tr>`;
       }).join("");
 
       // Mobile card rows
       const cardRows = exercises.map(ex => {
-        const prevNiziM = prevNiziMap[ex.code] || [];
+        const prevDataM = prevNiziMap[ex.code] || {};
+        const prevNiziM = prevDataM.nizi || [];
         const nizBadges = ex.nizi.map((n,i)=>{
           if (!n) return "";
           const changed = prevNiziM[i] && n !== prevNiziM[i];
           return `<span class="niz-cell${changed?" changed":""}"><span style="font-size:.6rem;color:${changed?"#4ade80":"var(--muted)"};display:block">Niz ${i+1}</span>${n}</span>`;
         }).filter(Boolean).join("");
+        const pdM = prevNiziMap[ex.code] || {};
         const stats = [
-          ex.sets   ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val">${esc(ex.sets)}</span></div>` : "",
-          ex.reps   ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val">${esc(ex.reps)}</span></div>` : "",
-          ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${esc(ex.tempo)}</span></div>` : "",
-          ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${esc(ex.rest)}</span></div>` : "",
+          ex.sets   ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val${pdM.sets&&pdM.sets!==ex.sets?' val-changed':''}">${esc(ex.sets)}</span></div>` : "",
+          ex.reps   ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val${pdM.reps&&pdM.reps!==ex.reps?' val-changed':''}">${esc(ex.reps)}</span></div>` : "",
+          ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val${pdM.tempo&&pdM.tempo!==ex.tempo?' val-changed':''}">${esc(ex.tempo)}</span></div>` : "",
+          ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val${pdM.rest&&pdM.rest!==ex.rest?' val-changed':''}">${esc(ex.rest)}</span></div>` : "",
         ].filter(Boolean).join("");
         const mVideoBtn = `<button style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:${ex.videoUrl?'rgba(37,99,235,.15)':'var(--bg3)'};border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};cursor:${ex.videoUrl?'pointer':'default'};font-weight:500;opacity:${ex.videoUrl?'1':'.4'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         return `<div class="ex-card">
