@@ -612,6 +612,17 @@
 
     <div id="sec-courses" class="section">
       <div class="page-header"><h2>Izobraževalni programi</h2><p>Izberite sistem in začnite z učenjem.</p></div>
+      <details style="margin-bottom:1.25rem">
+        <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px;font-size:.88rem;font-weight:500;color:var(--accent2)">
+          🎓 Kaj so izobraževalni programi? <span style="margin-left:auto;font-size:.73rem;color:var(--muted)">klikni</span>
+        </summary>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:1.25rem;font-size:.87rem;line-height:1.75;color:var(--muted)">
+          <p style="margin-bottom:.75rem">📚 <strong style="color:var(--text)">Tukaj najdeš baze znanj, trikov in sistemskih rešitev</strong> za dosego tvojih ciljev. Vsebine so organizirane v sisteme in korake — od osnov do naprednih tehnik.</p>
+          <p style="margin-bottom:.5rem">🎯 <strong style="color:var(--text)">Cilj je vedno na prvem mestu.</strong> Vsak sistem je zasnovan tako, da te korak za korakom vodi k rezultatom.</p>
+          <p style="margin-bottom:.5rem">🔒 <strong style="color:var(--text)">Nekateri sistemi so zaklenjeni</strong> — odpirajo se glede na tvoje potrebe in napredek po testiranju. Če te zanima določen sistem, zaprosi za dostop ali se pogovori s trenerjem.</p>
+          <p style="font-size:.8rem;color:var(--accent2);margin-top:.5rem">💡 Posebni sistemi so del individualne obravnave in se plačajo ločeno.</p>
+        </div>
+      </details>
       <!-- Systems view -->
       <div id="systems-view">
         <div id="systems-grid" class="cards-grid"></div>
@@ -2643,21 +2654,27 @@ const APP = window.APP = {
   _renderPrModalList(exercises) {
     const list = g("pr-modal-list");
     if (!list) return;
-    // Combine: defaults shown as checkboxes, custom ones as removable rows
-    const allItems = [...new Set([...this._PR_DEFAULTS, ...exercises])];
-    list.innerHTML = allItems.map((ex) => {
+    // Section 1: defaults as checkboxes
+    const defaultsHtml = this._PR_DEFAULTS.map(ex => {
       const isChecked = exercises.includes(ex);
-      const isDefault = this._PR_DEFAULTS.includes(ex);
       return `<div class="list-row" style="padding:.5rem .75rem;gap:.75rem">
         <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;flex:1">
-          <input type="checkbox" ${isChecked?"checked":""} 
+          <input type="checkbox" ${isChecked?"checked":""}
             onchange="APP._togglePrExercise('${esc(ex)}',this.checked)"
             style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
           <span style="font-size:.9rem">🏆 ${esc(ex)}</span>
         </label>
-        ${!isDefault ? `<button class="btn btn-sm btn-danger" onclick="APP._deletePrExercise('${esc(ex)}')">✕</button>` : ""}
       </div>`;
     }).join("");
+    // Section 2: custom (non-default) exercises — removable
+    const custom = exercises.filter(e=>!this._PR_DEFAULTS.includes(e));
+    const customHtml = custom.length ? custom.map(ex => `
+      <div class="list-row" style="padding:.5rem .75rem;gap:.75rem">
+        <span style="font-size:.9rem;flex:1">🏆 ${esc(ex)}</span>
+        <button class="btn btn-sm btn-danger" onclick="APP._deletePrExercise('${esc(ex)}')">✕</button>
+      </div>`).join("") : "";
+    list.innerHTML = defaultsHtml
+      + (custom.length ? `<div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:.5rem .75rem .2rem">Po meri</div>${customHtml}` : "");
   },
 
   async _togglePrExercise(name, checked) {
