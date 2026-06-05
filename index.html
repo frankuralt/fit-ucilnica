@@ -1246,8 +1246,11 @@ const APP = window.APP = {
       const allowed = await emailExistsInCollection("allowedUsers", email);
       if (!allowed){ showAuthErr("Ta e-poštni naslov ni odobren. Prosite skrbnika, da vas doda."); btn.innerHTML="Ustvari račun"; btn.disabled=false; return; }
       await createUserWithEmailAndPassword(auth, email, pass);
-      // Save display name to allowedUsers
-      await updateDoc(doc(db,"allowedUsers",ekey(email)),{ displayName: ime+" "+priimek });
+      // Save display name + default PR exercises to allowedUsers
+      await updateDoc(doc(db,"allowedUsers",ekey(email)),{
+        displayName: ime+" "+priimek,
+        prExercises: ["Počep","Mrtvi dvig"]
+      });
       clearAuthMsg();
     } catch(e){ showAuthErr(ERRORS[e.code]||"Registracija ni uspela: "+e.message); }
     btn.innerHTML="Ustvari račun"; btn.disabled=false;
@@ -2627,7 +2630,8 @@ const APP = window.APP = {
     htm("users-list", rows.length ? rows.join("") : "<p class='muted'>Še ni uporabnikov.</p>");
   },
 
-  _PR_DEFAULTS: ["Počep", "Mrtvi dvig oz. dead lift (DL)"],
+  _PR_DEFAULTS: ["Počep", "Mrtvi dvig"],
+  _PR_SAVED_DEFAULTS: ["Počep", "Mrtvi dvig"],
 
   async editUserPR(email) {
     const snap = await getDocs(collection(db,"allowedUsers"));
@@ -2641,7 +2645,7 @@ const APP = window.APP = {
       }
     }
     // If no prExercises saved yet, use defaults
-    const exercises = userData?.prExercises !== undefined
+    const exercises = (userData?.prExercises && userData.prExercises.length > 0)
       ? userData.prExercises
       : [...this._PR_DEFAULTS];
     g("pr-modal-email").value = email;
@@ -2962,7 +2966,7 @@ const APP = window.APP = {
     const email = g("new-user-email").value.trim().toLowerCase();
     const sheetId = (g("new-user-sheet")?.value||"").trim();
     if (!email){ toast("Vnesite e-poštni naslov.","err"); return; }
-    const userData = {email, addedAt:new Date().toISOString()};
+    const userData = {email, addedAt:new Date().toISOString(), prExercises:["Počep","Mrtvi dvig"]};
     if (sheetId) userData.sheetId = sheetId;
     await setDoc(doc(db,"allowedUsers",ekey(email)), userData);
     g("new-user-email").value="";
