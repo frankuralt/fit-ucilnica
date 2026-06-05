@@ -2342,7 +2342,7 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
     await this._showTrainingTab(sheetId, TABS[0], tabsEl.querySelector(".training-tab"));
   },
 
-  async _showTrainingTab(sheetId, tabName, btnEl) {
+  async _showTrainingTab(sheetId, tabName, btnEl, workoutIdx) {
     document.querySelectorAll(".training-tab").forEach(b=>b.classList.remove("active"));
     if(btnEl) btnEl.classList.add("active");
     htm("training-content",`<div class='training-empty'><p>Nalaganje ${tabName}…</p></div>`);
@@ -2388,10 +2388,14 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         return;
       }
 
-      // Take LAST workout block
-      const lastHeaderIdx = headerRowIdxs[headerRowIdxs.length-1];
-      // Also get PREVIOUS workout block for comparison
-      const prevHeaderIdx = headerRowIdxs.length >= 2 ? headerRowIdxs[headerRowIdxs.length-2] : -1;
+      // Default to last workout, or use workoutIdx if provided
+      const totalWorkoutBlocks = headerRowIdxs.length;
+      const currentIdx = (workoutIdx !== undefined && workoutIdx >= 0 && workoutIdx < totalWorkoutBlocks)
+        ? workoutIdx
+        : totalWorkoutBlocks - 1;
+      const lastHeaderIdx = headerRowIdxs[currentIdx];
+      // Previous block for comparison (always the one before current)
+      const prevHeaderIdx = currentIdx > 0 ? headerRowIdxs[currentIdx-1] : -1;
       // Number in col A, date in col B — same row as "Vaja" header
       const headerRow = rows[lastHeaderIdx];
       const workoutNum = String(headerRow[0]||"").trim();
@@ -2564,9 +2568,30 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         displayDate = d.toLocaleDateString("sl-SI", {day:"numeric", month:"numeric", year:"numeric"});
       }
 
+      // Build dropdown options from all header rows
+      const dropdownOptions = headerRowIdxs.map((hIdx, i) => {
+        const hRow = rows[hIdx];
+        const hNum = String(hRow[0]||"").trim();
+        const hDateRaw = String(hRow[1]||"").trim();
+        let hDate = hDateRaw;
+        const hSerial = parseFloat(hDateRaw);
+        if (!isNaN(hSerial) && hSerial > 1000) {
+          const hD = new Date((hSerial - 25569) * 86400 * 1000);
+          hDate = hD.toLocaleDateString("sl-SI", {day:"numeric", month:"numeric", year:"numeric"});
+        }
+        return `<option value="${i}" ${i===currentIdx?"selected":""}>${hNum ? "#"+hNum+" · " : ""}${hDate||"Trening "+(i+1)}</option>`;
+      }).reverse().join(""); // newest first in dropdown
+
       const header = `<div class="workout-header">
         <h3>${tabName}</h3>
-        <span class="workout-num">Trening #${esc(workoutNum)}${displayDate?" · "+esc(displayDate):""}</span>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          ${currentIdx > 0 ? `<button onclick="APP._showTrainingTab('${sheetId}','${tabName}',null,${currentIdx-1})" style="background:rgba(255,255,255,.1);border:none;border-radius:6px;color:#fff;cursor:pointer;padding:.25rem .55rem;font-size:1rem;line-height:1" title="Prejšnji trening">‹</button>` : `<span style="opacity:.2;padding:.25rem .55rem">‹</span>`}
+          <select onchange="APP._showTrainingTab('${sheetId}','${tabName}',null,parseInt(this.value))"
+            style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-family:inherit;font-size:.78rem;padding:.3rem .5rem;cursor:pointer;max-width:160px">
+            ${dropdownOptions}
+          </select>
+          ${currentIdx < totalWorkoutBlocks-1 ? `<button onclick="APP._showTrainingTab('${sheetId}','${tabName}',null,${currentIdx+1})" style="background:rgba(255,255,255,.1);border:none;border-radius:6px;color:#fff;cursor:pointer;padding:.25rem .55rem;font-size:1rem;line-height:1" title="Naslednji trening">›</button>` : `<span style="opacity:.2;padding:.25rem .55rem">›</span>`}
+        </div>
       </div>`;
 
       const volumeBar = volumeKg ? `
