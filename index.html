@@ -2983,20 +2983,45 @@ const APP = window.APP = {
     const snap = await getDocs(query(collection(db,"systems"),orderBy("order")));
     const list = document.getElementById("admin-systems-list");
     if (!list) return;
-    if (snap.empty) { list.innerHTML="<p class='muted'>Še ni sistemov.</p>"; return; }
-    list.innerHTML = snap.docs.map(d=>`
-      <div class="list-row">
-        <strong>${esc(d.data().title||"")}</strong>
-        <div class="btn-row">
-          <button class="btn btn-sm btn-danger" onclick="APP._deleteSystem('${d.id}')">Izbriši</button>
-        </div>
-      </div>`).join("");
-    // Also populate system selector in add course modal
+    if (snap.empty) {
+      list.innerHTML="<p class='muted'>Še ni sistemov.</p>";
+    } else {
+      list.innerHTML = snap.docs.map(d=>`
+        <div class="drag-item" id="sys-row-${d.id}">
+          <div class="drag-item-label">
+            <strong id="sys-label-${d.id}">${esc(d.data().title||"")}</strong>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-ghost" onclick="APP._renameSystem('${d.id}')">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="APP._deleteSystem('${d.id}')">Izbriši</button>
+          </div>
+        </div>`).join("");
+    }
+    // Populate system selector in add course modal
     const sel = document.getElementById("nc-system");
     if (sel) {
       sel.innerHTML = `<option value="">— brez sistema —</option>` +
         snap.docs.map(d=>`<option value="${d.id}">${esc(d.data().title||"")}</option>`).join("");
     }
+  },
+
+  _renameSystem(systemId) {
+    const label = document.getElementById("sys-label-"+systemId);
+    if (!label) return;
+    const current = label.textContent;
+    label.innerHTML = `<input class="rename-input" id="sys-ri-${systemId}" value="${esc(current)}" maxlength="80" style="width:100%">`;
+    const inp = document.getElementById("sys-ri-"+systemId);
+    inp.focus(); inp.select();
+    const save = async () => {
+      const val = inp.value.trim();
+      if (val && val !== current) {
+        await updateDoc(doc(db,"systems",systemId),{title:val});
+        toast("Sistem preimenovan.");
+      }
+      label.textContent = val || current;
+    };
+    inp.addEventListener("blur", save);
+    inp.addEventListener("keydown", e=>{ if(e.key==="Enter") inp.blur(); if(e.key==="Escape") label.textContent=current; });
   },
 
   async _addSystem() {
