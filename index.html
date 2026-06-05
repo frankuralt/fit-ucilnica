@@ -3028,6 +3028,40 @@ const APP = window.APP = {
     inp.addEventListener("keydown", e=>{ if(e.key==="Enter") inp.blur(); if(e.key==="Escape") label.textContent=current; });
   },
 
+  async _editSystemModal(systemId) {
+    const snap = await getDoc(doc(db,"systems",systemId));
+    const s = snap.data();
+    const modal = document.createElement("div");
+    modal.className="modal-bg open";
+    modal.innerHTML=`<div class="modal-box">
+      <div class="modal-handle"></div>
+      <h3>Uredi sistem</h3>
+      <label>Ime *</label><input id="es-title" class="inp" value="${esc(s.title||"")}">
+      <label>Opis</label><textarea id="es-desc" class="inp" rows="2">${esc(s.description||"")}</textarea>
+      <label>URL slike</label><input id="es-thumb" class="inp" value="${esc(s.thumbnail||"")}">
+      <div class="btn-row mt">
+        <button class="btn" onclick="APP._saveSystemEdit('${systemId}',this.closest('.modal-bg'))">Shrani</button>
+        <button class="btn btn-ghost" onclick="this.closest('.modal-bg').remove()">Prekliči</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click",e=>{ if(e.target===modal) modal.remove(); });
+  },
+
+  async _saveSystemEdit(systemId, modal) {
+    const title = document.getElementById("es-title")?.value.trim();
+    if (!title){ toast("Ime je obvezno.","err"); return; }
+    await updateDoc(doc(db,"systems",systemId),{
+      title,
+      description: document.getElementById("es-desc")?.value.trim()||"",
+      thumbnail:   document.getElementById("es-thumb")?.value.trim()||""
+    });
+    toast("Sistem shranjen!");
+    modal?.remove();
+    this._loadAdminSystems();
+    this._loadSkrbnikCourses();
+  },
+
   async _addSystem() {
     const title = (document.getElementById("ns2-title")?.value||"").trim();
     if (!title) { toast("Vnesite ime sistema.","err"); return; }
@@ -3059,32 +3093,97 @@ const APP = window.APP = {
     this._loadAdminSystems();
   },
 
-  /* ── Skrbnik: Courses ── */
   async _loadSkrbnikCourses() {
-    const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
-    if (snap.empty){ htm("admin-courses","<p class='muted'>Ni tečajev.</p>"); return; }
-    const rows = snap.docs.map(d=>{
-      const c=d.data();
-      return `<div class="drag-item" draggable="true" data-id="${d.id}" data-type="course">
-        <div class="drag-handle" title="Povleci za premik"><span></span><span></span><span></span></div>
-        <div class="drag-item-label">
-          <strong id="course-label-${d.id}">${esc(c.title)}</strong>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-sm btn-ghost" onclick="APP.renameCourse('${d.id}')">✏️ Preimenuj</button>
-          <button class="btn btn-sm" onclick="APP.openLekcijeModal('${d.id}','${esc(c.title)}')">Lekcije</button>
-          <button class="btn btn-sm btn-danger" onclick="APP.deleteCourse('${d.id}')">Izbriši</button>
-        </div>
-      </div>`;
+    const [coursesSnap, systemsSnap] = await Promise.all([
+      getDocs(query(collection(db,"courses"),orderBy("order"))),
+      getDocs(query(collection(db,"systems"),orderBy("order")))
+    ]);
+    if (coursesSnap.empty){ htm("admin-courses","<p class='muted'>Ni korakov.</p>"); return; }
+    const systems = [{id:"__none__", title:"Brez sistema"}];
+    systemsSnap.docs.forEach(d=>systems.push({id:d.id, title:d.data().title||""}));
+    const grouped = {};
+    systems.forEach(s=>{ grouped[s.id]=[]; });
+    coursesSnap.docs.forEach(d=>{
+      const sId = d.data().systemId||"__none__";
+      if (!grouped[sId]) grouped[sId]=[];
+      grouped[sId].push({id:d.id,...d.data()});
     });
-    htm("admin-courses", `<div class="drag-list" id="courses-drag-list">${rows.join("")}</div>`);
-    this._initDragList("courses-drag-list", async (orderedIds) => {
-      // save new order to Firestore
-      const batch = orderedIds.map((id,i) => updateDoc(doc(db,"courses",id),{order:i}));
-      await Promise.all(batch);
-      toast("Vrstni red shranjen.");
+    let out = "";
+    systems.forEach(sys=>{
+      const courses = grouped[sys.id]||[];
+      if (!courses.length && sys.id==="__none__") return;
+      const listId = "cdl_"+sys.id.replace(/[^a-z0-9]/gi,"_");
+      const sysColor = sys.id==="__none__" ? "var(--muted)" : "var(--accent2)";
+      const rows = courses.map(c=>`
+        <div class="drag-item" draggable="true" data-id="${c.id}" data-type="course">
+          <div class="drag-handle"><span></span><span></span><span></span></div>
+          <div class="drag-item-label"><strong id="course-label-${c.id}">${esc(c.title)}</strong></div>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-ghost" onclick="APP._editCourseModal('${c.id}')">✏️ Uredi</button>
+            <button class="btn btn-sm" onclick="APP.openLekcijeModal('${c.id}','${esc(c.title)}')">Lekcije</button>
+            <button class="btn btn-sm btn-danger" onclick="APP.deleteCourse('${c.id}')">Izbriši</button>
+          </div>
+        </div>`).join("");
+      out += `<details open style="margin-bottom:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <summary style="cursor:pointer;list-style:none;padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;font-weight:600;font-size:.9rem;color:${sysColor}">
+          ${sys.id==="__none__"?"📂":"🎓"} ${esc(sys.title)}
+          <span style="margin-left:.5rem;font-size:.75rem;color:var(--muted);font-weight:400">(${courses.length})</span>
+        </summary>
+        <div style="padding:.5rem .75rem .75rem">
+          ${courses.length ? `<div class="drag-list" id="${listId}">${rows}</div>` : `<p class="muted" style="font-size:.83rem">Ni korakov.</p>`}
+        </div>
+      </details>`;
+    });
+    htm("admin-courses", out||"<p class='muted'>Ni korakov.</p>");
+    systems.forEach(sys=>{
+      const listId = "cdl_"+sys.id.replace(/[^a-z0-9]/gi,"_");
+      if (!document.getElementById(listId)) return;
+      this._initDragList(listId, async (orderedIds)=>{
+        await Promise.all(orderedIds.map((id,i)=>updateDoc(doc(db,"courses",id),{order:i})));
+        toast("Vrstni red shranjen.");
+      });
     });
   },
+
+  async _editCourseModal(courseId) {
+    const snap = await getDoc(doc(db,"courses",courseId));
+    const c = snap.data();
+    const sysSnap = await getDocs(query(collection(db,"systems"),orderBy("order")));
+    const sysOptions = `<option value="">— brez sistema —</option>` +
+      sysSnap.docs.map(d=>`<option value="${d.id}" ${c.systemId===d.id?"selected":""}>${esc(d.data().title||"")}</option>`).join("");
+    // Reuse modal-add-course but in edit mode
+    const modal = document.createElement("div");
+    modal.className="modal-bg open";
+    modal.innerHTML=`<div class="modal-box">
+      <div class="modal-handle"></div>
+      <h3>Uredi korak</h3>
+      <label>Sistem</label><select id="ec-system" class="inp">${sysOptions}</select>
+      <label>Naslov *</label><input id="ec-title" class="inp" value="${esc(c.title||"")}">
+      <label>Opis</label><textarea id="ec-desc" class="inp" rows="2">${esc(c.description||"")}</textarea>
+      <label>URL slike</label><input id="ec-thumb" class="inp" value="${esc(c.thumbnail||"")}">
+      <div class="btn-row mt">
+        <button class="btn" onclick="APP._saveCourseEdit('${courseId}',this.closest('.modal-bg'))">Shrani</button>
+        <button class="btn btn-ghost" onclick="this.closest('.modal-bg').remove()">Prekliči</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click",e=>{ if(e.target===modal) modal.remove(); });
+  },
+
+  async _saveCourseEdit(courseId, modal) {
+    const title = document.getElementById("ec-title")?.value.trim();
+    if (!title){ toast("Naslov je obvezen.","err"); return; }
+    await updateDoc(doc(db,"courses",courseId),{
+      title,
+      description: document.getElementById("ec-desc")?.value.trim()||"",
+      thumbnail:   document.getElementById("ec-thumb")?.value.trim()||"",
+      systemId:    document.getElementById("ec-system")?.value||""
+    });
+    toast("Korak shranjen!");
+    modal?.remove();
+    this._loadSkrbnikCourses();
+  },
+
 
   renameCourse(courseId) {
     const label = g("course-label-"+courseId);
