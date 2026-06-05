@@ -825,11 +825,19 @@
       </div>
       <div class="card-form">
         <h3>Sistemi</h3>
-        <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
-          <input id="new-system-title" type="text" placeholder="Ime sistema (npr. Fit Izziv)" class="inp" style="margin:0;flex:1">
-          <button id="add-system-btn" class="btn" style="white-space:nowrap">+ Sistem</button>
-        </div>
-        <div id="admin-systems-list"></div>
+        <div id="admin-systems-list" style="margin-bottom:1rem"></div>
+        <details>
+          <summary style="cursor:pointer;list-style:none;color:var(--accent2);font-size:.88rem;font-weight:500;padding:.4rem 0">+ Dodaj nov sistem</summary>
+          <div style="margin-top:.75rem">
+            <label>Ime *</label>
+            <input id="new-system-title" type="text" placeholder="npr. Fit Izziv" class="inp">
+            <label>Opis</label>
+            <textarea id="new-system-desc" class="inp" rows="2" placeholder="Kratek opis sistema"></textarea>
+            <label>URL slike (neobvezno)</label>
+            <input id="new-system-thumb" type="text" placeholder="https://..." class="inp">
+            <button id="add-system-btn" class="btn">Ustvari sistem</button>
+          </div>
+        </details>
       </div>
       <div class="card-form">
         <h3>Koraki (Tečaji)</h3>
@@ -3063,17 +3071,17 @@ const APP = window.APP = {
   },
 
   async _addSystem() {
-    const title = (document.getElementById("ns2-title")?.value||"").trim();
+    const title = (document.getElementById("new-system-title")?.value||"").trim();
     if (!title) { toast("Vnesite ime sistema.","err"); return; }
     const snap = await getDocs(collection(db,"systems"));
     await addDoc(collection(db,"systems"),{
       title,
-      description: document.getElementById("ns2-desc")?.value.trim()||"",
-      thumbnail:   document.getElementById("ns2-thumb")?.value.trim()||"",
+      description: document.getElementById("new-system-desc")?.value.trim()||"",
+      thumbnail:   document.getElementById("new-system-thumb")?.value.trim()||"",
       order: snap.size,
       createdAt: new Date().toISOString()
     });
-    ["ns2-title","ns2-desc","ns2-thumb"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+    ["new-system-title","new-system-desc","new-system-thumb"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
     this.closeModal("modal-add-system");
     toast("Sistem ustvarjen!");
     this._loadAdminSystems();
@@ -4311,9 +4319,7 @@ document.querySelectorAll(".logout-btn").forEach(b=> b.addEventListener("click",
 on("add-user-btn",    ()=> APP.addUser());
 on("add-topic-btn",   ()=> APP.addTopic());
 on("open-add-course", ()=> APP.openAddCourse());
-on("add-system-btn",  ()=> APP.openModal("modal-add-system"));
-on("save-system-btn", ()=> APP._addSystem());
-on("cancel-add-system",()=>APP.closeModal("modal-add-system"));
+on("add-system-btn",  ()=> APP._addSystem());
 on("save-course-btn", ()=> APP.saveCourse());
 on("cancel-add-course",()=>APP.closeModal("modal-add-course"));
 on("add-lesson-btn",  ()=> APP.addLesson());
