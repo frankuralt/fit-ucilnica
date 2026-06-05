@@ -225,6 +225,8 @@
   .niz-cells { display:flex; gap:.3rem; flex-wrap:wrap; }
   .niz-cell.changed { border-color:#4ade80 !important; background:rgba(74,222,128,.15) !important; color:#4ade80 !important; }
   .ex-card-nizi .niz-cell.changed { border-color:#4ade80 !important; background:rgba(74,222,128,.15) !important; color:#4ade80 !important; }
+  .val-changed-box { display:inline-block; background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.4); border-radius:6px; padding:.1rem .45rem; color:#4ade80; font-weight:600; }
+  td.val-changed-box, td .val-changed-box { color:#4ade80; }
   .val-changed { color:#4ade80 !important; font-weight:600; }
   .niz-cell { background:var(--bg3); border:1px solid var(--border); border-radius:5px; padding:.2rem .45rem; font-size:.75rem; font-weight:500; white-space:nowrap; min-width:32px; text-align:center; }
   .niz-cell:not(:empty) { border-color:rgba(37,99,235,.3); }
@@ -2485,17 +2487,19 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         const repsChanged  = prevEx.reps  && ex.reps  !== prevEx.reps;
         const tempoChanged = prevEx.tempo && ex.tempo !== prevEx.tempo;
         const restChanged  = prevEx.rest  && ex.rest  !== prevEx.rest;
-        const chStyle = 'style="color:#4ade80;font-weight:600"';
+        const chBox = (val, changed) => changed
+          ? `<span class="val-changed-box">${val}</span>`
+          : val;
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
           <td>
-            <div class="ex-name" ${nameChanged?chStyle:""}>${esc(ex.name)}${videoLink}</div>
-            ${ex.note?`<div class="ex-note" ${noteChanged?chStyle:""}>${esc(ex.note)}</div>`:""}
+            <div class="ex-name">${nameChanged?`<span class="val-changed-box">${esc(ex.name)}</span>`:esc(ex.name)}${videoLink}</div>
+            ${ex.note?`<div class="ex-note">${chBox(esc(ex.note),noteChanged)}</div>`:""}
           </td>
-          <td class="ex-sets" ${setsChanged?chStyle:""}>${esc(ex.sets)}</td>
-          <td class="ex-reps" ${repsChanged?chStyle:""}>${esc(ex.reps)}</td>
-          <td class="ex-tempo" ${tempoChanged?chStyle:""}>${esc(ex.tempo)}</td>
-          <td class="ex-rest" ${restChanged?chStyle:""}>${esc(ex.rest)}</td>
+          <td class="ex-sets">${chBox(esc(ex.sets),setsChanged)}</td>
+          <td class="ex-reps">${chBox(esc(ex.reps),repsChanged)}</td>
+          <td class="ex-tempo">${chBox(esc(ex.tempo),tempoChanged)}</td>
+          <td class="ex-rest">${chBox(esc(ex.rest),restChanged)}</td>
           <td><div class="niz-cells">${nizCells}</div></td>
         </tr>`;
       }).join("");
@@ -2515,20 +2519,20 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
           const changed = prevNiziM[i] !== undefined && n !== prevNiziM[i];
           return `<span class="niz-cell${changed?" changed":""}"><span style="font-size:.6rem;color:${changed?"#4ade80":"var(--muted)"};display:block">Niz ${i+1}</span>${n}</span>`;
         }).filter(Boolean).join("");
-        const gc = (ch) => ch ? 'style="color:#4ade80;font-weight:600"' : "";
+        const gc = (val, ch) => ch ? `<span class="val-changed-box">${val}</span>` : val;
         const mVideoBtn = `<button style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:${ex.videoUrl?'rgba(37,99,235,.15)':'var(--bg3)'};border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};cursor:${ex.videoUrl?'pointer':'default'};font-weight:500;opacity:${ex.videoUrl?'1':'.4'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
-            <span class="ex-card-name" ${gc(mNameCh)}>${esc(ex.name)}</span>
+            <span class="ex-card-name">${gc(esc(ex.name),mNameCh)}</span>
             ${mVideoBtn}
           </div>
-          ${ex.note ? `<div class="ex-card-note" ${gc(mNoteCh)}>${esc(ex.note)}</div>` : ""}
+          ${ex.note ? `<div class="ex-card-note">${gc(esc(ex.note),mNoteCh)}</div>` : ""}
           <div class="ex-card-stats">
-            ${ex.sets  ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val" ${gc(mSetsCh)}>${esc(ex.sets)}</span></div>` : ""}
-            ${ex.reps  ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val" ${gc(mRepsCh)}>${esc(ex.reps)}</span></div>` : ""}
-            ${ex.tempo ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val" ${gc(mTempoCh)}>${esc(ex.tempo)}</span></div>` : ""}
-            ${ex.rest  ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val" ${gc(mRestCh)}>${esc(ex.rest)}</span></div>` : ""}
+            ${ex.sets  ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val">${gc(esc(ex.sets),mSetsCh)}</span></div>` : ""}
+            ${ex.reps  ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val">${gc(esc(ex.reps),mRepsCh)}</span></div>` : ""}
+            ${ex.tempo ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${gc(esc(ex.tempo),mTempoCh)}</span></div>` : ""}
+            ${ex.rest  ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${gc(esc(ex.rest),mRestCh)}</span></div>` : ""}
           </div>
           ${nizBadges ? `<div class="ex-card-nizi">${nizBadges}</div>` : ""}
         </div>`;
