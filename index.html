@@ -1799,7 +1799,6 @@ const APP = window.APP = {
     "Ni potrebno biti odličen da začneš — moraš začeti da postaneš odličen.",
     "Doslednost premaga motivacijo vsak dan.",
     "Telo doseže tisto kar si misli. Verjemi v proces.",
-    "Majhen napredek je še vedno napredek. Korak za korakom. 💪",
     "Edini trening ki ga obžaluješ je tisti ki ga nisi naredil.",
     "Tvoje telo zmore skoraj vse — prepričaj um da mu sledi.",
     "Vsak dan ki ga posvetiš gibanju je naložba v svojo prihodnost.",
@@ -1816,17 +1815,55 @@ const APP = window.APP = {
     if (heroWrap) heroWrap.innerHTML = `
       <div class="dash-hero" style="margin-bottom:1.5rem">
         <h2>${greeting}, ${esc(firstName)}! 👋</h2>
-        <p>Dobrodošel/a nazaj v FIT Team Sistemi.</p>
+        <p>Greva naredit nekaj dobrega zate! 🌟</p>
       </div>`;
 
-    // ── Motivational quote (random, changes daily) ──
+    // ── Motivational quote — try to get from sheet (Moč 1 last workout, col C lowest row) ──
     const qWrap = document.getElementById("dash-quote-wrap");
     if (qWrap) {
-      const dayIdx = new Date().getDate() % this._motivQuotes.length;
+      let sheetQuote = "";
+      let quoteAuthor = "FIT Team";
+      try {
+        // Get user's sheetId
+        const uSnap = await getDocs(collection(db,"allowedUsers"));
+        let sheetId = null;
+        for (const d of uSnap.docs) {
+          if ((d.data().email||"").toLowerCase().trim()===currentUser.email.toLowerCase().trim()) {
+            sheetId = d.data().sheetId||null; break;
+          }
+        }
+        if (sheetId) {
+          const range = encodeURIComponent("'Moč 1'!C:C");
+          const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}`;
+          const resp = await fetch(url);
+          if (resp.ok) {
+            const data = await resp.json();
+            const vals = (data.values||[]);
+            // Find last non-empty cell in col C that starts with quote char
+            for (let i = vals.length-1; i >= 0; i--) {
+              const v = String((vals[i]||[])[0]||"").trim();
+              if (v && (v.startsWith('"') || v.charCodeAt(0)===8220 || v.charCodeAt(0)===8222)) {
+                // Split on — if present to get author
+                const parts = v.replace(/^["“„]/,"").replace(/["”]$/,"").split(/\s*[—–-]{1,2}\s*/);
+                sheetQuote = parts[0].trim();
+                if (parts[1]) quoteAuthor = parts[1].trim();
+                break;
+              }
+            }
+          }
+        }
+      } catch(e){}
+
+      // Fallback to daily rotating quote
+      if (!sheetQuote) {
+        const dayIdx = new Date().getDate() % this._motivQuotes.length;
+        sheetQuote = this._motivQuotes[dayIdx];
+      }
+
       qWrap.innerHTML = `
         <div class="dash-quote-card">
-          <div class="dash-quote-text">"${this._motivQuotes[dayIdx]}"</div>
-          <div class="dash-quote-sub">— FIT Team</div>
+          <div class="dash-quote-text">"${esc(sheetQuote)}"</div>
+          <div class="dash-quote-sub">— ${esc(quoteAuthor)}</div>
         </div>`;
     }
 
@@ -2161,23 +2198,28 @@ const APP = window.APP = {
   async approveAccess(notifId, kind, userId, targetId) {
     const colName = kind==="system" ? "systemAccess" : "courseAccess";
     const field   = kind==="system" ? "systemId" : "courseId";
-    // Find the access request doc
     const snap = await getDocs(query(collection(db,colName),
       where("userId","==",userId), where(field,"==",targetId)));
     for (const d of snap.docs) {
       await updateDoc(d.ref,{granted:true, grantedAt:serverTimestamp()});
     }
     await updateDoc(doc(db,"notifications",notifId),{resolved:"approved",read:true});
-    // Notify the user
     const accData = snap.docs[0]?.data()||{};
+    const title = accData[kind==="system"?"title":"courseTitle"]||"";
+    // If system approved — also approve all courses in that system
+    if (kind==="system") {
+      const cSnap = await getDocs(query(collection(db,"courses"), where("systemId","==",targetId)));
+      for (const cd of cSnap.docs) {
+        await setDoc(doc(db,"courseAccess",userId+"_"+cd.id),
+          {userId, courseId:cd.id, courseTitle:cd.data().title||"", granted:true, grantedAt:serverTimestamp()},{merge:true});
+      }
+    }
     await addDoc(collection(db,"notifications"),{
-      type: "access_granted",
-      userId,
-      message: `✅ Dostop do "${accData[kind==="system"?"title":"courseTitle"]||""}" je bil odobren!`,
-      read: false,
-      createdAt: serverTimestamp()
+      type:"access_granted", userId,
+      message:`✅ Dostop do "${title}" je bil odobren!${kind==="system"?" Vsi koraki so na voljo.":""}`,
+      read:false, createdAt:serverTimestamp()
     });
-    toast("Dostop odobren!");
+    toast(kind==="system" ? "Sistem in vsi koraki odobreni! ✅" : "Dostop odobren!");
     this.openNotifications();
   },
 
@@ -2624,9 +2666,34 @@ const APP = window.APP = {
     if (currentlyGranted) {
       await setDoc(doc(db,colName,docId),{userId:email,[field]:targetId,granted:false},{merge:true});
       btn.textContent="✅ Dodeli"; btn.className="btn btn-sm btn";
+      // If revoking system, also revoke all courses in that system
+      if (kind==="system") {
+        const cSnap = await getDocs(query(collection(db,"courses"), where("systemId","==",targetId)));
+        for (const cd of cSnap.docs) {
+          await setDoc(doc(db,"courseAccess",email+"_"+cd.id),
+            {userId:email,courseId:cd.id,granted:false},{merge:true});
+        }
+        toast("Dostop do sistema in vseh korakov odvzet.");
+      } else {
+        toast("Dostop odvzet.");
+      }
     } else {
       await setDoc(doc(db,colName,docId),{userId:email,userName:email,[field]:targetId,title,granted:true,grantedAt:serverTimestamp()},{merge:true});
       btn.textContent="🔒 Odvzemi"; btn.className="btn btn-sm btn-danger";
+      // If granting system, also grant all courses in that system
+      if (kind==="system") {
+        const cSnap = await getDocs(query(collection(db,"courses"), where("systemId","==",targetId)));
+        for (const cd of cSnap.docs) {
+          await setDoc(doc(db,"courseAccess",email+"_"+cd.id),
+            {userId:email,courseId:cd.id,courseTitle:cd.data().title||"",granted:true,grantedAt:serverTimestamp()},{merge:true});
+          // Update button in UI if visible
+          const cBtn = document.querySelector(`[data-course-id="${cd.id}"]`);
+          if(cBtn){ cBtn.textContent="🔒 Odvzemi"; cBtn.className="btn btn-sm btn-danger"; }
+        }
+        toast(`Sistem in vsi koraki (${cSnap.size}) odobreni! ✅`);
+      } else {
+        toast("Dostop dodeljen! ✅");
+      }
       // Notify user
       await addDoc(collection(db,"notifications"),{
         type:"access_granted", userId:email,
@@ -2635,7 +2702,6 @@ const APP = window.APP = {
       });
     }
     btn.disabled=false;
-    toast(currentlyGranted?"Dostop odvzet.":"Dostop dodeljen! ✅");
   },
 
   async viewUserWeightChart(email, displayName) {
