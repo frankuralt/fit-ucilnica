@@ -924,6 +924,15 @@ function parseHyperlink(val) {
   return {url:"", name:s};
 }
 
+// Extract plain display name — strips HYPERLINK formula, returns only text
+function plainName(val) {
+  if (!val) return "";
+  const s = String(val).trim();
+  const parsed = parseHyperlink(s);
+  if (parsed.url) return parsed.name;
+  return s;
+}
+
 function toast(msg, type="ok") {
   const d = document.createElement("div");
   d.className = "toast toast-"+type;
@@ -2427,7 +2436,7 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         if (code && name && name !== "Vaja") {
           exercises.push({
             code,
-            name,
+            name: plainName(rawCell2) || name,
             videoUrl,
             note:  String(row[3]||"").trim(),
             sets:  String(row[4]||"").trim(),
@@ -2454,11 +2463,13 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
           const name = parseHyperlink(rawCell).name || rawCell;
           if (code && name && name !== "Vaja") {
             prevNiziMap[code] = {
-              nizi: [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]].map(v=>String(v||"").trim()),
+              name:  plainName(rawCell),
+              note:  String(row[3]||"").trim(),
               sets:  String(row[4]||"").trim(),
               reps:  String(row[5]||"").trim(),
               tempo: String(row[6]||"").trim(),
-              rest:  String(row[7]||"").trim()
+              rest:  String(row[7]||"").trim(),
+              nizi:  [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]].map(v=>String(v||"").trim())
             };
           }
         }
