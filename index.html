@@ -2478,47 +2478,58 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
           return `<span class="niz-cell${changed?" changed":""}"><span style="font-size:.65rem;color:${changed?"#4ade80":"var(--muted)"};display:block">Niz ${i+1}</span>${val}</span>`;
         }).join("");
         const videoLink = `<button style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};margin-left:.5rem;border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:5px;padding:.15rem .5rem;cursor:${ex.videoUrl?'pointer':'default'};background:${ex.videoUrl?'rgba(37,99,235,.1)':'transparent'};opacity:${ex.videoUrl?'1':'.35'}" title="${ex.videoUrl?'Poglej video':'Video ni na voljo'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
-        const pd = prevNiziMap[ex.code] || {};
-        const chSets  = pd.sets  && pd.sets  !== ex.sets  ? ' class="val-changed"' : '';
-        const chReps  = pd.reps  && pd.reps  !== ex.reps  ? ' class="val-changed"' : '';
-        const chTempo = pd.tempo && pd.tempo !== ex.tempo ? ' class="val-changed"' : '';
-        const chRest  = pd.rest  && pd.rest  !== ex.rest  ? ' class="val-changed"' : '';
+        const prevEx = prevNiziMap[ex.code] || {};
+        const nameChanged  = prevEx.name  && ex.name  !== prevEx.name;
+        const noteChanged  = prevEx.note  !== undefined && ex.note  !== prevEx.note;
+        const setsChanged  = prevEx.sets  && ex.sets  !== prevEx.sets;
+        const repsChanged  = prevEx.reps  && ex.reps  !== prevEx.reps;
+        const tempoChanged = prevEx.tempo && ex.tempo !== prevEx.tempo;
+        const restChanged  = prevEx.rest  && ex.rest  !== prevEx.rest;
+        const chStyle = 'style="color:#4ade80;font-weight:600"';
         return `<tr>
           <td><span class="ex-code">${esc(ex.code)}</span></td>
-          <td><div class="ex-name">${esc(ex.name)}${videoLink}</div>${ex.note?`<div class="ex-note">${esc(ex.note)}</div>`:""}</td>
-          <td class="ex-sets"><span${chSets}>${esc(ex.sets)}</span></td>
-          <td class="ex-reps"><span${chReps}>${esc(ex.reps)}</span></td>
-          <td class="ex-tempo"><span${chTempo}>${esc(ex.tempo)}</span></td>
-          <td class="ex-rest"><span${chRest}>${esc(ex.rest)}</span></td>
+          <td>
+            <div class="ex-name" ${nameChanged?chStyle:""}>${esc(ex.name)}${videoLink}</div>
+            ${ex.note?`<div class="ex-note" ${noteChanged?chStyle:""}>${esc(ex.note)}</div>`:""}
+          </td>
+          <td class="ex-sets" ${setsChanged?chStyle:""}>${esc(ex.sets)}</td>
+          <td class="ex-reps" ${repsChanged?chStyle:""}>${esc(ex.reps)}</td>
+          <td class="ex-tempo" ${tempoChanged?chStyle:""}>${esc(ex.tempo)}</td>
+          <td class="ex-rest" ${restChanged?chStyle:""}>${esc(ex.rest)}</td>
           <td><div class="niz-cells">${nizCells}</div></td>
         </tr>`;
       }).join("");
 
       // Mobile card rows
       const cardRows = exercises.map(ex => {
-        const prevDataM = prevNiziMap[ex.code] || {};
-        const prevNiziM = prevDataM.nizi || [];
+        const prevM = prevNiziMap[ex.code] || {};
+        const prevNiziM = prevM.nizi || [];
+        const mNameCh  = prevM.name  && ex.name  !== prevM.name;
+        const mNoteCh  = prevM.note  !== undefined && ex.note  !== prevM.note;
+        const mSetsCh  = prevM.sets  && ex.sets  !== prevM.sets;
+        const mRepsCh  = prevM.reps  && ex.reps  !== prevM.reps;
+        const mTempoCh = prevM.tempo && ex.tempo !== prevM.tempo;
+        const mRestCh  = prevM.rest  && ex.rest  !== prevM.rest;
         const nizBadges = ex.nizi.map((n,i)=>{
           if (!n) return "";
-          const changed = prevNiziM[i] && n !== prevNiziM[i];
+          const changed = prevNiziM[i] !== undefined && n !== prevNiziM[i];
           return `<span class="niz-cell${changed?" changed":""}"><span style="font-size:.6rem;color:${changed?"#4ade80":"var(--muted)"};display:block">Niz ${i+1}</span>${n}</span>`;
         }).filter(Boolean).join("");
-        const pdM = prevNiziMap[ex.code] || {};
-        const stats = [
-          ex.sets   ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val${pdM.sets&&pdM.sets!==ex.sets?' val-changed':''}">${esc(ex.sets)}</span></div>` : "",
-          ex.reps   ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val${pdM.reps&&pdM.reps!==ex.reps?' val-changed':''}">${esc(ex.reps)}</span></div>` : "",
-          ex.tempo  ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val${pdM.tempo&&pdM.tempo!==ex.tempo?' val-changed':''}">${esc(ex.tempo)}</span></div>` : "",
-          ex.rest   ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val${pdM.rest&&pdM.rest!==ex.rest?' val-changed':''}">${esc(ex.rest)}</span></div>` : "",
-        ].filter(Boolean).join("");
+        const gc = (ch) => ch ? 'style="color:#4ade80;font-weight:600"' : "";
         const mVideoBtn = `<button style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:${ex.videoUrl?'rgba(37,99,235,.15)':'var(--bg3)'};border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};cursor:${ex.videoUrl?'pointer':'default'};font-weight:500;opacity:${ex.videoUrl?'1':'.4'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         return `<div class="ex-card">
           <div class="ex-card-top">
             <span class="ex-card-code">${esc(ex.code)}</span>
-            <span class="ex-card-name">${esc(ex.name)}</span>
+            <span class="ex-card-name" ${gc(mNameCh)}>${esc(ex.name)}</span>
             ${mVideoBtn}
           </div>
-          ${ex.note ? `<div class="ex-card-note">${esc(ex.note)}</div>` : ""}
-          <div class="ex-card-stats">${stats}</div>
+          ${ex.note ? `<div class="ex-card-note" ${gc(mNoteCh)}>${esc(ex.note)}</div>` : ""}
+          <div class="ex-card-stats">
+            ${ex.sets  ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val" ${gc(mSetsCh)}>${esc(ex.sets)}</span></div>` : ""}
+            ${ex.reps  ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val" ${gc(mRepsCh)}>${esc(ex.reps)}</span></div>` : ""}
+            ${ex.tempo ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val" ${gc(mTempoCh)}>${esc(ex.tempo)}</span></div>` : ""}
+            ${ex.rest  ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val" ${gc(mRestCh)}>${esc(ex.rest)}</span></div>` : ""}
+          </div>
           ${nizBadges ? `<div class="ex-card-nizi">${nizBadges}</div>` : ""}
         </div>`;
       }).join("");
