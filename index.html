@@ -296,6 +296,21 @@
   .show-more-comments { background:none; border:none; color:var(--accent2); font-family:inherit; font-size:.8rem; cursor:pointer; padding:.25rem 0; display:block; margin-bottom:.5rem; }
   .show-more-comments:hover { text-decoration:underline; }
 
+  /* ── ACCESS & NOTIFICATIONS ── */
+  .card-locked { opacity:.6; cursor:default !important; }
+  .card-locked:hover { transform:none !important; box-shadow:none !important; border-color:var(--border) !important; }
+  .lock-badge { position:absolute; top:.75rem; right:.75rem; background:rgba(0,0,0,.6); border-radius:8px; padding:.3rem .6rem; font-size:.75rem; color:#fff; display:flex; align-items:center; gap:.3rem; z-index:2; }
+  .request-btn { display:block; width:calc(100% - 2.5rem); margin:.5rem 1.25rem 1rem; padding:.6rem; background:rgba(37,99,235,.15); border:1px solid rgba(37,99,235,.3); border-radius:8px; color:var(--accent2); font-family:inherit; font-size:.82rem; font-weight:600; cursor:pointer; text-align:center; transition:background .15s; }
+  .request-btn:hover { background:rgba(37,99,235,.25); }
+  .request-btn:disabled { opacity:.5; cursor:default; }
+  .notif-dot { width:8px; height:8px; background:#ef4444; border-radius:50%; display:inline-block; margin-left:4px; flex-shrink:0; }
+  .notif-item { display:flex; align-items:flex-start; gap:.75rem; padding:.85rem 1rem; border-bottom:1px solid var(--border); }
+  .notif-item:last-child { border-bottom:none; }
+  .notif-item.unread { background:rgba(37,99,235,.05); }
+  .notif-unread-dot { width:8px; height:8px; background:#ef4444; border-radius:50%; flex-shrink:0; margin-top:.35rem; }
+  .notif-item .notif-text { flex:1; font-size:.88rem; line-height:1.4; }
+  .notif-item .notif-time { font-size:.75rem; color:var(--muted); white-space:nowrap; }
+
   /* ── PROFILE STATS ── */
   .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.75rem; margin-top:.75rem; }
   .stat-box { background:var(--bg3); border-radius:12px; padding:1rem; text-align:center; border:1px solid var(--border); }
@@ -513,7 +528,13 @@
   <!-- Mobile top bar -->
   <div class="mobile-topbar">
     <span class="mobile-topbar-logo"><span class="brand-F">F</span>it Team Sistemi</span>
-    <span class="mobile-user" id="mobile-user-label">—</span>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <button onclick="APP.openNotifications()" style="background:none;border:none;cursor:pointer;position:relative;padding:.25rem" id="notif-btn-mobile">
+        <svg width="20" height="20" fill="none" stroke="#9090b0" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.999M9 17H4l1.405-1.405A2.032 2.032 0 006 14.158V11a6 6 0 0112 0v3.159c0 .538.214 1.055.595 1.436L20 17H4" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 21a2 2 0 01-4 0" stroke-linecap="round"/></svg>
+        <span id="notif-dot-mobile" style="display:none;position:absolute;top:0;right:0" class="notif-dot"></span>
+      </button>
+      <span class="mobile-user" id="mobile-user-label">—</span>
+    </div>
   </div>
 
   <nav class="sidebar">
@@ -543,6 +564,11 @@
       Skrbnik
     </button>
     <div class="sidebar-footer">
+      <button onclick="APP.openNotifications()" class="nav-item" id="nav-notif" style="position:relative;margin-bottom:.5rem">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.999M9 17H4l1.405-1.405A2.032 2.032 0 006 14.158V11a6 6 0 0112 0v3.159c0 .538.214 1.055.595 1.436L20 17H4" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 21a2 2 0 01-4 0" stroke-linecap="round"/></svg>
+        Obvestila
+        <span id="notif-dot-desktop" style="display:none" class="notif-dot"></span>
+      </button>
       <div class="user-chip">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
         <span id="user-label">—</span>
@@ -847,6 +873,21 @@
   </div>
 </div>
 
+<!-- Notifications Modal -->
+<div id="notif-modal" class="modal-bg">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h3 style="margin:0">Obvestila 🔔</h3>
+      <button id="mark-all-read-btn" class="btn btn-ghost btn-sm">Označi vse kot prebrano</button>
+    </div>
+    <div id="notif-list"><p class="muted">Nalaganje…</p></div>
+    <div class="btn-row mt">
+      <button class="btn btn-ghost btn-full" onclick="APP.closeModal('notif-modal')">Zapri</button>
+    </div>
+  </div>
+</div>
+
 <!-- PR Exercises Modal -->
 <div id="pr-modal" class="modal-bg">
   <div class="modal-box">
@@ -1036,6 +1077,7 @@ onAuthStateChanged(auth, async user => {
   if(g("mnav-admin")) g("mnav-admin").style.display = IS_ADMIN ? "" : "none";
   switchScreen("app");
   APP.nav("dashboard");
+  APP._checkUnreadNotifications();
 
   // Check birthday 🎂
   if (currentUserData.dob) {
@@ -1786,20 +1828,45 @@ const APP = window.APP = {
       return;
     }
 
+    // Check system access for each system
+    const sysAccessChecks = await Promise.all(sysSnap.docs.map(async d => {
+      if (IS_ADMIN) return {id:d.id, granted:true, requested:false};
+      const accSnap = await getDocs(query(collection(db,"systemAccess"),
+        where("userId","==",currentUser.email), where("systemId","==",d.id)));
+      const acc = accSnap.docs[0]?.data();
+      return {id:d.id, granted:acc?.granted||false, requested:!!acc};
+    }));
+    const sysAccessMap = Object.fromEntries(sysAccessChecks.map(a=>[a.id,a]));
+
     // Show systems as cards
     systemsGrid.innerHTML = sysSnap.docs.map(d=>{
       const s=d.data();
+      const acc = sysAccessMap[d.id]||{};
+      const locked = !acc.granted;
       const thumb = s.thumbnail
         ? `<img src="${esc(s.thumbnail)}" class="card-thumb" alt="">`
-        : `<div class="card-thumb-ph"><span>🎓</span></div>`;
+        : `<div class="card-thumb-ph"><span>${locked?"🔒":"🎓"}</span></div>`;
+      if (locked) {
+        const reqBtn = acc.requested
+          ? `<button class="request-btn" disabled>⏳ Čakamo na odobritev</button>`
+          : `<button class="request-btn" onclick="APP.requestSystemAccess('${d.id}','${esc(s.title)}')">🔓 Zaprosi za dostop</button>`;
+        return `<div class="card card-locked">
+          <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div>
+            <div class="lock-badge">🔒 Zaklenjeno</div>
+          </div>
+          <div class="card-body">
+            <h3 style="color:var(--muted)">${esc(s.title)}</h3>
+            <p>${esc(s.description||"")}</p>
+          </div>
+          ${reqBtn}
+        </div>`;
+      }
       return `<div class="card" onclick="APP._openSystem('${d.id}','${esc(s.title)}')">
         <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div></div>
         <div class="card-body">
           <h3>${esc(s.title)}</h3>
           <p>${esc(s.description||"")}</p>
-          <div class="card-meta">
-            <span class="card-open-btn">Odpri →</span>
-          </div>
+          <div class="card-meta"><span class="card-open-btn">Odpri →</span></div>
         </div>
       </div>`;
     }).join("");
@@ -1808,20 +1875,44 @@ const APP = window.APP = {
   async _openSystem(systemId, title) {
     document.getElementById("systems-view").style.display = "none";
     document.getElementById("system-courses-view").style.display = "";
-    document.getElementById("system-courses-header").innerHTML =
-      `<h2>${esc(title)}</h2>`;
+    document.getElementById("system-courses-header").innerHTML = `<h2>${esc(title)}</h2>`;
     const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
     const courses = snap.docs.filter(d=>(d.data().systemId||"")=== systemId);
     const list = document.getElementById("system-courses-list");
-    if (!courses.length) {
-      list.innerHTML = "<p class='muted'>Ta sistem še nima korakov.</p>";
-      return;
-    }
+    if (!courses.length) { list.innerHTML = "<p class='muted'>Ta sistem še nima korakov.</p>"; return; }
+
+    // Check access for each course
+    const accessChecks = await Promise.all(courses.map(async d => {
+      if (IS_ADMIN) return {id:d.id, granted:true, requested:false};
+      const accSnap = await getDocs(query(collection(db,"courseAccess"),
+        where("userId","==",currentUser.email), where("courseId","==",d.id)));
+      const acc = accSnap.docs[0]?.data();
+      return {id:d.id, granted:acc?.granted||false, requested:!!acc};
+    }));
+    const accessMap = Object.fromEntries(accessChecks.map(a=>[a.id,a]));
+
     list.innerHTML = courses.map(d=>{
       const c=d.data();
+      const acc = accessMap[d.id]||{};
+      const locked = !acc.granted;
       const thumb = c.thumbnail
         ? `<img src="${esc(c.thumbnail)}" class="card-thumb" alt="">`
-        : `<div class="card-thumb-ph"><span>📖</span></div>`;
+        : `<div class="card-thumb-ph"><span>${locked?"🔒":"📖"}</span></div>`;
+      if (locked) {
+        const reqBtn = acc.requested
+          ? `<button class="request-btn" disabled>⏳ Čakamo na odobritev</button>`
+          : `<button class="request-btn" onclick="APP.requestCourseAccess('${d.id}','${esc(c.title)}','${systemId}','${esc(title)}')">🔓 Zaprosi za dostop</button>`;
+        return `<div class="card card-locked">
+          <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div>
+            <div class="lock-badge">🔒 Zaklenjeno</div>
+          </div>
+          <div class="card-body">
+            <h3 style="color:var(--muted)">${esc(c.title)}</h3>
+            <p>${esc(c.description||"")}</p>
+          </div>
+          ${reqBtn}
+        </div>`;
+      }
       return `<div class="card" onclick="APP.openCourse('${d.id}')">
         <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div></div>
         <div class="card-body">
@@ -1839,6 +1930,159 @@ const APP = window.APP = {
   _backToSystems() {
     document.getElementById("system-courses-view").style.display = "none";
     document.getElementById("systems-view").style.display = "";
+  },
+
+  async requestSystemAccess(systemId, title) {
+    const btn = event.target;
+    btn.disabled = true; btn.textContent = "Pošiljanje…";
+    await setDoc(doc(db,"systemAccess",currentUser.email+"_"+systemId),{
+      userId: currentUser.email,
+      userName: currentDisplayName || currentUser.email,
+      systemId, title,
+      granted: false,
+      requestedAt: serverTimestamp()
+    });
+    // Create notification for admin
+    await addDoc(collection(db,"notifications"),{
+      type: "access_request",
+      kind: "system",
+      userId: currentUser.email,
+      userName: currentDisplayName || currentUser.email,
+      targetId: systemId,
+      targetTitle: title,
+      message: `${currentDisplayName||currentUser.email} prosi za dostop do sistema "${title}"`,
+      read: false,
+      createdAt: serverTimestamp()
+    });
+    btn.textContent = "⏳ Čakamo na odobritev";
+    toast("Zahteva poslana! Admin bo kmalu odobril dostop.");
+  },
+
+  async requestCourseAccess(courseId, courseTitle, systemId, systemTitle) {
+    const btn = event.target;
+    btn.disabled = true; btn.textContent = "Pošiljanje…";
+    await setDoc(doc(db,"courseAccess",currentUser.email+"_"+courseId),{
+      userId: currentUser.email,
+      userName: currentDisplayName || currentUser.email,
+      courseId, courseTitle,
+      granted: false,
+      requestedAt: serverTimestamp()
+    });
+    await addDoc(collection(db,"notifications"),{
+      type: "access_request",
+      kind: "course",
+      userId: currentUser.email,
+      userName: currentDisplayName || currentUser.email,
+      targetId: courseId,
+      targetTitle: courseTitle,
+      message: `${currentDisplayName||currentUser.email} prosi za dostop do koraka "${courseTitle}"`,
+      read: false,
+      createdAt: serverTimestamp()
+    });
+    btn.textContent = "⏳ Čakamo na odobritev";
+    toast("Zahteva poslana!");
+  },
+
+  async openNotifications() {
+    this.openModal("notif-modal");
+    const list = document.getElementById("notif-list");
+    // Admin sees all notifications; users see their own
+    let notifSnap;
+    if (IS_ADMIN) {
+      notifSnap = await getDocs(query(collection(db,"notifications"), orderBy("createdAt","desc")));
+    } else {
+      notifSnap = await getDocs(query(collection(db,"notifications"),
+        where("userId","==",currentUser.email), orderBy("createdAt","desc")));
+    }
+    if (notifSnap.empty) {
+      list.innerHTML = "<p class='muted' style='padding:.5rem 0'>Ni obvestil.</p>";
+      return;
+    }
+    list.innerHTML = notifSnap.docs.map(d=>{
+      const n=d.data();
+      const timeStr = n.createdAt ? new Date(n.createdAt.seconds*1000).toLocaleDateString("sl-SI",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "";
+      const approveBtn = IS_ADMIN && n.type==="access_request" && !n.resolved
+        ? `<div style="display:flex;gap:.4rem;margin-top:.5rem">
+            <button class="btn btn-sm" onclick="APP.approveAccess('${d.id}','${n.kind}','${n.userId}','${n.targetId}')">✅ Odobri</button>
+            <button class="btn btn-sm btn-danger" onclick="APP.denyAccess('${d.id}')">✕ Zavrni</button>
+          </div>` : "";
+      const resolvedBadge = n.resolved
+        ? `<span style="font-size:.72rem;color:${n.resolved==='approved'?'#4ade80':'#f09090'}">${n.resolved==='approved'?'✓ Odobreno':'✕ Zavrnjeno'}</span>` : "";
+      return `<div class="notif-item ${n.read?'':'unread'}">
+        ${!n.read?'<div class="notif-unread-dot"></div>':'<div style="width:8px"></div>'}
+        <div style="flex:1">
+          <div class="notif-text">${esc(n.message||"")}</div>
+          <div style="display:flex;align-items:center;gap:.75rem;margin-top:.2rem">
+            <span class="notif-time">${timeStr}</span>
+            ${resolvedBadge}
+          </div>
+          ${approveBtn}
+        </div>
+      </div>`;
+    }).join("");
+    // Mark as read
+    for (const d of notifSnap.docs) {
+      if (!d.data().read && (IS_ADMIN || d.data().userId===currentUser.email)) {
+        updateDoc(doc(db,"notifications",d.id),{read:true}).catch(()=>{});
+      }
+    }
+    // Hide dot
+    ["notif-dot-desktop","notif-dot-mobile"].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.style.display="none";
+    });
+  },
+
+  async approveAccess(notifId, kind, userId, targetId) {
+    const colName = kind==="system" ? "systemAccess" : "courseAccess";
+    const field   = kind==="system" ? "systemId" : "courseId";
+    // Find the access request doc
+    const snap = await getDocs(query(collection(db,colName),
+      where("userId","==",userId), where(field,"==",targetId)));
+    for (const d of snap.docs) {
+      await updateDoc(d.ref,{granted:true, grantedAt:serverTimestamp()});
+    }
+    await updateDoc(doc(db,"notifications",notifId),{resolved:"approved",read:true});
+    // Notify the user
+    const accData = snap.docs[0]?.data()||{};
+    await addDoc(collection(db,"notifications"),{
+      type: "access_granted",
+      userId,
+      message: `✅ Dostop do "${accData[kind==="system"?"title":"courseTitle"]||""}" je bil odobren!`,
+      read: false,
+      createdAt: serverTimestamp()
+    });
+    toast("Dostop odobren!");
+    this.openNotifications();
+  },
+
+  async denyAccess(notifId) {
+    await updateDoc(doc(db,"notifications",notifId),{resolved:"denied",read:true});
+    toast("Zahteva zavrnjena.");
+    this.openNotifications();
+  },
+
+  async _markAllRead() {
+    const snap = await getDocs(query(collection(db,"notifications"), where("read","==",false)));
+    for (const d of snap.docs) { updateDoc(d.ref,{read:true}).catch(()=>{}); }
+    ["notif-dot-desktop","notif-dot-mobile"].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display="none"; });
+    this.openNotifications();
+  },
+
+  async _checkUnreadNotifications() {
+    try {
+      let q2;
+      if (IS_ADMIN) {
+        q2 = query(collection(db,"notifications"), where("read","==",false));
+      } else {
+        q2 = query(collection(db,"notifications"), where("userId","==",currentUser.email), where("read","==",false));
+      }
+      const snap = await getDocs(q2);
+      const hasUnread = !snap.empty;
+      ["notif-dot-desktop","notif-dot-mobile"].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.style.display = hasUnread?"inline-block":"none";
+      });
+    } catch(e){}
   },
 
   /* ── Course Viewer ── */
@@ -2079,8 +2323,10 @@ const APP = window.APP = {
           <button class="btn btn-sm btn-ghost" onclick="APP.toggleCanPost('${esc(email)}',${canPost})">
             ${canPost ? "🚫 Odvzemi objavljanje" : "✅ Dovoli objavljanje"}
           </button>
+          <button class="btn btn-sm btn-ghost" onclick="APP.viewUserProgress('${esc(email)}','${esc(displayName)}')">📊 Napredek</button>
           <button class="btn btn-sm btn-ghost" onclick="APP.editUserSheet('${esc(email)}','${esc(sheetId)}')">✏️ Sheet ID</button>
           <button class="btn btn-sm btn-ghost" onclick="APP.editUserPR('${esc(email)}')">🏆 PR vaje</button>
+          <button class="btn btn-sm btn-ghost" onclick="APP.manageUserAccess('${esc(email)}','${esc(displayName)}')">🔑 Dostop</button>
           <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button>
         </div>
       </div>`;
@@ -2155,6 +2401,124 @@ const APP = window.APP = {
     await updateDoc(doc(db,"allowedUsers",ekey(email)),{canPost: !currentValue});
     toast(!currentValue ? "Objavljanje dovoljeno." : "Objavljanje onemogočeno.");
     this._loadUsers();
+  },
+
+  async manageUserAccess(email, displayName) {
+    const modal = document.createElement("div");
+    modal.className = "modal-bg open";
+    modal.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-handle"></div>
+        <h3>🔑 Dostop — ${esc(displayName||email)}</h3>
+        <div id="manage-access-content"><p class="muted">Nalaganje…</p></div>
+        <div class="btn-row mt">
+          <button class="btn btn-ghost btn-full" onclick="this.closest('.modal-bg').remove()">Zapri</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e=>{ if(e.target===modal) modal.remove(); });
+
+    const content = document.getElementById("manage-access-content");
+    const [sysSnap, courseSnap, sysAccSnap, courseAccSnap] = await Promise.all([
+      getDocs(query(collection(db,"systems"),orderBy("order"))),
+      getDocs(query(collection(db,"courses"),orderBy("order"))),
+      getDocs(query(collection(db,"systemAccess"),where("userId","==",email))),
+      getDocs(query(collection(db,"courseAccess"),where("userId","==",email)))
+    ]);
+    const sysAccMap    = Object.fromEntries(sysAccSnap.docs.map(d=>[d.data().systemId, d]));
+    const courseAccMap = Object.fromEntries(courseAccSnap.docs.map(d=>[d.data().courseId, d]));
+
+    let rows = "<h4 style='margin-bottom:.75rem;color:var(--accent2)'>Sistemi</h4>";
+    sysSnap.docs.forEach(d=>{
+      const s=d.data();
+      const acc=sysAccMap[d.id];
+      const granted=acc?.data()?.granted||false;
+      rows += `<div class="list-row">
+        <span>${esc(s.title)}</span>
+        <button class="btn btn-sm ${granted?'btn-danger':'btn'}"
+          onclick="APP._toggleAccess('system','${d.id}','${esc(s.title)}','${email}',${granted},this)">
+          ${granted?"🔒 Odvzemi":"✅ Dodeli"}
+        </button>
+      </div>`;
+    });
+    rows += "<h4 style='margin:.75rem 0;color:var(--accent2)'>Koraki</h4>";
+    courseSnap.docs.forEach(d=>{
+      const c=d.data();
+      const acc=courseAccMap[d.id];
+      const granted=acc?.data()?.granted||false;
+      rows += `<div class="list-row">
+        <span style="font-size:.88rem">${esc(c.title)}</span>
+        <button class="btn btn-sm ${granted?'btn-danger':'btn'}"
+          onclick="APP._toggleAccess('course','${d.id}','${esc(c.title)}','${email}',${granted},this)">
+          ${granted?"🔒 Odvzemi":"✅ Dodeli"}
+        </button>
+      </div>`;
+    });
+    content.innerHTML = rows;
+  },
+
+  async _toggleAccess(kind, targetId, title, email, currentlyGranted, btn) {
+    btn.disabled=true;
+    const colName = kind==="system" ? "systemAccess" : "courseAccess";
+    const field   = kind==="system" ? "systemId"     : "courseId";
+    const docId   = email+"_"+targetId;
+    if (currentlyGranted) {
+      await setDoc(doc(db,colName,docId),{userId:email,[field]:targetId,granted:false},{merge:true});
+      btn.textContent="✅ Dodeli"; btn.className="btn btn-sm btn";
+    } else {
+      await setDoc(doc(db,colName,docId),{userId:email,userName:email,[field]:targetId,title,granted:true,grantedAt:serverTimestamp()},{merge:true});
+      btn.textContent="🔒 Odvzemi"; btn.className="btn btn-sm btn-danger";
+      // Notify user
+      await addDoc(collection(db,"notifications"),{
+        type:"access_granted", userId:email,
+        message:`✅ Dostop do "${title}" je bil odobren!`,
+        read:false, createdAt:serverTimestamp()
+      });
+    }
+    btn.disabled=false;
+    toast(currentlyGranted?"Dostop odvzet.":"Dostop dodeljen! ✅");
+  },
+
+  async viewUserProgress(email, displayName) {
+    // Show which lesson user is on for each course they have access to
+    const modal = document.createElement("div");
+    modal.className = "modal-bg open";
+    modal.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-handle"></div>
+        <h3>📊 Napredek — ${esc(displayName||email)}</h3>
+        <div id="user-progress-content"><p class="muted">Nalaganje…</p></div>
+        <div class="btn-row mt">
+          <button class="btn btn-ghost btn-full" onclick="this.closest('.modal-bg').remove()">Zapri</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e=>{ if(e.target===modal) modal.remove(); });
+
+    // Load progress for this user
+    const progressSnap = await getDocs(query(collection(db,"progress"), where("email","==",email)));
+    const coursesSnap  = await getDocs(query(collection(db,"courses"),orderBy("order")));
+    const content = document.getElementById("user-progress-content");
+    if (progressSnap.empty) {
+      content.innerHTML = "<p class='muted'>Ni zabeleženih napredkov.</p>";
+      return;
+    }
+    const progressMap = {};
+    progressSnap.docs.forEach(d=>{ progressMap[d.data().courseId]=d.data(); });
+    const rows = coursesSnap.docs
+      .filter(d=>progressMap[d.id])
+      .map(d=>{
+        const c=d.data();
+        const p=progressMap[d.id];
+        return `<div class="list-row">
+          <div>
+            <div style="font-weight:500">${esc(c.title)}</div>
+            <div style="font-size:.78rem;color:var(--muted)">Zadnja lekcija: ID ${esc(p.stepId||"?")} · Korak ${(p.stepIndex||0)+1}</div>
+          </div>
+          <button class="btn btn-sm" onclick="APP.openCourse('${d.id}')">Odpri</button>
+        </div>`;
+      }).join("");
+    content.innerHTML = rows || "<p class='muted'>Ni podatkov.</p>";
   },
 
   async editUserSheet(email, currentSheetId) {
@@ -3357,6 +3721,7 @@ on("save-weight-btn",  ()=> APP.saveWeight());
 on("cancel-profile-btn", ()=> APP.toggleProfileEdit(false));
 on("pr-modal-add-btn",   ()=> APP._addPrExercise());
 on("pr-modal-close-btn", ()=> APP.closeModal("pr-modal"));
+on("mark-all-read-btn", ()=> APP._markAllRead());
 document.getElementById("pr-modal-input")?.addEventListener("keydown", e=>{ if(e.key==="Enter") APP._addPrExercise(); });
 on("mnav-training", ()=> APP.nav("training"));
 on("nav-feed",    ()=> APP.nav("feed"));
