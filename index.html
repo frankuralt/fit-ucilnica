@@ -296,6 +296,21 @@
   .show-more-comments { background:none; border:none; color:var(--accent2); font-family:inherit; font-size:.8rem; cursor:pointer; padding:.25rem 0; display:block; margin-bottom:.5rem; }
   .show-more-comments:hover { text-decoration:underline; }
 
+  /* ── DASHBOARD ── */
+  .dash-quote-card { background:linear-gradient(135deg,#0a1628,#1e3a5f); border-radius:16px; padding:1.75rem 2rem; border:1px solid rgba(37,99,235,.2); position:relative; overflow:hidden; margin-bottom:1.5rem; }
+  .dash-quote-card::after { content:''; position:absolute; right:-30px; top:-30px; width:150px; height:150px; background:radial-gradient(circle,rgba(37,99,235,.2) 0%,transparent 70%); pointer-events:none; }
+  .dash-quote-text { font-family:"DM Serif Display",serif; font-size:1.15rem; line-height:1.55; color:var(--text); margin-bottom:.5rem; }
+  .dash-quote-sub { font-size:.82rem; color:var(--accent2); opacity:.8; }
+  .dash-stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:.75rem; }
+  .dash-stat { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:.9rem 1rem; text-align:center; }
+  .dash-stat-num { font-family:"DM Serif Display",serif; font-size:1.5rem; color:var(--accent2); line-height:1; }
+  .dash-stat-lbl { font-size:.72rem; color:var(--muted); margin-top:.2rem; text-transform:uppercase; letter-spacing:.06em; }
+  .dash-section-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); font-weight:600; margin-bottom:.75rem; }
+  .dash-continue-card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; cursor:pointer; transition:border-color .2s; }
+  .dash-continue-card:hover { border-color:var(--accent); }
+  .dash-continue-icon { width:42px; height:42px; border-radius:10px; background:rgba(37,99,235,.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.2rem; }
+  .dash-feed-preview { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:1rem 1.25rem; }
+
   /* ── ACCESS & NOTIFICATIONS ── */
   .card-locked { opacity:.6; cursor:default !important; }
   .card-locked:hover { transform:none !important; box-shadow:none !important; border-color:var(--border) !important; }
@@ -579,8 +594,20 @@
 
   <div class="main-content">
     <div id="sec-dashboard" class="section active">
-      <div class="page-header"><h2>Dobrodošli nazaj 👋</h2><p>Izberite tečaj in nadaljujte z učenjem.</p></div>
-      <div id="dash-grid" class="cards-grid"><p class="muted">Loading…</p></div>
+      <!-- Hero greeting -->
+      <div id="dash-hero-wrap"></div>
+
+      <!-- Motivational quote -->
+      <div id="dash-quote-wrap" style="margin-bottom:1.5rem"></div>
+
+      <!-- Quick stats row -->
+      <div id="dash-stats-wrap" style="margin-bottom:1.5rem"></div>
+
+      <!-- Latest feed post -->
+      <div id="dash-feed-wrap" style="margin-bottom:1.5rem"></div>
+
+      <!-- Continue learning -->
+      <div id="dash-continue-wrap"></div>
     </div>
 
     <div id="sec-courses" class="section">
@@ -1766,36 +1793,135 @@ const APP = window.APP = {
   },
 
   /* ── Domov ── */
+  _motivQuotes: [
+    "Vsak trening gradi snežno kepo pozitivnih učinkov. 🏔️",
+    "Danes morda ni idealen dan za trening — ampak jutri čez eno leto ti bo telo hvaležno.",
+    "Ni potrebno biti odličen da začneš — moraš začeti da postaneš odličen.",
+    "Doslednost premaga motivacijo vsak dan.",
+    "Telo doseže tisto kar si misli. Verjemi v proces.",
+    "Majhen napredek je še vedno napredek. Korak za korakom. 💪",
+    "Edini trening ki ga obžaluješ je tisti ki ga nisi naredil.",
+    "Tvoje telo zmore skoraj vse — prepričaj um da mu sledi.",
+    "Vsak dan ki ga posvetiš gibanju je naložba v svojo prihodnost.",
+    "Disciplina je most med cilji in dosežki."
+  ],
+
   async _loadDomov() {
-    htm("dash-grid","<p class='muted'>Nalaganje…</p>");
-    try {
-      const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
-      if (snap.empty){ htm("dash-grid","<p class='muted'>Še ni tečajev.</p>"); return; }
-      htm("dash-grid", snap.docs.map(d=>{
-        const c=d.data();
-        const thumb = c.thumbnail
-          ? `<img src="${esc(c.thumbnail)}" class="card-thumb" alt="">`
-          : `<div class="card-thumb-ph">📚</div>`;
-        return `<div class="card" onclick="APP.openCourse('${d.id}')">
-          <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div></div>
-          <div class="card-body">
-            <h3>${esc(c.title)}</h3>
-            <p>${esc(c.description||"")}</p>
-            <div class="card-meta">
-              <span class="card-lessons">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                ${c.steps||0} lekcij
-              </span>
-              <span class="card-open-btn">
-                Začni
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-            <div class="card-progress-bar"><div class="card-progress-fill" style="width:0%"></div></div>
+    const firstName = (currentDisplayName||"").split(" ")[0] || "tam";
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? "Dobro jutro" : hour < 18 ? "Dober dan" : "Dober večer";
+
+    // ── Hero ──
+    const heroWrap = document.getElementById("dash-hero-wrap");
+    if (heroWrap) heroWrap.innerHTML = `
+      <div class="dash-hero" style="margin-bottom:1.5rem">
+        <h2>${greeting}, ${esc(firstName)}! 👋</h2>
+        <p>Dobrodošel/a nazaj v FIT Team Sistemi.</p>
+      </div>`;
+
+    // ── Motivational quote (random, changes daily) ──
+    const qWrap = document.getElementById("dash-quote-wrap");
+    if (qWrap) {
+      const dayIdx = new Date().getDate() % this._motivQuotes.length;
+      qWrap.innerHTML = `
+        <div class="dash-quote-card">
+          <div class="dash-quote-text">"${this._motivQuotes[dayIdx]}"</div>
+          <div class="dash-quote-sub">— FIT Team</div>
+        </div>`;
+    }
+
+    // ── Quick stats ──
+    const statsWrap = document.getElementById("dash-stats-wrap");
+    if (statsWrap) {
+      let workoutCount = 0;
+      let latestWeight = "";
+      try {
+        // Get workout count from Firestore progress docs
+        const progSnap = await getDocs(query(collection(db,"progress"), where("email","==",currentUser.email)));
+        workoutCount = progSnap.size;
+      } catch(e){}
+      try {
+        const wSnap = await getDocs(query(collection(db,"weights"), where("email","==",currentUser.email)));
+        if (!wSnap.empty) {
+          const sorted = wSnap.docs.map(d=>d.data()).sort((a,b)=>b.date.localeCompare(a.date));
+          latestWeight = sorted[0].weight+" kg";
+        }
+      } catch(e){}
+      statsWrap.innerHTML = `
+        <div class="dash-section-title">Tvoji podatki</div>
+        <div class="dash-stat-grid">
+          <div class="dash-stat" onclick="APP.nav('training')" style="cursor:pointer">
+            <div class="dash-stat-num">💪</div>
+            <div class="dash-stat-lbl">Moj trening</div>
+          </div>
+          ${latestWeight ? `<div class="dash-stat">
+            <div class="dash-stat-num">${latestWeight}</div>
+            <div class="dash-stat-lbl">Zadnja teža</div>
+          </div>` : ""}
+          <div class="dash-stat" onclick="APP.nav('profile')" style="cursor:pointer">
+            <div class="dash-stat-num">📊</div>
+            <div class="dash-stat-lbl">Moj profil</div>
+          </div>
+          <div class="dash-stat" onclick="APP.nav('feed')" style="cursor:pointer">
+            <div class="dash-stat-num">💬</div>
+            <div class="dash-stat-lbl">Skupnost</div>
           </div>
         </div>`;
-      }).join(""));
-    } catch(e){ htm("dash-grid",`<p class='muted'>Error: ${esc(e.message)}</p>`); }
+    }
+
+    // ── Latest feed post ──
+    const feedWrap = document.getElementById("dash-feed-wrap");
+    if (feedWrap) {
+      try {
+        const feedSnap = await getDocs(query(collection(db,"feed"), orderBy("createdAt","desc")));
+        if (!feedSnap.empty) {
+          const p = feedSnap.docs[0].data();
+          const timeStr = p.createdAt ? new Date(p.createdAt.seconds*1000).toLocaleDateString("sl-SI",{day:"numeric",month:"short"}) : "";
+          const imgHtml = p.imageUrl ? `<img src="${esc(p.imageUrl)}" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:.75rem" onerror="this.style.display='none'">` : "";
+          feedWrap.innerHTML = `
+            <div class="dash-section-title">Zadnja objava v skupnosti</div>
+            <div class="dash-feed-preview" onclick="APP.nav('feed')" style="cursor:pointer">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+                <span style="font-size:.82rem;font-weight:600;color:var(--accent2)">${esc(p.authorName||p.authorEmail||"")}</span>
+                <span style="font-size:.75rem;color:var(--muted)">${timeStr}</span>
+              </div>
+              <div style="font-size:.9rem;line-height:1.55;color:var(--text);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(p.text||"")}</div>
+              ${imgHtml}
+              <div style="font-size:.78rem;color:var(--accent2);margin-top:.6rem">Odpri skupnost →</div>
+            </div>`;
+        }
+      } catch(e){}
+    }
+
+    // ── Continue learning ──
+    const contWrap = document.getElementById("dash-continue-wrap");
+    if (contWrap) {
+      try {
+        const progSnap = await getDocs(query(collection(db,"progress"), where("email","==",currentUser.email)));
+        if (!progSnap.empty) {
+          // Get most recently updated progress
+          const sorted = progSnap.docs.map(d=>d.data()).sort((a,b)=>{
+            const ta = a.updatedAt?.seconds||0; const tb = b.updatedAt?.seconds||0;
+            return tb-ta;
+          });
+          const lastProg = sorted[0];
+          const courseSnap = await getDoc(doc(db,"courses",lastProg.courseId));
+          if (courseSnap.exists()) {
+            const c = courseSnap.data();
+            contWrap.innerHTML = `
+              <div class="dash-section-title">Nadaljuj kjer si ostal/a</div>
+              <div class="dash-continue-card" onclick="APP.openCourse('${lastProg.courseId}')">
+                <div class="dash-continue-icon">📖</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-weight:600;margin-bottom:.2rem">${esc(c.title)}</div>
+                  <div style="font-size:.78rem;color:var(--muted)">Lekcija ${(lastProg.stepIndex||0)+1} od ${c.steps||"?"}</div>
+                </div>
+                <svg width="16" height="16" fill="none" stroke="var(--accent2)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>`;
+          }
+        }
+      } catch(e){}
+    }
   },
 
   /* ── Systems & Courses ── */
@@ -2301,6 +2427,18 @@ const APP = window.APP = {
   /* ── Skrbnik: Users ── */
   async _loadUsers() {
     const snap = await getDocs(collection(db,"allowedUsers"));
+    // Pre-fetch latest weights for all users
+    const weightMap = {};
+    try {
+      const allWeights = await getDocs(collection(db,"weights"));
+      allWeights.docs.forEach(d=>{
+        const wd=d.data();
+        if (!weightMap[wd.email] || wd.date > weightMap[wd.email].date) {
+          weightMap[wd.email] = wd;
+        }
+      });
+    } catch(e){}
+
     const rows = snap.docs.map(d=>{
       const data = d.data();
       const email = data.email || d.id.replace(/_at_/g,"@").replace(/_/g,".");
@@ -2313,17 +2451,38 @@ const APP = window.APP = {
         ? `<span class="badge" style="background:rgba(34,197,94,.15);color:#4ade80">✓ Može objavljati</span>`
         : `<span style="font-size:.75rem;color:var(--muted)">Ne more objavljati</span>`;
       const displayName = data.displayName || email;
+      // Calculate age from dob
+      let ageStr = "";
+      if (data.dob) {
+        const now = new Date(); const b = new Date(data.dob);
+        let a = now.getFullYear()-b.getFullYear();
+        if (now.getMonth()<b.getMonth()||(now.getMonth()===b.getMonth()&&now.getDate()<b.getDate())) a--;
+        const dobFormatted = b.toLocaleDateString("sl-SI",{day:"numeric",month:"numeric",year:"numeric"});
+        ageStr = `${dobFormatted} (${a} let)`;
+      }
+      const genderLabel = {m:"Moški",f:"Ženski"}[data.gender||""]||"";
+      // Get latest weight from pre-fetched map
+      const latestW = weightMap[email];
+      const latestWeightChip = latestW ? `⚖️ ${latestW.weight} kg` : "";
+      const statsChips = [
+        data.height ? `📏 ${data.height} cm` : "",
+        genderLabel ? `⚥ ${genderLabel}` : "",
+        ageStr ? `🎂 ${ageStr}` : "",
+        latestWeightChip,
+      ].filter(Boolean).map(s=>`<span style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:.1rem .5rem;font-size:.72rem;color:var(--muted)">${s}</span>`).join("");
       return `<div class="list-row" style="flex-wrap:wrap;gap:.4rem">
         <div style="flex:1;min-width:160px">
           <div style="font-weight:500">${esc(displayName)}</div>
           <div style="font-size:.78rem;color:var(--muted)">${esc(email)}</div>
-          <div style="display:flex;align-items:center;gap:.4rem;margin-top:.3rem">${sheetBadge} ${postBadge}</div>
+          <div style="display:flex;align-items:center;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">${sheetBadge} ${postBadge}</div>
+          ${statsChips ? `<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.3rem">${statsChips}</div>` : ""}
         </div>
         <div class="btn-row">
           <button class="btn btn-sm btn-ghost" onclick="APP.toggleCanPost('${esc(email)}',${canPost})">
             ${canPost ? "🚫 Odvzemi objavljanje" : "✅ Dovoli objavljanje"}
           </button>
           <button class="btn btn-sm btn-ghost" onclick="APP.viewUserProgress('${esc(email)}','${esc(displayName)}')">📊 Napredek</button>
+          <button class="btn btn-sm btn-ghost" onclick="APP.viewUserWeightChart('${esc(email)}','${esc(displayName)}')">📈 Graf</button>
           <button class="btn btn-sm btn-ghost" onclick="APP.editUserSheet('${esc(email)}','${esc(sheetId)}')">✏️ Sheet ID</button>
           <button class="btn btn-sm btn-ghost" onclick="APP.editUserPR('${esc(email)}')">🏆 PR vaje</button>
           <button class="btn btn-sm btn-ghost" onclick="APP.manageUserAccess('${esc(email)}','${esc(displayName)}')">🔑 Dostop</button>
@@ -2477,6 +2636,83 @@ const APP = window.APP = {
     }
     btn.disabled=false;
     toast(currentlyGranted?"Dostop odvzet.":"Dostop dodeljen! ✅");
+  },
+
+  async viewUserWeightChart(email, displayName) {
+    const modal = document.createElement("div");
+    modal.className = "modal-bg open";
+    modal.style.alignItems = "center";
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:640px">
+        <div class="modal-handle"></div>
+        <h3>📈 Graf teže — ${esc(displayName||email)}</h3>
+        <div style="position:relative;height:280px;margin:1rem 0">
+          <canvas id="admin-weight-canvas"></canvas>
+        </div>
+        <div id="admin-weight-msg" style="text-align:center;font-size:.85rem;color:var(--muted);margin-bottom:.5rem"></div>
+        <div class="btn-row mt">
+          <button class="btn btn-ghost btn-full" onclick="this.closest('.modal-bg').remove()">Zapri</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", e=>{ if(e.target===modal) modal.remove(); });
+
+    // Fetch weight data
+    let entries = [];
+    try {
+      const wSnap = await getDocs(query(collection(db,"weights"), where("email","==",email), orderBy("date","asc")));
+      entries = wSnap.docs.map(d=>d.data()).sort((a,b)=>a.date.localeCompare(b.date));
+    } catch(e) {
+      try {
+        const wSnap2 = await getDocs(query(collection(db,"weights"), where("email","==",email)));
+        entries = wSnap2.docs.map(d=>d.data()).sort((a,b)=>a.date.localeCompare(b.date));
+      } catch(e2){}
+    }
+
+    const canvas = document.getElementById("admin-weight-canvas");
+    const msgEl  = document.getElementById("admin-weight-msg");
+    if (!entries.length || !canvas) {
+      if(msgEl) msgEl.textContent = "Ni zabeleženih tehtanj.";
+      return;
+    }
+
+    const labels  = entries.map(e=>e.date.slice(5));
+    const weights = entries.map(e=>e.weight);
+
+    // Trend line
+    const n=weights.length, sumX=weights.reduce((_,__,i)=>_+i,0), sumY=weights.reduce((a,b)=>a+b,0);
+    const sumXY=weights.reduce((a,b,i)=>a+i*b,0), sumX2=weights.reduce((a,_,i)=>a+i*i,0);
+    const slope=(n*sumXY-sumX*sumY)/(n*sumX2-sumX*sumX)||0;
+    const intercept=(sumY-slope*sumX)/n;
+    const trendData=weights.map((_,i)=>+(intercept+slope*i).toFixed(2));
+
+    if(msgEl) {
+      const dir = slope<-0.01?"pada":slope>0.01?"narašča":"stabilna";
+      const arrow = slope<-0.01?"📉":slope>0.01?"📈":"➡️";
+      msgEl.innerHTML = `${arrow} Teža ${dir} za ~${Math.abs(slope*7).toFixed(1)} kg/teden · Zadnja: <strong>${weights[weights.length-1]} kg</strong>`;
+    }
+
+    new Chart(canvas, {
+      type:"line",
+      data:{
+        labels,
+        datasets:[
+          {label:"Teža",data:weights,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.08)",borderWidth:2,pointRadius:3,tension:0.3,fill:true},
+          {label:"Trend",data:trendData,borderColor:"#60a5fa",borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,fill:false}
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{labels:{color:"#9090b0",font:{size:11},usePointStyle:true,pointStyle:"line"}},
+          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${(+ctx.parsed.y).toFixed(1)} kg`}}
+        },
+        scales:{
+          x:{ticks:{color:"#7070a0",maxTicksLimit:8,font:{size:11}},grid:{color:"#2e2e3f"}},
+          y:{ticks:{color:"#7070a0",callback:v=>(+v).toFixed(1)+" kg",font:{size:11}},grid:{color:"#2e2e3f"}}
+        }
+      }
+    });
   },
 
   async viewUserProgress(email, displayName) {
