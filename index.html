@@ -2481,12 +2481,13 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         }).join("");
         const videoLink = `<button style="display:inline-flex;align-items:center;gap:.15rem;font-size:.75rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};margin-left:.5rem;border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:5px;padding:.15rem .5rem;cursor:${ex.videoUrl?'pointer':'default'};background:${ex.videoUrl?'rgba(37,99,235,.1)':'transparent'};opacity:${ex.videoUrl?'1':'.35'}" title="${ex.videoUrl?'Poglej video':'Video ni na voljo'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
         const prevEx = prevNiziMap[ex.code] || {};
-        const nameChanged  = prevEx.name  && ex.name  !== prevEx.name;
-        const noteChanged  = prevEx.note  !== undefined && ex.note  !== prevEx.note;
-        const setsChanged  = prevEx.sets  && ex.sets  !== prevEx.sets;
-        const repsChanged  = prevEx.reps  && ex.reps  !== prevEx.reps;
-        const tempoChanged = prevEx.tempo && ex.tempo !== prevEx.tempo;
-        const restChanged  = prevEx.rest  && ex.rest  !== prevEx.rest;
+        const hasPrev = Object.keys(prevEx).length > 0;
+        const nameChanged  = hasPrev && prevEx.name  !== undefined && ex.name  !== prevEx.name;
+        const noteChanged  = hasPrev && prevEx.note  !== undefined && ex.note  !== prevEx.note;
+        const setsChanged  = hasPrev && prevEx.sets  !== undefined && ex.sets  !== prevEx.sets;
+        const repsChanged  = hasPrev && prevEx.reps  !== undefined && ex.reps  !== prevEx.reps;
+        const tempoChanged = hasPrev && prevEx.tempo !== undefined && ex.tempo !== prevEx.tempo;
+        const restChanged  = hasPrev && prevEx.rest  !== undefined && ex.rest  !== prevEx.rest;
         const chBox = (val, changed) => changed
           ? `<span class="val-changed-box">${val}</span>`
           : val;
@@ -2508,12 +2509,13 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
       const cardRows = exercises.map(ex => {
         const prevM = prevNiziMap[ex.code] || {};
         const prevNiziM = prevM.nizi || [];
-        const mNameCh  = prevM.name  && ex.name  !== prevM.name;
-        const mNoteCh  = prevM.note  !== undefined && ex.note  !== prevM.note;
-        const mSetsCh  = prevM.sets  && ex.sets  !== prevM.sets;
-        const mRepsCh  = prevM.reps  && ex.reps  !== prevM.reps;
-        const mTempoCh = prevM.tempo && ex.tempo !== prevM.tempo;
-        const mRestCh  = prevM.rest  && ex.rest  !== prevM.rest;
+        const hasPrevM = Object.keys(prevM).length > 0;
+        const mNameCh  = hasPrevM && prevM.name  !== undefined && ex.name  !== prevM.name;
+        const mNoteCh  = hasPrevM && prevM.note  !== undefined && ex.note  !== prevM.note;
+        const mSetsCh  = hasPrevM && prevM.sets  !== undefined && ex.sets  !== prevM.sets;
+        const mRepsCh  = hasPrevM && prevM.reps  !== undefined && ex.reps  !== prevM.reps;
+        const mTempoCh = hasPrevM && prevM.tempo !== undefined && ex.tempo !== prevM.tempo;
+        const mRestCh  = hasPrevM && prevM.rest  !== undefined && ex.rest  !== prevM.rest;
         const nizBadges = ex.nizi.map((n,i)=>{
           if (!n) return "";
           const changed = prevNiziM[i] !== undefined && n !== prevNiziM[i];
