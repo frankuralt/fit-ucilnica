@@ -3004,7 +3004,7 @@ const APP = window.APP = {
             <strong id="sys-label-${d.id}">${esc(d.data().title||"")}</strong>
           </div>
           <div class="btn-row">
-            <button class="btn btn-sm btn-ghost" onclick="APP._renameSystem('${d.id}')">✏️</button>
+            <button class="btn btn-sm btn-ghost" onclick="APP._editSystemModal('${d.id}')">✏️</button>
             <button class="btn btn-sm btn-danger" onclick="APP._deleteSystem('${d.id}')">Izbriši</button>
           </div>
         </div>`).join("");
@@ -3017,24 +3017,7 @@ const APP = window.APP = {
     }
   },
 
-  _renameSystem(systemId) {
-    const label = document.getElementById("sys-label-"+systemId);
-    if (!label) return;
-    const current = label.textContent;
-    label.innerHTML = `<input class="rename-input" id="sys-ri-${systemId}" value="${esc(current)}" maxlength="80" style="width:100%">`;
-    const inp = document.getElementById("sys-ri-"+systemId);
-    inp.focus(); inp.select();
-    const save = async () => {
-      const val = inp.value.trim();
-      if (val && val !== current) {
-        await updateDoc(doc(db,"systems",systemId),{title:val});
-        toast("Sistem preimenovan.");
-      }
-      label.textContent = val || current;
-    };
-    inp.addEventListener("blur", save);
-    inp.addEventListener("keydown", e=>{ if(e.key==="Enter") inp.blur(); if(e.key==="Escape") label.textContent=current; });
-  },
+
 
   async _editSystemModal(systemId) {
     const snap = await getDoc(doc(db,"systems",systemId));
