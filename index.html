@@ -558,8 +558,17 @@
     </div>
 
     <div id="sec-courses" class="section">
-      <div class="page-header"><h2>Vsi tečaji</h2></div>
-      <div id="courses-list"></div>
+      <div class="page-header"><h2>Izobraževalni programi</h2><p>Izberite sistem in začnite z učenjem.</p></div>
+      <!-- Systems view -->
+      <div id="systems-view">
+        <div id="systems-grid" class="cards-grid"></div>
+      </div>
+      <!-- Courses inside a system -->
+      <div id="system-courses-view" style="display:none">
+        <button onclick="APP._backToSystems()" class="btn btn-ghost btn-sm" style="margin-bottom:1.25rem">← Nazaj na sisteme</button>
+        <div id="system-courses-header" class="page-header" style="margin-bottom:1rem"></div>
+        <div id="system-courses-list" class="cards-grid"></div>
+      </div>
     </div>
 
     <div id="sec-profile" class="section">
@@ -717,8 +726,16 @@
         <div id="topics-list"></div>
       </div>
       <div class="card-form">
-        <h3>Tečaji</h3>
-        <button id="open-add-course" class="btn" style="margin-bottom:1rem">+ Nov tečaj</button>
+        <h3>Sistemi</h3>
+        <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+          <input id="new-system-title" type="text" placeholder="Ime sistema (npr. Fit Izziv)" class="inp" style="margin:0;flex:1">
+          <button id="add-system-btn" class="btn" style="white-space:nowrap">+ Sistem</button>
+        </div>
+        <div id="admin-systems-list"></div>
+      </div>
+      <div class="card-form">
+        <h3>Koraki (Tečaji)</h3>
+        <button id="open-add-course" class="btn" style="margin-bottom:1rem">+ Nov korak</button>
         <div id="admin-courses"></div>
       </div>
     </div>
@@ -743,12 +760,31 @@
   </div>
 </div>
 
+<!-- MODAL: Add System -->
+<div id="modal-add-system" class="modal-bg">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <h3>Nov sistem</h3>
+    <label>Ime *</label><input id="ns2-title" class="inp" placeholder="npr. Fit Izziv">
+    <label>Opis</label><textarea id="ns2-desc" class="inp" rows="2" placeholder="Kratek opis sistema"></textarea>
+    <label>URL slike (neobvezno)</label><input id="ns2-thumb" class="inp" placeholder="https://...">
+    <div class="btn-row mt">
+      <button id="save-system-btn" class="btn">Ustvari</button>
+      <button id="cancel-add-system" class="btn btn-ghost">Prekliči</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Add Course -->
 <div id="modal-add-course" class="modal-bg">
   <div class="modal-box">
     <div class="modal-handle"></div>
-    <h3>Nov tečaj</h3>
-    <label>Naslov *</label><input id="nc-title" class="inp" placeholder="Naslov tečaja">
+    <h3>Nov korak</h3>
+    <label>Sistem *</label>
+    <select id="nc-system" class="inp">
+      <option value="">— brez sistema —</option>
+    </select>
+    <label>Naslov *</label><input id="nc-title" class="inp" placeholder="Naslov koraka">
     <label>Opis</label><textarea id="nc-desc" class="inp" rows="2" placeholder="Kratek opis"></textarea>
     <label>URL slike (neobvezno)</label><input id="nc-thumb" class="inp" placeholder="https://...">
     <div class="btn-row mt">
@@ -1720,21 +1756,89 @@ const APP = window.APP = {
     } catch(e){ htm("dash-grid",`<p class='muted'>Error: ${esc(e.message)}</p>`); }
   },
 
-  /* ── Courses List ── */
+  /* ── Systems & Courses ── */
   async _loadCoursesList() {
-    htm("courses-list","<p class='muted'>Nalaganje…</p>");
-    const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
-    if (snap.empty){ htm("courses-list","<p class='muted'>Še ni tečajev.</p>"); return; }
-    htm("courses-list", snap.docs.map(d=>{
-      const c=d.data();
-      return `<div class="list-row">
-        <strong>${esc(c.title)}</strong>
-        <div class="btn-row">
-          <span class="badge">${c.steps||0} lessons</span>
-          <button class="btn btn-sm" onclick="APP.openCourse('${d.id}')">Odpri</button>
+    // Load systems first
+    const sysSnap = await getDocs(query(collection(db,"systems"),orderBy("order")));
+    const systemsGrid = document.getElementById("systems-grid");
+    if (!systemsGrid) return;
+
+    if (sysSnap.empty) {
+      // No systems yet — show all courses directly
+      const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
+      systemsGrid.innerHTML = snap.docs.map(d=>{
+        const c=d.data();
+        const thumb = c.thumbnail
+          ? `<img src="${esc(c.thumbnail)}" class="card-thumb" alt="">`
+          : `<div class="card-thumb-ph">📚</div>`;
+        return `<div class="card" onclick="APP.openCourse('${d.id}')">
+          <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div></div>
+          <div class="card-body">
+            <h3>${esc(c.title)}</h3>
+            <p>${esc(c.description||"")}</p>
+            <div class="card-meta">
+              <span class="card-lessons">${c.steps||0} lekcij</span>
+              <span class="card-open-btn">Odpri →</span>
+            </div>
+          </div>
+        </div>`;
+      }).join("") || "<p class='muted'>Še ni vsebin.</p>";
+      return;
+    }
+
+    // Show systems as cards
+    systemsGrid.innerHTML = sysSnap.docs.map(d=>{
+      const s=d.data();
+      const thumb = s.thumbnail
+        ? `<img src="${esc(s.thumbnail)}" class="card-thumb" alt="">`
+        : `<div class="card-thumb-ph"><span>🎓</span></div>`;
+      return `<div class="card" onclick="APP._openSystem('${d.id}','${esc(s.title)}')">
+        <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div></div>
+        <div class="card-body">
+          <h3>${esc(s.title)}</h3>
+          <p>${esc(s.description||"")}</p>
+          <div class="card-meta">
+            <span class="card-open-btn">Odpri →</span>
+          </div>
         </div>
       </div>`;
-    }).join(""));
+    }).join("");
+  },
+
+  async _openSystem(systemId, title) {
+    document.getElementById("systems-view").style.display = "none";
+    document.getElementById("system-courses-view").style.display = "";
+    document.getElementById("system-courses-header").innerHTML =
+      `<h2>${esc(title)}</h2>`;
+    const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
+    const courses = snap.docs.filter(d=>(d.data().systemId||"")=== systemId);
+    const list = document.getElementById("system-courses-list");
+    if (!courses.length) {
+      list.innerHTML = "<p class='muted'>Ta sistem še nima korakov.</p>";
+      return;
+    }
+    list.innerHTML = courses.map(d=>{
+      const c=d.data();
+      const thumb = c.thumbnail
+        ? `<img src="${esc(c.thumbnail)}" class="card-thumb" alt="">`
+        : `<div class="card-thumb-ph"><span>📖</span></div>`;
+      return `<div class="card" onclick="APP.openCourse('${d.id}')">
+        <div style="position:relative">${thumb}<div class="card-thumb-overlay"></div></div>
+        <div class="card-body">
+          <h3>${esc(c.title)}</h3>
+          <p>${esc(c.description||"")}</p>
+          <div class="card-meta">
+            <span class="card-lessons">${c.steps||0} lekcij</span>
+            <span class="card-open-btn">Začni →</span>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+  },
+
+  _backToSystems() {
+    document.getElementById("system-courses-view").style.display = "none";
+    document.getElementById("systems-view").style.display = "";
   },
 
   /* ── Course Viewer ── */
@@ -2081,6 +2185,58 @@ const APP = window.APP = {
     this._loadUsers();
   },
 
+  /* ── Skrbnik: Systems ── */
+  async _loadAdminSystems() {
+    const snap = await getDocs(query(collection(db,"systems"),orderBy("order")));
+    const list = document.getElementById("admin-systems-list");
+    if (!list) return;
+    if (snap.empty) { list.innerHTML="<p class='muted'>Še ni sistemov.</p>"; return; }
+    list.innerHTML = snap.docs.map(d=>`
+      <div class="list-row">
+        <strong>${esc(d.data().title||"")}</strong>
+        <div class="btn-row">
+          <button class="btn btn-sm btn-danger" onclick="APP._deleteSystem('${d.id}')">Izbriši</button>
+        </div>
+      </div>`).join("");
+    // Also populate system selector in add course modal
+    const sel = document.getElementById("nc-system");
+    if (sel) {
+      sel.innerHTML = `<option value="">— brez sistema —</option>` +
+        snap.docs.map(d=>`<option value="${d.id}">${esc(d.data().title||"")}</option>`).join("");
+    }
+  },
+
+  async _addSystem() {
+    const title = (document.getElementById("ns2-title")?.value||"").trim();
+    if (!title) { toast("Vnesite ime sistema.","err"); return; }
+    const snap = await getDocs(collection(db,"systems"));
+    await addDoc(collection(db,"systems"),{
+      title,
+      description: document.getElementById("ns2-desc")?.value.trim()||"",
+      thumbnail:   document.getElementById("ns2-thumb")?.value.trim()||"",
+      order: snap.size,
+      createdAt: new Date().toISOString()
+    });
+    ["ns2-title","ns2-desc","ns2-thumb"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+    this.closeModal("modal-add-system");
+    toast("Sistem ustvarjen!");
+    this._loadAdminSystems();
+  },
+
+  async _deleteSystem(id) {
+    if (!confirm("Izbrisati sistem? Koraki (tečaji) znotraj ostanejo, samo sistemId se odstrani.")) return;
+    // Remove systemId from all courses in this system
+    const cSnap = await getDocs(collection(db,"courses"));
+    for (const d of cSnap.docs) {
+      if (d.data().systemId === id) {
+        await updateDoc(doc(db,"courses",d.id),{systemId:""});
+      }
+    }
+    await deleteDoc(doc(db,"systems",id));
+    toast("Sistem izbrisan.");
+    this._loadAdminSystems();
+  },
+
   /* ── Skrbnik: Courses ── */
   async _loadSkrbnikCourses() {
     const snap = await getDocs(query(collection(db,"courses"),orderBy("order")));
@@ -2133,9 +2289,11 @@ const APP = window.APP = {
     const title = g("nc-title").value.trim();
     if (!title){ toast("Naslov je obvezen.","err"); return; }
     const snap = await getDocs(collection(db,"courses"));
+    const systemId = (document.getElementById("nc-system")?.value||"").trim();
     await addDoc(collection(db,"courses"),{
       title, description:g("nc-desc").value.trim(),
-      thumbnail:g("nc-thumb").value.trim(), order:snap.size, steps:0
+      thumbnail:g("nc-thumb").value.trim(), order:snap.size, steps:0,
+      systemId
     });
     ["nc-title","nc-desc","nc-thumb"].forEach(id=>g(id).value="");
     this.closeModal("modal-add-course");
@@ -3231,6 +3389,9 @@ document.querySelectorAll(".logout-btn").forEach(b=> b.addEventListener("click",
 on("add-user-btn",    ()=> APP.addUser());
 on("add-topic-btn",   ()=> APP.addTopic());
 on("open-add-course", ()=> APP.openAddCourse());
+on("add-system-btn",  ()=> APP.openModal("modal-add-system"));
+on("save-system-btn", ()=> APP._addSystem());
+on("cancel-add-system",()=>APP.closeModal("modal-add-system"));
 on("save-course-btn", ()=> APP.saveCourse());
 on("cancel-add-course",()=>APP.closeModal("modal-add-course"));
 on("add-lesson-btn",  ()=> APP.addLesson());
