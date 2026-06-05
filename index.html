@@ -1806,7 +1806,41 @@ const APP = window.APP = {
   ],
 
   async _loadDomov() {
-    const firstName = (currentDisplayName||"").split(" ")[0] || "tam";
+    // Get best available name: profile displayName > sheet filename > email prefix
+    let bestName = currentDisplayName || "";
+    // If no display name or it looks like an email, try sheet filename
+    if (!bestName || bestName.includes("@")) {
+      try {
+        const uSnap = await getDocs(collection(db,"allowedUsers"));
+        let sheetId = null;
+        for (const d of uSnap.docs) {
+          if ((d.data().email||"").toLowerCase().trim()===currentUser.email.toLowerCase().trim()) {
+            sheetId = d.data().sheetId||null;
+            // Also check if displayName was saved
+            if (d.data().displayName) { bestName = d.data().displayName; break; }
+            break;
+          }
+        }
+        if ((!bestName || bestName.includes("@")) && sheetId) {
+          const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=properties.title&key=${SHEETS_API_KEY}`;
+          const metaResp = await fetch(metaUrl);
+          if (metaResp.ok) {
+            const metaData = await metaResp.json();
+            const sheetTitle = metaData.properties?.title||"";
+            if (sheetTitle) bestName = sheetTitle;
+          }
+        }
+      } catch(e){}
+    }
+    // Update global display name so sidebar also shows correct name
+    if (bestName && !bestName.includes("@") && bestName !== currentDisplayName) {
+      currentDisplayName = bestName;
+      const el = document.getElementById("user-label");
+      const mel = document.getElementById("mobile-user-label");
+      if(el) el.textContent = bestName;
+      if(mel) mel.textContent = bestName;
+    }
+    const firstName = bestName.split(" ")[0] || "tam";
     const hour = new Date().getHours();
     const greeting = hour < 12 ? "Dobro jutro" : hour < 18 ? "Dober dan" : "Dober večer";
 
