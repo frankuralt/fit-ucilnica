@@ -704,13 +704,35 @@
 
       <!-- Kcal calculator -->
       <div class="card-form" id="profile-kcal-card" style="display:none">
-        <h3>Ocenjena kalorična poraba 🔥</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <h3 style="margin:0">Ocenjena kalorična poraba 🔥</h3>
+          <details style="position:relative">
+            <summary style="cursor:pointer;list-style:none;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);border-radius:8px;padding:.3rem .7rem;font-size:.78rem;color:var(--accent2)">ℹ️ Zakaj to izpolniti</summary>
+            <div style="position:absolute;right:0;top:2rem;z-index:10;width:280px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;font-size:.82rem;line-height:1.6;color:var(--muted);box-shadow:0 12px 40px rgba(0,0,0,.5)">
+              <p style="margin-bottom:.5rem">Za točen izračun potrebujemo: <strong style="color:var(--text)">višino, datum rojstva, spol in nivo aktivnosti</strong>.</p>
+              <p style="margin-bottom:.5rem">🔥 <strong style="color:var(--accent2)">TDEE</strong> je skupna dnevna poraba kalorij — koliko kalorij tvoje telo porabi na dan.</p>
+              <p style="margin-bottom:.5rem">Vnos hrane pod TDEE → hujšanje. Nad TDEE → pridobivanje mišic.</p>
+              <p style="font-size:.75rem;color:var(--accent2)">💡 Za točen načrt prehrane se posvetuj s svojim trenerjem.</p>
+            </div>
+          </details>
+        </div>
         <div id="profile-kcal-content"></div>
       </div>
 
       <!-- Full graph -->
       <div class="card-form">
-        <h3>Graf telesne teže 📈</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+          <h3 style="margin:0">Graf telesne teže 📈</h3>
+          <details style="position:relative">
+            <summary style="cursor:pointer;list-style:none;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);border-radius:8px;padding:.3rem .7rem;font-size:.78rem;color:var(--accent2)">ℹ️ Kako brati</summary>
+            <div style="position:absolute;right:0;top:2rem;z-index:10;width:270px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;font-size:.82rem;line-height:1.6;color:var(--muted);box-shadow:0 12px 40px rgba(0,0,0,.5)">
+              <p style="margin-bottom:.5rem"><strong style="color:var(--accent2)">Polna modra črta</strong> — tvoja dejanska teža vsak dan.</p>
+              <p style="margin-bottom:.5rem"><strong style="color:#60a5fa">Prekinjena črta</strong> — trend (smer gibanja teže).</p>
+              <p style="margin-bottom:.5rem">📉 Projekcija čez 3 mesece — če nadaljuješ v istem ritmu.</p>
+              <p style="font-size:.75rem;color:var(--accent2)">💡 Tehtaj se vsak dan ob isti uri, pred zajtrkom.</p>
+            </div>
+          </details>
+        </div>
         <div id="weight-graph-wrap">
           <div style="position:relative;height:300px;width:100%"><canvas id="weight-chart"></canvas></div>
           <div id="weight-trend-msg" style="margin-top:.75rem;font-size:.88rem;color:var(--muted);text-align:center"></div>
@@ -731,6 +753,18 @@
 
     <div id="sec-feed" class="section">
       <div class="page-header"><h2>Skupnost 💬</h2><p>Objave, napovedi in pogovori.</p></div>
+      <details style="margin-bottom:1.25rem">
+        <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px;font-size:.85rem;font-weight:500;color:var(--accent2)">
+          💬 Kako sodelovati v skupnosti? <span style="margin-left:auto;font-size:.73rem;color:var(--muted)">klikni</span>
+        </summary>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:1.1rem 1.25rem;font-size:.86rem;line-height:1.7;color:var(--muted)">
+          <p style="margin-bottom:.5rem">🏅 <strong style="color:var(--text)">Deli svoje zmage</strong> — vsak trening je dosežek. Pohvali se, motiviraj druge!</p>
+          <p style="margin-bottom:.5rem">❓ <strong style="color:var(--text)">Postavljaj vprašanja</strong> — ni neumnih vprašanj. Skupaj se učimo hitreje.</p>
+          <p style="margin-bottom:.5rem">🤝 <strong style="color:var(--text)">Podpiraj sočlanе</strong> — všečkaj, komentiraj, spodbujaj. Skupnost je močnejša skupaj.</p>
+          <p style="margin-bottom:.5rem">📸 <strong style="color:var(--text)">Dodaj sliko</strong> — pokaži napredek, trening ali zdrav obrok.</p>
+          <p style="font-size:.78rem;color:var(--accent2);margin-top:.5rem">💡 Spoštujmo drug drugega — pozitivna energija je osnova skupnosti.</p>
+        </div>
+      </details>
       <div class="feed-filter-bar" id="feed-filter-bar">
         <button class="feed-filter-btn active" data-filter="vse" onclick="APP.filterFeed('vse',this)">🌐 Vse</button>
       </div>
@@ -1847,10 +1881,23 @@ const APP = window.APP = {
     // ── Hero ──
     const heroWrap = document.getElementById("dash-hero-wrap");
     if (heroWrap) heroWrap.innerHTML = `
-      <div class="dash-hero" style="margin-bottom:1.5rem">
+      <div class="dash-hero" style="margin-bottom:1rem">
         <h2>${greeting}, ${esc(firstName)}! 👋</h2>
         <p>Greva naredit nekaj dobrega zate! 🌟</p>
-      </div>`;
+      </div>
+      <details style="margin-bottom:1.5rem">
+        <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px;font-size:.88rem;font-weight:500;color:var(--accent2)">
+          <span>ℹ️</span> Kako deluje FIT Team Sistemi? <span style="margin-left:auto;font-size:.75rem;color:var(--muted)">klikni za razlago</span>
+        </summary>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:1.25rem;font-size:.88rem;line-height:1.7;color:var(--muted)">
+          <p style="margin-bottom:.75rem">👋 <strong style="color:var(--text)">Dobrodošel/a v tvoj osebni fitnes prostor!</strong></p>
+          <p style="margin-bottom:.5rem">🏋️ <strong style="color:var(--text)">Moj trening</strong> — tvoj osebni vadbeni načrt ki ga pripravlja trener.</p>
+          <p style="margin-bottom:.5rem">🎓 <strong style="color:var(--text)">Izobraževalni programi</strong> — video lekcije in programi za globlje razumevanje vadbe.</p>
+          <p style="margin-bottom:.5rem">💬 <strong style="color:var(--text)">Skupnost</strong> — deli izkušnje, postavljaj vprašanja, motiviraj druge.</p>
+          <p style="margin-bottom:.5rem">📊 <strong style="color:var(--text)">Moj profil</strong> — sledi svoji teži, napredku in kalorični porabi.</p>
+          <p style="margin-top:.75rem;font-size:.8rem;color:var(--accent2)">💡 Za vprašanja se obrni na svojega trenerja.</p>
+        </div>
+      </details>`;
 
     // ── Motivational quote — try to get from sheet (Moč 1 last workout, col C lowest row) ──
     const qWrap = document.getElementById("dash-quote-wrap");
