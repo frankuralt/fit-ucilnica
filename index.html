@@ -1293,7 +1293,7 @@ const APP = window.APP = {
     g("sec-"+section).classList.add("active");
     if (section==="dashboard") this._loadDomov();
     if (section==="courses")   this._loadCoursesList();
-    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); this._loadTopics(); }
+    if (section==="admin" && IS_ADMIN){ this._loadUsers(); this._loadSkrbnikCourses(); this._loadAdminSystems(); this._loadTopics(); this._loadPrExercises(); }
     if (section==="feed")     this._loadFeed();
     if (section==="training") this._loadTraining();
     if (section==="profile")  this._loadProfile();
