@@ -2293,11 +2293,21 @@ const APP = window.APP = {
       notifSnap = await getDocs(query(collection(db,"notifications"),
         where("userId","==",currentUser.email), orderBy("createdAt","desc")));
     }
-    // Filter notifications older than 7 days
+    // Auto-delete read notifications older than 7 days from Firestore
+    const cutoff = Date.now() - 7*24*60*60*1000;
+    for (const d of notifSnap.docs) {
+      const n = d.data();
+      if (n.read && n.createdAt?.seconds && (n.createdAt.seconds*1000) < cutoff) {
+        deleteDoc(d.ref).catch(()=>{});
+      }
+    }
+    // Unread: always show. Read: only if newer than 7 days
     const sevenDaysAgo = Date.now() - 7*24*60*60*1000;
     const recentDocs = notifSnap.docs.filter(d=>{
-      const ts = d.data().createdAt?.seconds;
-      return !ts || (ts*1000) > sevenDaysAgo;
+      const n = d.data();
+      if (!n.read) return true; // unread always visible
+      const ts = n.createdAt?.seconds;
+      return !ts || (ts*1000) > sevenDaysAgo; // read: only last 7 days
     });
     if (!recentDocs.length) {
       list.innerHTML = "<p class='muted' style='padding:.5rem 0'>Ni obvestil.</p>";
