@@ -2621,27 +2621,48 @@ const APP = window.APP = {
         ageStr ? `🎂 ${ageStr}` : "",
         latestWeightChip,
       ].filter(Boolean).map(s=>`<span style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:.1rem .5rem;font-size:.72rem;color:var(--muted)">${s}</span>`).join("");
-      return `<div class="list-row" style="flex-wrap:wrap;gap:.4rem">
-        <div style="flex:1;min-width:160px">
-          <div style="font-weight:500">${esc(displayName)}</div>
-          <div style="font-size:.78rem;color:var(--muted)">${esc(email)}</div>
-          <div style="display:flex;align-items:center;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">${sheetBadge} ${postBadge}</div>
-          ${statsChips ? `<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.3rem">${statsChips}</div>` : ""}
+      const uid = esc(email).replace(/[^a-z0-9]/gi,"_");
+      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:.5rem;overflow:hidden">
+        <!-- Collapsed header — always visible, click to expand -->
+        <div onclick="APP._toggleUserRow('${uid}')"
+          style="display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;cursor:pointer;user-select:none">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:.95rem">${esc(displayName)}</div>
+            <div style="font-size:.75rem;color:var(--muted)">${esc(email)}</div>
+            ${statsChips ? `<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.3rem">${statsChips}</div>` : ""}
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0">
+            ${sheetBadge}
+            ${postBadge}
+            <svg id="chevron-${uid}" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--muted);transition:transform .2s"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
         </div>
-        <div class="btn-row">
-          <button class="btn btn-sm btn-ghost" onclick="APP.toggleCanPost('${esc(email)}',${canPost})">
-            ${canPost ? "🚫 Odvzemi objavljanje" : "✅ Dovoli objavljanje"}
-          </button>
-          <button class="btn btn-sm btn-ghost" onclick="APP.viewUserProgress('${esc(email)}','${esc(displayName)}')">📊 Napredek</button>
-          <button class="btn btn-sm btn-ghost" onclick="APP.viewUserWeightChart('${esc(email)}','${esc(displayName)}')">📈 Graf</button>
-          <button class="btn btn-sm btn-ghost" onclick="APP.editUserSheet('${esc(email)}','${esc(sheetId)}')">✏️ Sheet ID</button>
-          <button class="btn btn-sm btn-ghost" onclick="APP.editUserPR('${esc(email)}')">🏆 PR vaje</button>
-          <button class="btn btn-sm btn-ghost" onclick="APP.manageUserAccess('${esc(email)}','${esc(displayName)}')">🔑 Dostop</button>
-          <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button>
+        <!-- Expanded actions — hidden by default -->
+        <div id="userrow-${uid}" style="display:none;padding:.25rem 1rem .85rem;border-top:1px solid var(--border)">
+          <div class="btn-row" style="flex-wrap:wrap;gap:.4rem;margin-top:.6rem">
+            <button class="btn btn-sm btn-ghost" onclick="APP.toggleCanPost('${esc(email)}',${canPost})">
+              ${canPost ? "🚫 Odvzemi objavljanje" : "✅ Dovoli objavljanje"}
+            </button>
+            <button class="btn btn-sm btn-ghost" onclick="APP.viewUserProgress('${esc(email)}','${esc(displayName)}')">📊 Napredek</button>
+            <button class="btn btn-sm btn-ghost" onclick="APP.viewUserWeightChart('${esc(email)}','${esc(displayName)}')">📈 Graf</button>
+            <button class="btn btn-sm btn-ghost" onclick="APP.editUserSheet('${esc(email)}','${esc(sheetId)}')">✏️ Sheet ID</button>
+            <button class="btn btn-sm btn-ghost" onclick="APP.editUserPR('${esc(email)}')">🏆 PR vaje</button>
+            <button class="btn btn-sm btn-ghost" onclick="APP.manageUserAccess('${esc(email)}','${esc(displayName)}')">🔑 Dostop</button>
+            <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button>
+          </div>
         </div>
       </div>`;
     });
     htm("users-list", rows.length ? rows.join("") : "<p class='muted'>Še ni uporabnikov.</p>");
+  },
+
+  _toggleUserRow(uid) {
+    const row = document.getElementById("userrow-"+uid);
+    const chevron = document.getElementById("chevron-"+uid);
+    if (!row) return;
+    const open = row.style.display !== "none";
+    row.style.display = open ? "none" : "";
+    if (chevron) chevron.style.transform = open ? "" : "rotate(90deg)";
   },
 
   _PR_DEFAULTS: ["Počep", "Mrtvi dvig"],
