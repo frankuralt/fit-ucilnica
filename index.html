@@ -2099,16 +2099,18 @@ const APP = window.APP = {
 
     // Check system access for each system
     const sysAccessChecks = await Promise.all(visibleSystems.map(async d => {
-      if (IS_ADMIN) return {id:d.id, granted:true, requested:false};
+      if (IS_ADMIN) return {id:d.id, granted:true, requested:false, hidden:false};
       const accSnap = await getDocs(query(collection(db,"systemAccess"),
         where("userId","==",currentUser.email), where("systemId","==",d.id)));
       const acc = accSnap.docs[0]?.data();
-      return {id:d.id, granted:acc?.granted||false, requested:!!acc};
+      return {id:d.id, granted:acc?.granted||false, requested:!!acc, hidden:acc?.hidden||false};
     }));
     const sysAccessMap = Object.fromEntries(sysAccessChecks.map(a=>[a.id,a]));
 
     // Show systems as cards
-    systemsGrid.innerHTML = visibleSystems.map(d=>{
+    // Filter out per-user hidden systems
+    const userVisibleSystems = visibleSystems.filter(d=>!sysAccessMap[d.id]?.hidden);
+    systemsGrid.innerHTML = userVisibleSystems.map(d=>{
       const s=d.data();
       const acc = sysAccessMap[d.id]||{};
       const locked = !acc.granted;
@@ -2152,15 +2154,16 @@ const APP = window.APP = {
 
     // Check access for each course
     const accessChecks = await Promise.all(courses.map(async d => {
-      if (IS_ADMIN) return {id:d.id, granted:true, requested:false};
+      if (IS_ADMIN) return {id:d.id, granted:true, requested:false, hidden:false};
       const accSnap = await getDocs(query(collection(db,"courseAccess"),
         where("userId","==",currentUser.email), where("courseId","==",d.id)));
       const acc = accSnap.docs[0]?.data();
-      return {id:d.id, granted:acc?.granted||false, requested:!!acc};
+      return {id:d.id, granted:acc?.granted||false, requested:!!acc, hidden:acc?.hidden||false};
     }));
     const accessMap = Object.fromEntries(accessChecks.map(a=>[a.id,a]));
 
-    list.innerHTML = courses.map(d=>{
+    const visibleCourses = courses.filter(d=>!accessMap[d.id]?.hidden);
+    list.innerHTML = visibleCourses.map(d=>{
       const c=d.data();
       const acc = accessMap[d.id]||{};
       const locked = !acc.granted;
@@ -2771,33 +2774,75 @@ const APP = window.APP = {
     const sysAccMap    = Object.fromEntries(sysAccSnap.docs.map(d=>[d.data().systemId, d]));
     const courseAccMap = Object.fromEntries(courseAccSnap.docs.map(d=>[d.data().courseId, d]));
 
+    const stateBtn = (kind, id, title, acc) => {
+      const granted = acc?.data()?.granted||false;
+      const hidden  = acc?.data()?.hidden||false;
+      const state   = hidden ? "hidden" : granted ? "granted" : "locked";
+      const labels  = {hidden:"🙈 Skrito", granted:"✅ Dostop", locked:"🔒 Zaklenjeno"};
+      const next    = {hidden:"locked", granted:"hidden", locked:"granted"};
+      const colors  = {hidden:"background:var(--bg3);color:var(--muted)", granted:"background:rgba(34,197,94,.15);color:#4ade80", locked:"background:rgba(37,99,235,.15);color:var(--accent2)"};
+      return `<button class="btn btn-sm" style="${colors[state]};border:1px solid currentColor;opacity:.9"
+        onclick="APP._setAccessState('${kind}','${id}','${esc(title)}','${email}','${next[state]}',this)">
+        ${labels[state]}
+      </button>`;
+    };
     let rows = "<h4 style='margin-bottom:.75rem;color:var(--accent2)'>Sistemi</h4>";
     sysSnap.docs.forEach(d=>{
       const s=d.data();
       const acc=sysAccMap[d.id];
-      const granted=acc?.data()?.granted||false;
       rows += `<div class="list-row">
         <span>${esc(s.title)}</span>
-        <button class="btn btn-sm ${granted?'btn-danger':'btn'}"
-          onclick="APP._toggleAccess('system','${d.id}','${esc(s.title)}','${email}',${granted},this)">
-          ${granted?"🔒 Odvzemi":"✅ Dodeli"}
-        </button>
+        ${stateBtn('system',d.id,s.title,acc)}
       </div>`;
     });
     rows += "<h4 style='margin:.75rem 0;color:var(--accent2)'>Koraki</h4>";
     courseSnap.docs.forEach(d=>{
       const c=d.data();
       const acc=courseAccMap[d.id];
-      const granted=acc?.data()?.granted||false;
       rows += `<div class="list-row">
         <span style="font-size:.88rem">${esc(c.title)}</span>
-        <button class="btn btn-sm ${granted?'btn-danger':'btn'}"
-          onclick="APP._toggleAccess('course','${d.id}','${esc(c.title)}','${email}',${granted},this)">
-          ${granted?"🔒 Odvzemi":"✅ Dodeli"}
-        </button>
+        ${stateBtn('course',d.id,c.title,acc)}
       </div>`;
     });
     content.innerHTML = rows;
+  },
+
+  async _setAccessState(kind, targetId, title, email, newState, btn) {
+    btn.disabled = true;
+    const colName = kind==="system" ? "systemAccess" : "courseAccess";
+    const field   = kind==="system" ? "systemId"     : "courseId";
+    const docId   = email+"_"+targetId;
+    const granted = newState === "granted";
+    const hidden  = newState === "hidden";
+    await setDoc(doc(db,colName,docId),{
+      userId:email, userName:email, [field]:targetId, title,
+      granted, hidden,
+      ...(granted?{grantedAt:serverTimestamp()}:{})
+    },{merge:true});
+    // Cascade to courses if system
+    if (kind==="system") {
+      const cSnap = await getDocs(query(collection(db,"courses"), where("systemId","==",targetId)));
+      for (const cd of cSnap.docs) {
+        await setDoc(doc(db,"courseAccess",email+"_"+cd.id),
+          {userId:email,courseId:cd.id,courseTitle:cd.data().title||"",granted,hidden,
+          ...(granted?{grantedAt:serverTimestamp()}:{})},{merge:true});
+      }
+    }
+    if (granted && !hidden) {
+      await addDoc(collection(db,"notifications"),{
+        type:"access_granted",userId:email,
+        message:`✅ Dostop do "${title}" je bil odobren!`,
+        read:false,createdAt:serverTimestamp()
+      });
+    }
+    const labels = {hidden:"🙈 Skrito",granted:"✅ Dostop",locked:"🔒 Zaklenjeno"};
+    const next   = {hidden:"locked",granted:"hidden",locked:"granted"};
+    const colors = {hidden:"background:var(--bg3);color:var(--muted)",granted:"background:rgba(34,197,94,.15);color:#4ade80",locked:"background:rgba(37,99,235,.15);color:var(--accent2)"};
+    btn.style.cssText = colors[newState]+";border:1px solid currentColor;opacity:.9";
+    btn.textContent = labels[newState];
+    btn.onclick = ()=>APP._setAccessState(kind,targetId,title,email,next[newState],btn);
+    btn.disabled = false;
+    toast(newState==="granted"?"Dostop dodeljen! ✅":newState==="hidden"?"Skrito 🙈":"Zaklenjeno 🔒");
   },
 
   async _toggleAccess(kind, targetId, title, email, currentlyGranted, btn) {
