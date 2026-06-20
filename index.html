@@ -2368,13 +2368,28 @@ const APP = window.APP = {
   async openNotifications() {
     this.openModal("notif-modal");
     const list = document.getElementById("notif-list");
+    list.innerHTML = "<p class='muted' style='padding:.5rem 0'>Nalaganje…</p>";
     // Admin sees all notifications; users see their own
     let notifSnap;
-    if (IS_ADMIN) {
-      notifSnap = await getDocs(query(collection(db,"notifications"), orderBy("createdAt","desc")));
-    } else {
-      notifSnap = await getDocs(query(collection(db,"notifications"),
-        where("userId","==",currentUser.email), orderBy("createdAt","desc")));
+    try {
+      if (IS_ADMIN) {
+        notifSnap = await getDocs(query(collection(db,"notifications"), orderBy("createdAt","desc")));
+      } else {
+        notifSnap = await getDocs(query(collection(db,"notifications"),
+          where("userId","==",currentUser.email), orderBy("createdAt","desc")));
+      }
+    } catch(e) {
+      // Composite index missing — fallback to unordered fetch + client-side sort/filter
+      try {
+        const allSnap = await getDocs(collection(db,"notifications"));
+        let docs = allSnap.docs;
+        if (!IS_ADMIN) docs = docs.filter(d => d.data().userId === currentUser.email);
+        docs.sort((a,b) => (b.data().createdAt?.seconds||0) - (a.data().createdAt?.seconds||0));
+        notifSnap = { docs };
+      } catch(e2) {
+        list.innerHTML = "<p class='muted' style='padding:.5rem 0'>Napaka pri nalaganju obvestil: "+esc(e2.message)+"</p>";
+        return;
+      }
     }
     // Auto-delete read notifications older than 7 days from Firestore
     const cutoff = Date.now() - 7*24*60*60*1000;
@@ -2465,22 +2480,47 @@ const APP = window.APP = {
   },
 
   async _markAllRead() {
-    const snap = await getDocs(query(collection(db,"notifications"), where("read","==",false)));
-    for (const d of snap.docs) { updateDoc(d.ref,{read:true}).catch(()=>{}); }
+    try {
+      let docs;
+      try {
+        const q3 = IS_ADMIN
+          ? query(collection(db,"notifications"), where("read","==",false))
+          : query(collection(db,"notifications"), where("userId","==",currentUser.email), where("read","==",false));
+        const snap = await getDocs(q3);
+        docs = snap.docs;
+      } catch(e) {
+        const allSnap = await getDocs(collection(db,"notifications"));
+        docs = allSnap.docs.filter(d => {
+          const n = d.data();
+          return !n.read && (IS_ADMIN || n.userId === currentUser.email);
+        });
+      }
+      for (const d of docs) { updateDoc(d.ref,{read:true}).catch(()=>{}); }
+    } catch(e){}
     ["notif-dot-desktop","notif-dot-mobile"].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display="none"; });
     this.openNotifications();
   },
 
   async _checkUnreadNotifications() {
     try {
-      let q2;
-      if (IS_ADMIN) {
-        q2 = query(collection(db,"notifications"), where("read","==",false));
-      } else {
-        q2 = query(collection(db,"notifications"), where("userId","==",currentUser.email), where("read","==",false));
+      let hasUnread = false;
+      try {
+        let q2;
+        if (IS_ADMIN) {
+          q2 = query(collection(db,"notifications"), where("read","==",false));
+        } else {
+          q2 = query(collection(db,"notifications"), where("userId","==",currentUser.email), where("read","==",false));
+        }
+        const snap = await getDocs(q2);
+        hasUnread = !snap.empty;
+      } catch(e) {
+        // Composite index missing — fallback to client-side filter
+        const allSnap = await getDocs(collection(db,"notifications"));
+        hasUnread = allSnap.docs.some(d => {
+          const n = d.data();
+          return !n.read && (IS_ADMIN || n.userId === currentUser.email);
+        });
       }
-      const snap = await getDocs(q2);
-      const hasUnread = !snap.empty;
       ["notif-dot-desktop","notif-dot-mobile"].forEach(id=>{
         const el=document.getElementById(id);
         if(el) el.style.display = hasUnread?"inline-block":"none";
