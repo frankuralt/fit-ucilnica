@@ -225,6 +225,45 @@
   .niz-cells { display:flex; gap:.3rem; flex-wrap:wrap; }
   .niz-cell.changed { border-color:#4ade80 !important; background:rgba(74,222,128,.15) !important; color:#4ade80 !important; }
   .ex-card-nizi .niz-cell.changed { border-color:#4ade80 !important; background:rgba(74,222,128,.15) !important; color:#4ade80 !important; }
+
+  /* ── REDESIGNED EXERCISE CARDS (accessibility-first) ── */
+  .ex-card2 { background:#1c1c26; border:2px solid #4a4a66; border-radius:14px; padding:16px; margin-bottom:10px; }
+  .ex-card2.sklop-b { background:#2a2a3a; border-color:#5e5e7a; }
+  .ex-card2-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; }
+  .ex-card2-id { display:flex; align-items:center; gap:10px; min-width:0; }
+  .ex-card2-code { background:#2563eb; color:#fff; font-size:15px; font-weight:700; min-width:32px; height:32px; padding:0 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .sklop-b .ex-card2-code { background:#4f8df7; }
+  .ex-card2-name { font-weight:700; font-size:19px; color:#ffffff; line-height:1.25; }
+  .ex-card2-video { width:38px; height:38px; border-radius:10px; background:#2563eb; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; border:none; cursor:pointer; font-size:18px; }
+  .sklop-b .ex-card2-video { background:#4f8df7; }
+  .ex-card2-video.no-video { background:#33334a; color:#6a6a86; cursor:default; opacity:.5; }
+  .ex-card2-note { font-size:15px; color:#d0d2e0; margin-bottom:14px; line-height:1.4; }
+  .sklop-b .ex-card2-note { color:#dde0f0; }
+  .ex-card2-nizi { display:flex; gap:7px; margin-bottom:10px; flex-wrap:wrap; }
+  .niz2-box { flex:1; min-width:60px; background:#26263a; border:2px solid #4a4a66; border-radius:12px; padding:10px 4px; text-align:center; cursor:pointer; transition:opacity .15s; position:relative; user-select:none; -webkit-tap-highlight-color:transparent; }
+  .sklop-b .niz2-box { background:#33334a; border-color:#5e5e7a; }
+  .niz2-box-label { font-size:12px; color:#a8aac4; font-weight:700; margin-bottom:3px; }
+  .sklop-b .niz2-box-label { color:#c2c4dc; }
+  .niz2-box-val { font-size:21px; font-weight:700; color:#ffffff; }
+  .niz2-box.changed { background:#15291d; border-color:#2f7d4f; }
+  .niz2-box.changed .niz2-box-label { color:#8ce6ab; }
+  .niz2-box.changed .niz2-box-val { color:#8ce6ab; }
+  .niz2-box.done { opacity:.55; }
+  .niz2-box.done.changed { opacity:1; border-width:3px; padding:9px 4px; }
+  .niz2-box.done:not(.changed) { background:#1a2535; border-color:#3b82f6; }
+  .niz2-box.done:not(.changed) .niz2-box-label,
+  .niz2-box.done:not(.changed) .niz2-box-val { color:#7fa8e0; }
+  .niz2-check { display:none; position:absolute; top:-7px; right:-5px; width:18px; height:18px; border-radius:50%; align-items:center; justify-content:center; font-size:11px; font-weight:900; }
+  .niz2-box.done .niz2-check { display:flex; }
+  .niz2-box.done:not(.changed) .niz2-check { background:#3b82f6; color:#fff; }
+  .niz2-box.done.changed .niz2-check { background:#4ade80; color:#0e2818; }
+  .ex-card2-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .ex-card2-stat { background:#26263a; border-radius:9px; padding:8px 10px; }
+  .sklop-b .ex-card2-stat { background:#383850; }
+  .ex-card2-stat-label { font-size:13px; color:#a8aac4; margin-bottom:2px; }
+  .sklop-b .ex-card2-stat-label { color:#c8cae0; }
+  .ex-card2-stat-val { font-size:18px; color:#ffffff; font-weight:700; }
+
   .val-changed-box { display:inline-block; background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.4); border-radius:6px; padding:.1rem .45rem; color:#4ade80; font-weight:600; }
   td.val-changed-box, td .val-changed-box { color:#4ade80; }
   .val-changed { color:#4ade80 !important; font-weight:600; }
@@ -2536,6 +2575,12 @@ const APP = window.APP = {
     this._ytExpanded = false;
   },
 
+  _toggleNizDone(cellId) {
+    const el = document.getElementById(cellId);
+    if (!el) return;
+    el.classList.toggle("done");
+  },
+
   async showStep(courseId, stepId, stepIndex, totalSteps) {
     document.querySelectorAll(".step-row").forEach(r=>r.classList.remove("active"));
     const row = g("sr-"+stepId); if(row) row.classList.add("active");
@@ -3735,8 +3780,8 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         </tr>`;
       }).join("");
 
-      // Mobile card rows
-      const cardRows = exercises.map(ex => {
+      // Mobile card rows — redesigned: sklop grouping (A/A1=sklop A, B/B1=sklop B...), checkbox nizi, accessible sizing
+      const cardRows = exercises.map((ex, exIdx) => {
         const prevM = prevNiziMap[ex.code] || {};
         const prevNiziM = prevM.nizi || [];
         const hasPrevM = Object.keys(prevM).length > 0;
@@ -3746,27 +3791,46 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         const mRepsCh  = hasPrevM && prevM.reps  !== undefined && ex.reps  !== prevM.reps;
         const mTempoCh = hasPrevM && prevM.tempo !== undefined && ex.tempo !== prevM.tempo;
         const mRestCh  = hasPrevM && prevM.rest  !== undefined && ex.rest  !== prevM.rest;
-        const nizBadges = ex.nizi.map((n,i)=>{
+
+        // Sklop = leading letter of code (A, A1, A2 -> "A"; B, B1 -> "B")
+        const sklopLetter = (ex.code.match(/^[A-Za-z]+/)||["A"])[0].toUpperCase();
+        const sklopIndex = sklopLetter.charCodeAt(0) - 65; // A=0,B=1,C=2...
+        const isSklopB = sklopIndex % 2 === 1;
+
+        const niziHtml = ex.nizi.map((n,i)=>{
           if (!n) return "";
           const changed = prevNiziM[i] !== undefined && n !== prevNiziM[i];
-          return `<span class="niz-cell${changed?" changed":""}"><span style="font-size:.6rem;color:${changed?"#4ade80":"var(--muted)"};display:block">Niz ${i+1}</span>${n}</span>`;
+          const cellId = `niz2_${tabName.replace(/[^a-z0-9]/gi,"")}_${exIdx}_${i}`;
+          return `<div class="niz2-box${changed?" changed":""}" id="${cellId}" onclick="APP._toggleNizDone('${cellId}')">
+            <span class="niz2-check">✓</span>
+            <div class="niz2-box-label">Niz ${i+1}</div>
+            <div class="niz2-box-val">${esc(n)}</div>
+          </div>`;
         }).filter(Boolean).join("");
+
+        const hasVideo = !!ex.videoUrl;
+        const videoBtn = hasVideo
+          ? `<button class="ex-card2-video" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false" title="Poglej video">▶</button>`
+          : `<span class="ex-card2-video no-video" title="Video ni na voljo">▶</span>`;
+
         const gc = (val, ch) => ch ? `<span class="val-changed-box">${val}</span>` : val;
-        const mVideoBtn = `<button style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:${ex.videoUrl?'rgba(37,99,235,.15)':'var(--bg3)'};border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};cursor:${ex.videoUrl?'pointer':'default'};font-weight:500;opacity:${ex.videoUrl?'1':'.4'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
-        return `<div class="ex-card">
-          <div class="ex-card-top">
-            <span class="ex-card-code">${esc(ex.code)}</span>
-            <span class="ex-card-name">${gc(esc(ex.name),mNameCh)}</span>
-            ${mVideoBtn}
+
+        const statsHtml = [
+          (ex.sets||ex.reps) ? `<div class="ex-card2-stat"><div class="ex-card2-stat-label">Nizi × Ponovitve</div><div class="ex-card2-stat-val">${gc(esc(ex.sets)||"—",mSetsCh)} × ${gc(esc(ex.reps)||"—",mRepsCh)}</div></div>` : "",
+          (ex.tempo||ex.rest) ? `<div class="ex-card2-stat"><div class="ex-card2-stat-label">Tempo · Odmor</div><div class="ex-card2-stat-val">${gc(esc(ex.tempo)||"—",mTempoCh)} · ${gc(esc(ex.rest)||"—",mRestCh)}</div></div>` : ""
+        ].filter(Boolean).join("");
+
+        return `<div class="ex-card2${isSklopB?" sklop-b":""}">
+          <div class="ex-card2-top">
+            <div class="ex-card2-id">
+              <span class="ex-card2-code">${esc(ex.code)}</span>
+              <span class="ex-card2-name">${gc(esc(ex.name),mNameCh)}</span>
+            </div>
+            ${videoBtn}
           </div>
-          ${ex.note ? `<div class="ex-card-note">${gc(esc(ex.note),mNoteCh)}</div>` : ""}
-          <div class="ex-card-stats">
-            ${ex.sets  ? `<div class="ex-stat"><span class="ex-stat-label">Nizi</span><span class="ex-stat-val">${gc(esc(ex.sets),mSetsCh)}</span></div>` : ""}
-            ${ex.reps  ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val">${gc(esc(ex.reps),mRepsCh)}</span></div>` : ""}
-            ${ex.tempo ? `<div class="ex-stat"><span class="ex-stat-label">Tempo</span><span class="ex-stat-val">${gc(esc(ex.tempo),mTempoCh)}</span></div>` : ""}
-            ${ex.rest  ? `<div class="ex-stat"><span class="ex-stat-label">Odmor</span><span class="ex-stat-val">${gc(esc(ex.rest),mRestCh)}</span></div>` : ""}
-          </div>
-          ${nizBadges ? `<div class="ex-card-nizi">${nizBadges}</div>` : ""}
+          ${ex.note ? `<div class="ex-card2-note">${gc(esc(ex.note),mNoteCh)}</div>` : ""}
+          ${niziHtml ? `<div class="ex-card2-nizi">${niziHtml}</div>` : ""}
+          ${statsHtml ? `<div class="ex-card2-stats">${statsHtml}</div>` : ""}
         </div>`;
       }).join("");
 
@@ -3975,20 +4039,29 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         </tr>`;
       }).join("");
 
-      const specialnoCards = specialnoExercises.map(ex => {
-        const ogVideoBtn = `<button style="margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:.25rem;background:${ex.videoUrl?'rgba(37,99,235,.15)':'var(--bg3)'};border:1px solid ${ex.videoUrl?'rgba(37,99,235,.4)':'var(--border)'};border-radius:6px;padding:.3rem .7rem;font-size:.82rem;color:${ex.videoUrl?'var(--accent2)':'var(--muted)'};cursor:${ex.videoUrl?'pointer':'default'};font-weight:500;opacity:${ex.videoUrl?'1':'.4'}" onclick="${ex.videoUrl?'APP.openYT(\''+esc(ex.videoUrl)+'\',\''+esc(ex.name)+'\')':''};return false">▶</button>`;
-        return `<div class="ex-card">
-          <div class="ex-card-top">
-            <span class="ex-card-code">${esc(ex.code)}</span>
-            <span class="ex-card-name">${esc(ex.name)}</span>
-            ${ogVideoBtn}
+      const specialnoCards = specialnoExercises.map((ex, exIdx) => {
+        const sklopLetter = (ex.code.match(/^[A-Za-z]+/)||["A"])[0].toUpperCase();
+        const sklopIndex = sklopLetter.charCodeAt(0) - 65;
+        const isSklopB = sklopIndex % 2 === 1;
+        const hasVideo = !!ex.videoUrl;
+        const videoBtn = hasVideo
+          ? `<button class="ex-card2-video" onclick="APP.openYT('${esc(ex.videoUrl)}','${esc(ex.name)}');return false" title="Poglej video">▶</button>`
+          : `<span class="ex-card2-video no-video" title="Video ni na voljo">▶</span>`;
+        const statsHtml = [
+          ex.serije ? `<div class="ex-card2-stat"><div class="ex-card2-stat-label">Serije</div><div class="ex-card2-stat-val">${esc(ex.serije)}</div></div>` : "",
+          ex.ponov  ? `<div class="ex-card2-stat"><div class="ex-card2-stat-label">Ponovitve</div><div class="ex-card2-stat-val">${esc(ex.ponov)}</div></div>` : "",
+          ex.cas    ? `<div class="ex-card2-stat"><div class="ex-card2-stat-label">Čas</div><div class="ex-card2-stat-val">${esc(ex.cas)}</div></div>` : ""
+        ].filter(Boolean).join("");
+        return `<div class="ex-card2${isSklopB?" sklop-b":""}">
+          <div class="ex-card2-top">
+            <div class="ex-card2-id">
+              <span class="ex-card2-code">${esc(ex.code)}</span>
+              <span class="ex-card2-name">${esc(ex.name)}</span>
+            </div>
+            ${videoBtn}
           </div>
-          ${ex.opomba ? `<div class="ex-card-note">${esc(ex.opomba)}</div>` : ""}
-          <div class="ex-card-stats">
-            ${ex.serije ? `<div class="ex-stat"><span class="ex-stat-label">Serije</span><span class="ex-stat-val">${esc(ex.serije)}</span></div>` : ""}
-            ${ex.ponov  ? `<div class="ex-stat"><span class="ex-stat-label">Ponovitve</span><span class="ex-stat-val">${esc(ex.ponov)}</span></div>` : ""}
-            ${ex.cas    ? `<div class="ex-stat"><span class="ex-stat-label">Čas</span><span class="ex-stat-val">${esc(ex.cas)}</span></div>` : ""}
-          </div>
+          ${ex.opomba ? `<div class="ex-card2-note">${esc(ex.opomba)}</div>` : ""}
+          ${statsHtml ? `<div class="ex-card2-stats">${statsHtml}</div>` : ""}
         </div>`;
       }).join("");
 
