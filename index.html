@@ -2682,12 +2682,12 @@ const APP = window.APP = {
       const email = data.email || d.id.replace(/_at_/g,"@").replace(/_/g,".");
       const sheetId = data.sheetId || "";
       const sheetBadge = sheetId
-        ? `<span class="badge" title="${esc(sheetId)}" style="max-width:120px;overflow:hidden;text-overflow:ellipsis">📊 Sheet</span>`
-        : `<span style="font-size:.75rem;color:var(--muted)">Brez sheet-a</span>`;
+        ? `<span class="badge" title="${esc(sheetId)}">📊 Sheet</span>`
+        : `<span class="badge" style="background:var(--bg3);color:var(--muted)">Brez sheet-a</span>`;
       const canPost = data.canPost || false;
       const postBadge = canPost
-        ? `<span class="badge" style="background:rgba(34,197,94,.15);color:#4ade80">✓ Može objavljati</span>`
-        : `<span style="font-size:.75rem;color:var(--muted)">Ne more objavljati</span>`;
+        ? `<span class="badge" style="background:rgba(34,197,94,.15);color:#4ade80">✓ Lahko objavlja</span>`
+        : `<span class="badge" style="background:var(--bg3);color:var(--muted)">Ne objavlja</span>`;
       const displayName = data.displayName || email;
       // Calculate age from dob
       let ageStr = "";
@@ -2712,16 +2712,18 @@ const APP = window.APP = {
       return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:.5rem;overflow:hidden">
         <!-- Collapsed header — always visible, click to expand -->
         <div onclick="APP._toggleUserRow('${uid}')"
-          style="display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;cursor:pointer;user-select:none">
+          style="display:flex;align-items:flex-start;gap:.6rem;padding:.85rem 1rem;cursor:pointer;user-select:none">
           <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:.95rem">${esc(displayName)}</div>
-            <div style="font-size:.75rem;color:var(--muted)">${esc(email)}</div>
-            ${statsChips ? `<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.3rem">${statsChips}</div>` : ""}
-          </div>
-          <div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0">
-            ${sheetBadge}
-            ${postBadge}
-            <svg id="chevron-${uid}" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--muted);transition:transform .2s"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.15rem">
+              <div style="font-weight:600;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(displayName)}</div>
+              <svg id="chevron-${uid}" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color:var(--muted);transition:transform .2s;flex-shrink:0"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div style="font-size:.75rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:.4rem">${esc(email)}</div>
+            <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+              ${sheetBadge}
+              ${postBadge}
+              ${statsChips}
+            </div>
           </div>
         </div>
         <!-- Expanded actions — hidden by default -->
