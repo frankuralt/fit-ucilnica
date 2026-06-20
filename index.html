@@ -3581,24 +3581,36 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
       }
 
       // Find all workout header rows (where col C === "Vaja")
-      const headerRowIdxs = [];
+      const allHeaderRowIdxs = [];
       rows.forEach((row,i) => {
-        if (String(row[2]||"").trim() === "Vaja") headerRowIdxs.push(i);
+        if (String(row[2]||"").trim() === "Vaja") allHeaderRowIdxs.push(i);
       });
 
-      if (!headerRowIdxs.length) {
+      if (!allHeaderRowIdxs.length) {
         htm("training-content","<div class='training-empty'><p>V tem listu še ni vadb.</p></div>");
         return;
       }
 
+      // A block is "filled" if the row right after its header has a code (col B) and name (col C)
+      // This filters out empty pre-made template blocks (e.g. 6 blank workouts prepared in advance)
+      const headerRowIdxs = allHeaderRowIdxs.filter(hIdx => {
+        const nextRow = rows[hIdx+1] || [];
+        const nextCode = String(nextRow[1]||"").trim();
+        const nextName = String(nextRow[2]||"").trim();
+        return !!(nextCode && nextName);
+      });
+
+      // If filtering removed everything (e.g. all blocks happen to look empty), fall back to unfiltered
+      const effectiveHeaderRowIdxs = headerRowIdxs.length ? headerRowIdxs : allHeaderRowIdxs;
+
       // Default to last workout, or use workoutIdx if provided
-      const totalWorkoutBlocks = headerRowIdxs.length;
+      const totalWorkoutBlocks = effectiveHeaderRowIdxs.length;
       const currentIdx = (workoutIdx !== undefined && workoutIdx >= 0 && workoutIdx < totalWorkoutBlocks)
         ? workoutIdx
         : totalWorkoutBlocks - 1;
-      const lastHeaderIdx = headerRowIdxs[currentIdx];
+      const lastHeaderIdx = effectiveHeaderRowIdxs[currentIdx];
       // Previous block for comparison (always the one before current)
-      const prevHeaderIdx = currentIdx > 0 ? headerRowIdxs[currentIdx-1] : -1;
+      const prevHeaderIdx = currentIdx > 0 ? effectiveHeaderRowIdxs[currentIdx-1] : -1;
       // Number in col A, date in col B — same row as "Vaja" header
       const headerRow = rows[lastHeaderIdx];
       const workoutNum = String(headerRow[0]||"").trim();
@@ -3772,7 +3784,7 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
       }
 
       // Build dropdown options from all header rows
-      const dropdownOptions = headerRowIdxs.map((hIdx, i) => {
+      const dropdownOptions = effectiveHeaderRowIdxs.map((hIdx, i) => {
         const hRow = rows[hIdx];
         const hNum = String(hRow[0]||"").trim();
         const hDateRaw = String(hRow[1]||"").trim();
