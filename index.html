@@ -336,6 +336,17 @@
   .show-more-comments:hover { text-decoration:underline; }
 
   /* ── DASHBOARD ── */
+  .review-banner { background:linear-gradient(135deg,#1a1530,#2a1f3d); border:1px solid rgba(167,139,250,.3); border-radius:16px; padding:1.5rem; position:relative; }
+  .review-banner-close { position:absolute; top:.75rem; right:.75rem; background:rgba(255,255,255,.08); border:none; border-radius:8px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; color:var(--muted); cursor:pointer; font-size:1rem; }
+  .review-banner-close:hover { background:rgba(255,255,255,.15); color:var(--text); }
+  .review-banner h3 { font-family:"DM Serif Display",serif; font-size:1.2rem; margin-bottom:.6rem; padding-right:2rem; }
+  .review-banner p { font-size:.88rem; line-height:1.65; color:#d0c8e8; margin-bottom:.6rem; }
+  .review-banner .stars { font-size:1.1rem; letter-spacing:.1em; }
+  .review-banner-btns { display:flex; gap:.6rem; margin-top:1rem; flex-wrap:wrap; }
+  .review-btn { display:inline-flex; align-items:center; gap:.5rem; padding:.65rem 1.1rem; border-radius:10px; font-family:inherit; font-size:.85rem; font-weight:600; cursor:pointer; text-decoration:none; border:none; }
+  .review-btn-google { background:#fff; color:#1a1a2e; }
+  .review-btn-fb { background:#1877f2; color:#fff; }
+
   .dash-quote-card { background:linear-gradient(135deg,#0a1628,#1e3a5f); border-radius:16px; padding:1.75rem 2rem; border:1px solid rgba(37,99,235,.2); position:relative; overflow:hidden; margin-bottom:1.5rem; }
   .dash-quote-card::after { content:''; position:absolute; right:-30px; top:-30px; width:150px; height:150px; background:radial-gradient(circle,rgba(37,99,235,.2) 0%,transparent 70%); pointer-events:none; }
   .dash-quote-text { font-family:"DM Serif Display",serif; font-size:1.15rem; line-height:1.55; color:var(--text); margin-bottom:.5rem; }
@@ -635,6 +646,9 @@
     <div id="sec-dashboard" class="section active">
       <!-- Hero greeting -->
       <div id="dash-hero-wrap"></div>
+
+      <!-- Review banner -->
+      <div id="dash-review-wrap" style="margin-bottom:1.5rem"></div>
 
       <!-- Motivational quote -->
       <div id="dash-quote-wrap" style="margin-bottom:1.5rem"></div>
@@ -1987,6 +2001,36 @@ const APP = window.APP = {
         </div>
       </details>`;
 
+    // ── Review banner — per-user, admin-controlled, dismissible ──
+    const reviewWrap = document.getElementById("dash-review-wrap");
+    if (reviewWrap) {
+      try {
+        const accSnap = await getDocs(query(collection(db,"reviewPrompt"),
+          where("userId","==",currentUser.email)));
+        const accData = accSnap.docs[0]?.data();
+        const showReview = accData?.enabled && !accData?.dismissed;
+        if (showReview) {
+          reviewWrap.innerHTML = `
+            <div class="review-banner">
+              <button class="review-banner-close" onclick="APP._dismissReview()" title="Zapri">✕</button>
+              <h3>Živjo ${esc(firstName)}!</h3>
+              <p>Imam eno malo prošnjo, ki ti bo vzela 3 minute časa.<br>
+              Kot trenerju, ki konstantno želi maksimalno pomagati svojim strankam, mi tvoje mnenje zelo veliko pomeni.<br>
+              Preko mnenj tudi bodočim strankam pomagaš oblikovati mnenje.</p>
+              <p>Torej kaj je moja prošnja...<br>
+              Prosim te le za popolnoma iskreno mnenje o tvoji izkušnji s sistemom, ki ga oddaš na facebook in google.</p>
+              <p>Tu pri facebook klikneš na mnenja potem te vpraša ali želiš oddati mnenje / review kjer klikneš da / yes. Dodajam tudi slike. Če povezava ne deluje pravilno pa v facebook napiši <strong>"fran kuralt - fit team sistemi"</strong>.</p>
+              <p>Lep dan in iskreno hvala že v naprej.<br>Coach Fran</p>
+              <p style="font-size:.82rem">P.s. Če želiš le čim hitreje opraviti pa lahko namesto besedila le prilepiš zvezdice <span class="stars">⭐⭐⭐⭐⭐</span> na zgornji povezavi.</p>
+              <div class="review-banner-btns">
+                <a class="review-btn review-btn-google" href="https://g.page/r/CUh7qXX43MxvEAg/review?rc" target="_blank" rel="noopener" onclick="APP._dismissReview()">⭐ Oceni na Google</a>
+                <a class="review-btn review-btn-fb" href="https://www.facebook.com/fitteamslo" target="_blank" rel="noopener" onclick="APP._dismissReview()">👍 Oceni na Facebook</a>
+              </div>
+            </div>`;
+        }
+      } catch(e){}
+    }
+
     // ── Motivational quote — try to get from sheet (Moč 1 last workout, col C lowest row) ──
     const qWrap = document.getElementById("dash-quote-wrap");
     if (qWrap) {
@@ -2581,6 +2625,28 @@ const APP = window.APP = {
     el.classList.toggle("done");
   },
 
+  async _dismissReview() {
+    const wrap = document.getElementById("dash-review-wrap");
+    if (wrap) wrap.innerHTML = "";
+    try {
+      const accSnap = await getDocs(query(collection(db,"reviewPrompt"), where("userId","==",currentUser.email)));
+      const docRef = accSnap.docs[0]?.ref || doc(db,"reviewPrompt",currentUser.email.replace(/[^a-z0-9]/gi,"_"));
+      await setDoc(docRef, {userId: currentUser.email, dismissed: true}, {merge:true});
+    } catch(e){}
+  },
+
+  async _toggleReviewPrompt(email) {
+    const docId = email.replace(/[^a-z0-9]/gi,"_");
+    const snap = await getDoc(doc(db,"reviewPrompt",docId));
+    const currentlyEnabled = snap.exists() && snap.data().enabled;
+    await setDoc(doc(db,"reviewPrompt",docId), {
+      userId: email,
+      enabled: !currentlyEnabled,
+      dismissed: false
+    }, {merge:true});
+    toast(!currentlyEnabled ? "Poziv za oceno omogočen za "+email : "Poziv za oceno skrit za "+email);
+  },
+
   async showStep(courseId, stepId, stepIndex, totalSteps) {
     document.querySelectorAll(".step-row").forEach(r=>r.classList.remove("active"));
     const row = g("sr-"+stepId); if(row) row.classList.add("active");
@@ -2737,6 +2803,7 @@ const APP = window.APP = {
             <button class="btn btn-sm btn-ghost" onclick="APP.editUserSheet('${esc(email)}','${esc(sheetId)}')">✏️ Sheet ID</button>
             <button class="btn btn-sm btn-ghost" onclick="APP.editUserPR('${esc(email)}')">🏆 PR vaje</button>
             <button class="btn btn-sm btn-ghost" onclick="APP.manageUserAccess('${esc(email)}','${esc(displayName)}')">🔑 Dostop</button>
+            <button class="btn btn-sm btn-ghost" onclick="APP._toggleReviewPrompt('${esc(email)}')">⭐ Poziv za oceno</button>
             <button class="btn btn-sm btn-danger" onclick="APP.removeUser('${esc(email)}')">Odstrani</button>
           </div>
         </div>
