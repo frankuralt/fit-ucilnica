@@ -21,6 +21,13 @@
   .screen { display:none; }
   .screen.active { display:flex; }
 
+  /* ── LOADING SCREEN ── */
+  #screen-loading { flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:var(--bg); gap:1.5rem; }
+  .loading-label { color:var(--muted); font-size:.8rem; letter-spacing:.12em; text-transform:uppercase; }
+  /* overlay shown during login/signup processing */
+  #overlay-loading { display:none; position:fixed; inset:0; z-index:9999; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; gap:1.5rem; }
+  #overlay-loading.active { display:flex; }
+
   /* ── LOGIN ── */
   #screen-login { align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at 60% 20%,#0a1628 0%,var(--bg) 70%); padding:1rem; }
   .login-box { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:2.5rem 2rem; width:100%; max-width:400px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
@@ -45,6 +52,14 @@
   .user-chip span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .logout-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.78rem; font-family:inherit; transition:color .15s; white-space:nowrap; }
   .logout-btn:hover { color:var(--danger); }
+  /* user menu dropdown */
+  .user-menu-wrap { position:relative; }
+  .user-menu-btn { display:flex; align-items:center; gap:.45rem; cursor:pointer; padding:.35rem .6rem; border-radius:8px; border:none; background:none; font-family:inherit; font-size:.82rem; color:var(--muted); transition:background .15s; white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis; }
+  .user-menu-btn:hover { background:var(--bg3); color:var(--text); }
+  .user-menu-dropdown { display:none; position:absolute; right:0; top:calc(100% + 6px); background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:.3rem; min-width:120px; z-index:300; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+  .user-menu-dropdown.open { display:block; }
+  .user-menu-item { display:block; width:100%; text-align:left; padding:.5rem .75rem; border:none; background:none; color:var(--muted); font-family:inherit; font-size:.83rem; cursor:pointer; border-radius:7px; transition:all .15s; }
+  .user-menu-item:hover { background:rgba(224,85,85,.12); color:var(--danger); }
 
   /* mobile top bar (hidden on desktop) */
   .mobile-topbar { display:none; align-items:center; justify-content:space-between; padding:0 1rem; height:52px; background:var(--bg2); border-bottom:1px solid var(--border); flex-shrink:0; }
@@ -52,8 +67,8 @@
   .mobile-user { font-size:.75rem; color:var(--muted); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   /* mobile bottom nav (hidden on desktop) */
-  .mobile-nav { display:none !important; position:fixed; bottom:0; left:0; right:0; height:var(--nav-h); background:var(--bg2); border-top:1px solid var(--border); z-index:100; }
-  .mobile-nav-inner { display:flex; height:100%; }
+  .mobile-nav { display:none !important; position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:1px solid var(--border); z-index:100; padding-bottom:env(safe-area-inset-bottom, 8px); }
+  .mobile-nav-inner { display:flex; height:var(--nav-h); }
   .mobile-nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:none; background:none; color:var(--muted); font-family:inherit; font-size:.65rem; font-weight:500; cursor:pointer; transition:color .15s; }
   .mobile-nav-btn.active { color:var(--accent2); }
   .mobile-nav-btn svg { flex-shrink:0; }
@@ -228,7 +243,7 @@
 
   /* ── REDESIGNED EXERCISE CARDS (accessibility-first) ── */
   .ex-card2 { background:#1c1c26; border:2px solid #4a4a66; border-radius:14px; padding:16px; margin-bottom:10px; }
-  .ex-card2.sklop-b { background:#2a2a3a; border-color:#5e5e7a; }
+  .ex-card2.sklop-b { background:rgba(240,240,245,0.30); border-color:#5e5e7a; }
   .ex-card2-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; }
   .ex-card2-id { display:flex; align-items:center; gap:10px; min-width:0; }
   .ex-card2-code { background:#2563eb; color:#fff; font-size:15px; font-weight:700; min-width:32px; height:32px; padding:0 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -519,15 +534,93 @@
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Trening
     </button>
-    <button class="mobile-nav-btn" id="mnav-logout">
-      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Odjava
-    </button>
   </div>
 </nav>
 
+<!-- LOADING SCREEN -->
+<div id="screen-loading" class="screen active">
+  <svg class="squat-figure" viewBox="0 0 160 145" width="160" height="145" xmlns="http://www.w3.org/2000/svg">
+    <g class="squat-upper">
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,24;0,0" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <circle cx="80" cy="14" r="11" fill="#2563eb"/>
+      <line x1="80" y1="25" x2="80" y2="72" stroke="#2563eb" stroke-width="6" stroke-linecap="round"/>
+      <line x1="55" y1="44" x2="68" y2="56" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+      <line x1="105" y1="44" x2="92" y2="56" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+      <line x1="22" y1="36" x2="138" y2="36" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+      <rect x="22" y="30" width="4" height="12" rx="1.5" fill="#93c5fd"/>
+      <rect x="27" y="23" width="5" height="26" rx="1.5" fill="#2563eb"/>
+      <rect x="33" y="12" width="7" height="48" rx="2" fill="#1d4ed8"/>
+      <rect x="120" y="12" width="7" height="48" rx="2" fill="#1d4ed8"/>
+      <rect x="128" y="23" width="5" height="26" rx="1.5" fill="#2563eb"/>
+      <rect x="134" y="30" width="4" height="12" rx="1.5" fill="#93c5fd"/>
+    </g>
+    <line x1="80" y1="72" x2="63" y2="95" stroke="#2563eb" stroke-width="6" stroke-linecap="round">
+      <animate attributeName="y1" values="72;96;72" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="63;44;63" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="95;100;95" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+    </line>
+    <line x1="80" y1="72" x2="97" y2="95" stroke="#2563eb" stroke-width="6" stroke-linecap="round">
+      <animate attributeName="y1" values="72;96;72" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="97;116;97" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="95;100;95" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+    </line>
+    <line x1="63" y1="95" x2="57" y2="128" stroke="#2563eb" stroke-width="6" stroke-linecap="round">
+      <animate attributeName="x1" values="63;44;63" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="95;100;95" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+    </line>
+    <line x1="97" y1="95" x2="103" y2="128" stroke="#2563eb" stroke-width="6" stroke-linecap="round">
+      <animate attributeName="x1" values="97;116;97" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="95;100;95" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+    </line>
+    <line x1="57" y1="128" x2="40" y2="128" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="103" y1="128" x2="120" y2="128" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <span class="loading-label">Nalagam…</span>
+</div>
+
+<!-- OVERLAY LOADING (shown during login/signup processing) -->
+<div id="overlay-loading">
+  <svg class="squat-figure" viewBox="0 0 160 145" width="120" height="109" xmlns="http://www.w3.org/2000/svg">
+    <g class="squat-upper">
+      <animateTransform attributeName="transform" type="translate" values="0,0;0,24;0,0" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <circle cx="80" cy="14" r="11" fill="#2563eb"/>
+      <line x1="80" y1="25" x2="80" y2="72" stroke="#2563eb" stroke-width="6" stroke-linecap="round"/>
+      <line x1="55" y1="44" x2="68" y2="56" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+      <line x1="105" y1="44" x2="92" y2="56" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+      <line x1="22" y1="36" x2="138" y2="36" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+      <rect x="22" y="30" width="4" height="12" rx="1.5" fill="#93c5fd"/>
+      <rect x="27" y="23" width="5" height="26" rx="1.5" fill="#2563eb"/>
+      <rect x="33" y="12" width="7" height="48" rx="2" fill="#1d4ed8"/>
+      <rect x="120" y="12" width="7" height="48" rx="2" fill="#1d4ed8"/>
+      <rect x="128" y="23" width="5" height="26" rx="1.5" fill="#2563eb"/>
+      <rect x="134" y="30" width="4" height="12" rx="1.5" fill="#93c5fd"/>
+    </g>
+    <line x1="80" y1="72" x2="63" y2="95" stroke="#2563eb" stroke-width="6" stroke-linecap="round">
+      <animate attributeName="y1" values="72;96;72" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="63;44;63" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="95;100;95" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+    </line>
+    <line x1="80" y1="72" x2="97" y2="95" stroke="#2563eb" stroke-width="6" stroke-linecap="round">
+      <animate attributeName="y1" values="72;96;72" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="97;116;97" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="95;100;95" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+    </line>
+    <line x1="63" y1="95" x2="57" y2="128" stroke="#2563eb" stroke-width="6" stroke-linecap="round">
+      <animate attributeName="x1" values="63;44;63" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="95;100;95" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+    </line>
+    <line x1="97" y1="95" x2="103" y2="128" stroke="#2563eb" stroke-width="6" stroke-linecap="round">
+      <animate attributeName="x1" values="97;116;97" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="95;100;95" dur="1.8s" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" repeatCount="indefinite"/>
+    </line>
+    <line x1="57" y1="128" x2="40" y2="128" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="103" y1="128" x2="120" y2="128" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <span class="loading-label">Nalagam…</span>
+</div>
+
 <!-- LOGIN -->
-<div id="screen-login" class="screen active">
+<div id="screen-login" class="screen">
   <div class="login-box">
     <h1><span class="brand-F">F</span>it Team Sistemi</h1>
 
@@ -598,7 +691,14 @@
         <svg width="20" height="20" fill="none" stroke="#9090b0" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-4.999M9 17H4l1.405-1.405A2.032 2.032 0 006 14.158V11a6 6 0 0112 0v3.159c0 .538.214 1.055.595 1.436L20 17H4" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 21a2 2 0 01-4 0" stroke-linecap="round"/></svg>
         <span id="notif-dot-mobile" style="display:none;position:absolute;top:0;right:0" class="notif-dot"></span>
       </button>
-      <span class="mobile-user" id="mobile-user-label">—</span>
+      <div class="user-menu-wrap">
+        <button class="user-menu-btn" onclick="APP.toggleUserMenu('mobile-user-menu')"><span id="mobile-user-label">—</span></button>
+        <div class="user-menu-dropdown" id="mobile-user-menu">
+          <button class="user-menu-item" onclick="APP.logout()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:.4rem;vertical-align:middle"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round"/></svg>Odjava
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -634,10 +734,17 @@
         Obvestila
         <span id="notif-dot-desktop" style="display:none" class="notif-dot"></span>
       </button>
-      <div class="user-chip">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
-        <span id="user-label">—</span>
-        <button id="logout-btn" class="logout-btn">Odjava</button>
+      <div class="user-menu-wrap" style="width:100%">
+        <button class="user-menu-btn" onclick="APP.toggleUserMenu('desktop-user-menu')" style="width:100%;padding:.65rem;border-radius:10px;background:var(--bg3)">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
+          <span id="user-label" style="flex:1;overflow:hidden;text-overflow:ellipsis;text-align:left">—</span>
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="user-menu-dropdown" id="desktop-user-menu" style="bottom:calc(100% + 6px);top:auto;left:0;right:0">
+          <button class="user-menu-item" onclick="APP.logout()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:.4rem;vertical-align:middle"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round"/></svg>Odjava
+          </button>
+        </div>
       </div>
     </div>
   </nav>
@@ -754,33 +861,88 @@
         </div>
       </div>
 
-      <!-- Stats from sheet -->
+      <!-- Stats from sheet — collapsible -->
       <div class="card-form" id="profile-stats-card" style="display:none">
-        <h3>Statistika treningov 🏋️</h3>
-        <div id="profile-stats-content"></div>
-      </div>
-
-      <!-- Personal Records -->
-      <div class="card-form" id="profile-pr-card" style="display:none">
-        <h3>Osebni rekordi 🏆</h3>
-        <div id="profile-pr-content"></div>
-      </div>
-
-      <!-- Kcal calculator -->
-      <div class="card-form" id="profile-kcal-card" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-          <h3 style="margin:0">Ocenjena kalorična poraba 🔥</h3>
-          <details style="position:relative">
-            <summary style="cursor:pointer;list-style:none;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);border-radius:8px;padding:.3rem .7rem;font-size:.78rem;color:var(--accent2)">ℹ️ Zakaj to izpolniti</summary>
-            <div style="position:absolute;right:0;top:2rem;z-index:10;width:280px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;font-size:.82rem;line-height:1.6;color:var(--muted);box-shadow:0 12px 40px rgba(0,0,0,.5)">
-              <p style="margin-bottom:.5rem">Za točen izračun potrebujemo: <strong style="color:var(--text)">višino, datum rojstva, spol in nivo aktivnosti</strong>.</p>
-              <p style="margin-bottom:.5rem">🔥 <strong style="color:var(--accent2)">TDEE</strong> je skupna dnevna poraba kalorij — koliko kalorij tvoje telo porabi na dan.</p>
-              <p style="margin-bottom:.5rem">Vnos hrane pod TDEE → hujšanje. Nad TDEE → pridobivanje mišic.</p>
-              <p style="font-size:.75rem;color:var(--accent2)">💡 Za točen načrt prehrane se posvetuj s svojim trenerjem.</p>
-            </div>
-          </details>
+        <div onclick="APP._toggleCard('stats-body','stats-chev')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">Statistika treningov 🏋️</h3>
+          <span id="stats-chev" style="color:var(--muted);transition:transform .2s;display:inline-block">▼</span>
         </div>
-        <div id="profile-kcal-content"></div>
+        <div id="stats-body" style="display:none;margin-top:.75rem">
+          <div id="profile-stats-content"></div>
+        </div>
+      </div>
+
+      <!-- Personal Records — collapsible -->
+      <div class="card-form" id="profile-pr-card" style="display:none">
+        <div onclick="APP._toggleCard('pr-body','pr-chev')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">Osebni rekordi 🏆</h3>
+          <span id="pr-chev" style="color:var(--muted);transition:transform .2s;display:inline-block">▼</span>
+        </div>
+        <div id="pr-body" style="display:none;margin-top:.75rem">
+          <div id="profile-pr-content"></div>
+        </div>
+      </div>
+
+      <!-- Blood pressure — always visible, collapsible -->
+      <div class="card-form" id="profile-bp-card">
+        <div onclick="APP._toggleCard('bp-body','bp-chev')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">Krvni tlak 🩺</h3>
+          <span id="bp-chev" style="color:var(--muted);transition:transform .2s;display:inline-block">▼</span>
+        </div>
+        <div id="bp-body" style="display:none;margin-top:.75rem">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
+            <input id="bp-sys" type="number" class="inp" style="width:70px" placeholder="120" min="50" max="250">
+            <span style="color:var(--muted);font-size:1.1rem">/</span>
+            <input id="bp-dia" type="number" class="inp" style="width:70px" placeholder="80" min="30" max="150">
+            <span style="color:var(--muted);font-size:.85rem">mmHg</span>
+            <button class="btn btn-sm" onclick="APP.saveBP()">Shrani</button>
+          </div>
+          <div id="bp-msg" style="font-size:.82rem;margin-bottom:.5rem"></div>
+          <div id="bp-guidance" style="margin-bottom:.75rem"></div>
+          <div id="bp-history"></div>
+        </div>
+      </div>
+
+      <!-- Body composition — collapsible -->
+      <div class="card-form" id="ts-card" style="display:none">
+        <div onclick="APP._toggleCard('ts-body','ts-chev')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">Telesna sestava 📊</h3>
+          <span id="ts-chev" style="color:var(--muted);transition:transform .2s;display:inline-block">▼</span>
+        </div>
+        <div id="ts-body" style="display:none;margin-top:.75rem">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+            <button id="ts-prev" class="btn btn-ghost btn-sm" onclick="APP._tsPrev()">‹</button>
+            <span id="ts-date-lbl" style="flex:1;text-align:center;font-size:.85rem;color:var(--muted)"></span>
+            <button id="ts-next" class="btn btn-ghost btn-sm" onclick="APP._tsNext()">›</button>
+          </div>
+          <div id="ts-metrics"></div>
+          <div id="ts-from-first" style="margin-top:.75rem;padding:.75rem;background:var(--bg3);border-radius:10px;font-size:.83rem;display:none">
+            <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.4rem">Sprememba od prve meritve</div>
+            <span id="ts-from-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kcal calculator — collapsible -->
+      <div class="card-form" id="profile-kcal-card" style="display:none">
+        <div onclick="APP._toggleCard('kcal-body','kcal-chev')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:0">
+          <h3 style="margin:0">Ocenjena kalorična poraba 🔥</h3>
+          <div style="display:flex;align-items:center;gap:.5rem" onclick="event.stopPropagation()">
+            <details style="position:relative">
+              <summary style="cursor:pointer;list-style:none;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);border-radius:8px;padding:.3rem .7rem;font-size:.78rem;color:var(--accent2)">ℹ️ Zakaj</summary>
+              <div style="position:absolute;right:0;top:2rem;z-index:10;width:280px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;font-size:.82rem;line-height:1.6;color:var(--muted);box-shadow:0 12px 40px rgba(0,0,0,.5)">
+                <p style="margin-bottom:.5rem">Za točen izračun potrebujemo: <strong style="color:var(--text)">višino, datum rojstva, spol in nivo aktivnosti</strong>.</p>
+                <p style="margin-bottom:.5rem">🔥 <strong style="color:var(--accent2)">TDEE</strong> je skupna dnevna poraba kalorij — koliko kalorij tvoje telo porabi na dan.</p>
+                <p style="margin-bottom:.5rem">Vnos hrane pod TDEE → hujšanje. Nad TDEE → pridobivanje mišic.</p>
+                <p style="font-size:.75rem;color:var(--accent2)">💡 Za točen načrt prehrane se posvetuj s svojim trenerjem.</p>
+              </div>
+            </details>
+            <span id="kcal-chev" style="color:var(--muted);transition:transform .2s;display:inline-block">▼</span>
+          </div>
+        </div>
+        <div id="kcal-body" style="display:none;margin-top:.75rem">
+          <div id="profile-kcal-content"></div>
+        </div>
       </div>
 
       <!-- Full graph -->
@@ -1186,12 +1348,12 @@ let currentUserData = {};
 /* ── auth ── */
 onAuthStateChanged(auth, async user => {
   currentUser = user;
-  if (!user) { switchScreen("login"); return; }
+  if (!user) { APP._hideLoader(); switchScreen("login"); return; }
   try {
     const allowed = await emailExistsInCollection("allowedUsers", user.email);
-    if (!allowed) { await signOut(auth); showLoginErr("Vaš e-poštni naslov ni odobren. Obrnite se na skrbnika."); return; }
+    if (!allowed) { APP._hideLoader(); switchScreen("login"); await signOut(auth); showLoginErr("Vaš e-poštni naslov ni odobren. Obrnite se na skrbnika."); return; }
     IS_ADMIN = await emailExistsInCollection("admins", user.email);
-  } catch(e) { await signOut(auth); showLoginErr("Preverjanje dostopa ni uspelo: "+e.message); return; }
+  } catch(e) { APP._hideLoader(); switchScreen("login"); await signOut(auth); showLoginErr("Preverjanje dostopa ni uspelo: "+e.message); return; }
   // Load display name and canPost from allowedUsers
   try {
     const userSnap2 = await getDocs(collection(db,"allowedUsers"));
@@ -1208,7 +1370,7 @@ onAuthStateChanged(auth, async user => {
   if(g("mobile-user-label")) g("mobile-user-label").textContent = currentDisplayName;
   g("nav-admin").style.display = IS_ADMIN ? "" : "none";
   if(g("mnav-admin")) g("mnav-admin").style.display = IS_ADMIN ? "" : "none";
-  switchScreen("app");
+  APP._hideLoader(); switchScreen("app");
   APP.nav("dashboard");
   APP._checkUnreadNotifications();
 
@@ -1285,10 +1447,11 @@ const APP = window.APP = {
     if (!email||!pass){ showAuthErr("Vnesite e-pošto in geslo."); return; }
     const btn = g("login-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+    APP._showLoader();
     try {
       await signInWithEmailAndPassword(auth, email, pass);
       clearAuthMsg();
-    } catch(e){ showAuthErr(ERRORS[e.code]||"Prijava ni uspela: "+e.message); }
+    } catch(e){ APP._hideLoader(); showAuthErr(ERRORS[e.code]||"Prijava ni uspela: "+e.message); }
     btn.innerHTML="Sign In"; btn.disabled=false;
   },
 
@@ -1303,17 +1466,17 @@ const APP = window.APP = {
     if (pass.length < 6){ showAuthErr("Geslo mora imeti vsaj 6 znakov."); return; }
     const btn = g("signup-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+    APP._showLoader();
     try {
       const allowed = await emailExistsInCollection("allowedUsers", email);
-      if (!allowed){ showAuthErr("Ta e-poštni naslov ni odobren. Prosite skrbnika, da vas doda."); btn.innerHTML="Ustvari račun"; btn.disabled=false; return; }
+      if (!allowed){ APP._hideLoader(); showAuthErr("Ta e-poštni naslov ni odobren. Prosite skrbnika, da vas doda."); btn.innerHTML="Ustvari račun"; btn.disabled=false; return; }
       await createUserWithEmailAndPassword(auth, email, pass);
-      // Save display name + default PR exercises to allowedUsers
       await updateDoc(doc(db,"allowedUsers",ekey(email)),{
         displayName: ime+" "+priimek,
         prExercises: ["Počep","Mrtvi dvig"]
       });
       clearAuthMsg();
-    } catch(e){ showAuthErr(ERRORS[e.code]||"Registracija ni uspela: "+e.message); }
+    } catch(e){ APP._hideLoader(); showAuthErr(ERRORS[e.code]||"Registracija ni uspela: "+e.message); }
     btn.innerHTML="Ustvari račun"; btn.disabled=false;
   },
 
@@ -1323,25 +1486,275 @@ const APP = window.APP = {
     const btn = g("forgot-btn");
     btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
     try {
-      // Call Vercel function which uses Firebase Admin to generate link + sends via Resend
-      const resp = await fetch(RESET_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-      if (!resp.ok) {
-        const err = await resp.json().catch(()=>({}));
-        throw new Error(err.error || "Server error");
-      }
+      await sendPasswordResetEmail(auth, email);
       showAuthOk("E-pošta za ponastavitev je poslana! Preverite nabiralnik (in neželeno pošto).");
       g("forgot-email").value="";
     } catch(e){
-      showAuthErr("Pošiljanje ni uspelo: "+e.message);
+      const msg = e.code === "auth/user-not-found"
+        ? "Tega e-poštnega naslova ni v sistemu."
+        : e.code === "auth/invalid-email"
+        ? "Neveljaven e-poštni naslov."
+        : "Pošiljanje ni uspelo: "+e.message;
+      showAuthErr(msg);
     }
     btn.innerHTML="Pošlji e-pošto za ponastavitev"; btn.disabled=false;
   },
 
   logout: ()=>signOut(auth),
+
+  _showLoader() { const o = document.getElementById("overlay-loading"); if(o) o.classList.add("active"); },
+  _hideLoader() { const o = document.getElementById("overlay-loading"); if(o) o.classList.remove("active"); },
+
+  toggleUserMenu(id) {
+    const menu = document.getElementById(id);
+    if (!menu) return;
+    const isOpen = menu.classList.contains("open");
+    // close all open menus first
+    document.querySelectorAll(".user-menu-dropdown.open").forEach(m=>m.classList.remove("open"));
+    if (!isOpen) menu.classList.add("open");
+  },
+
+  _toggleCard(bodyId, chevId) {
+    const body = document.getElementById(bodyId);
+    const chev = document.getElementById(chevId);
+    if (!body) return;
+    const open = body.style.display === "none";
+    body.style.display = open ? "block" : "none";
+    if (chev) chev.style.transform = open ? "rotate(180deg)" : "";
+  },
+
+  async saveBP() {
+    const user = auth.currentUser;
+    if (!user) return;
+    const sysEl = document.getElementById("bp-sys");
+    const diaEl = document.getElementById("bp-dia");
+    const msgEl = document.getElementById("bp-msg");
+    const sys = parseInt(sysEl?.value);
+    const dia = parseInt(diaEl?.value);
+    if (!sys || !dia || sys < 50 || dia < 30) {
+      if (msgEl) { msgEl.textContent = "Vnesite veljavne vrednosti (npr. 120 / 80)."; msgEl.style.color = "var(--danger)"; }
+      return;
+    }
+    if (msgEl) { msgEl.textContent = "Shranjujem…"; msgEl.style.color = "var(--muted)"; }
+    try {
+      await addDoc(collection(db,"bp"), {
+        email: user.email.toLowerCase(), sys, dia, date: new Date().toISOString()
+      });
+      if (sysEl) sysEl.value = "";
+      if (diaEl) diaEl.value = "";
+      if (msgEl) { msgEl.textContent = "Shranjeno ✓"; msgEl.style.color = "var(--accent2)"; setTimeout(()=>{ if(msgEl) msgEl.textContent=""; }, 2000); }
+      await APP.loadBP(user.email);
+      // Auto-expand after save
+      const bpBody = document.getElementById("bp-body");
+      if (bpBody && bpBody.style.display === "none") APP._toggleCard("bp-body","bp-chev");
+    } catch(e) {
+      if (msgEl) { msgEl.textContent = "Napaka pri shranjevanju."; msgEl.style.color = "var(--danger)"; }
+    }
+  },
+
+  async loadBP(email) {
+    const snap = await getDocs(query(collection(db,"bp"), where("email","==",email.toLowerCase())));
+    const records = snap.docs.map(d=>d.data()).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+
+    // Auto-expand if we have records and body is still closed
+    if (records.length > 0) {
+      const bpBody = document.getElementById("bp-body");
+      if (bpBody && bpBody.style.display === "none") APP._toggleCard("bp-body","bp-chev");
+    }
+
+    // Render guidance for latest record
+    const guidanceEl = document.getElementById("bp-guidance");
+    if (guidanceEl && records.length > 0) {
+      const { sys, dia } = records[0];
+      let label, color, tip;
+      if (sys < 90) {
+        label = "Hipotenzija (nizek tlak)"; color = "#60a5fa";
+        tip = "Sistolični tlak pod 90 mmHg. Pogovorite se z zdravnikom, če se pojavljajo omotica ali slabost.";
+      } else if (sys < 120 && dia < 80) {
+        label = "Optimalen"; color = "#4ade80";
+        tip = "Odlično! Krvni tlak je v idealnem območju. Nadaljujte z zdravim načinom življenja.";
+      } else if (sys < 130 && dia < 80) {
+        label = "Normalen"; color = "#86efac";
+        tip = "Krvni tlak je v normalnem območju. Vzdržujte redno vadbo in uravnoteženo prehrano.";
+      } else if (sys < 140 || dia < 90) {
+        label = "Visok normalen"; color = "#fbbf24";
+        tip = "Mejno območje. Zmanjšajte vnos soli, povečajte telesno aktivnost in redno merite tlak.";
+      } else if (sys < 160 || dia < 100) {
+        label = "Visok tlak – 1. stopnja"; color = "#f97316";
+        tip = "Povišan krvni tlak. Priporoča se posvet z zdravnikom in spremembe življenjskega sloga.";
+      } else {
+        label = "Visok tlak – 2. stopnja"; color = "#ef4444";
+        tip = "Pomembno povišan krvni tlak. Obvezno se posvetujte z zdravnikom.";
+      }
+      guidanceEl.innerHTML = `
+        <div style="display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;background:${color}18;border:1px solid ${color}40;border-radius:10px;margin-bottom:.5rem">
+          <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
+          <div>
+            <div style="font-weight:600;font-size:.88rem;color:${color}">${sys}/${dia} mmHg — ${label}</div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:.15rem">${tip}</div>
+          </div>
+        </div>`;
+    } else if (guidanceEl) {
+      guidanceEl.innerHTML = `<p style="font-size:.83rem;color:var(--muted)">Vnesite izmerjeni sistolični in diastolični tlak ter kliknite Shrani.</p>`;
+    }
+
+    // Render history list
+    const histEl = document.getElementById("bp-history");
+    if (histEl) {
+      if (records.length === 0) { histEl.innerHTML = ""; return; }
+      histEl.innerHTML = `
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.4rem">Zadnjih ${records.length} meritev</div>
+        ${records.map(r => {
+          const d = new Date(r.date);
+          const ds = d.toLocaleDateString("sl-SI",{day:"numeric",month:"numeric",year:"numeric"});
+          const ts = d.toLocaleTimeString("sl-SI",{hour:"2-digit",minute:"2-digit"});
+          let col = "#4ade80";
+          if (r.sys < 90) col = "#60a5fa";
+          else if (r.sys >= 160 || r.dia >= 100) col = "#ef4444";
+          else if (r.sys >= 140 || r.dia >= 90) col = "#f97316";
+          else if (r.sys >= 130 || r.dia >= 80) col = "#fbbf24";
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-weight:600;color:${col}">${r.sys}/${r.dia} <span style="font-size:.78rem;font-weight:400;color:var(--muted)">mmHg</span></span>
+            <span style="font-size:.78rem;color:var(--muted)">${ds} ${ts}</span>
+          </div>`;
+        }).join("")}`;
+    }
+  },
+
+  _tsData: null,   // [{date, metrics}]
+  _tsIdx: 0,
+
+  _tsPrev() {
+    if (!this._tsData || this._tsIdx <= 0) return;
+    this._tsIdx--;
+    this._tsRender();
+  },
+  _tsNext() {
+    if (!this._tsData || this._tsIdx >= this._tsData.length - 1) return;
+    this._tsIdx++;
+    this._tsRender();
+  },
+
+  _tsRender() {
+    const data = this._tsData;
+    if (!data || data.length === 0) return;
+    const entry = data[this._tsIdx];
+    const first = data[0];
+    const dateLbl = document.getElementById("ts-date-lbl");
+    const metricsEl = document.getElementById("ts-metrics");
+    const fromFirstEl = document.getElementById("ts-from-first");
+    const fromTextEl = document.getElementById("ts-from-text");
+    const prevBtn = document.getElementById("ts-prev");
+    const nextBtn = document.getElementById("ts-next");
+
+    if (dateLbl) dateLbl.textContent = entry.date;
+    if (prevBtn) prevBtn.disabled = this._tsIdx === 0;
+    if (nextBtn) nextBtn.disabled = this._tsIdx === data.length - 1;
+
+    if (metricsEl) {
+      metricsEl.innerHTML = entry.metrics.map(m => {
+        const inRange = m.val !== null && m.range && m.val >= m.range[0] && m.val <= m.range[1];
+        const outRange = m.val !== null && m.range && !inRange;
+        const color = m.val === null ? "var(--muted)" : outRange ? "#fbbf24" : "var(--accent2)";
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:.85rem;font-weight:500">${m.label}</div>
+            ${m.range ? `<div style="font-size:.72rem;color:var(--muted)">Norma: ${m.range[0]}–${m.range[1]} ${m.unit}</div>` : ""}
+          </div>
+          <div style="text-align:right">
+            <span style="font-weight:700;color:${color}">${m.val !== null ? m.val : "—"}</span>
+            ${m.unit ? `<span style="font-size:.78rem;color:var(--muted);margin-left:.2rem">${m.unit}</span>` : ""}
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    // Show change from first measurement (only when not on first)
+    if (fromFirstEl && fromTextEl) {
+      if (this._tsIdx > 0 && first) {
+        const changes = entry.metrics.map(m => {
+          const fm = first.metrics.find(x => x.label === m.label);
+          if (!fm || m.val === null || fm.val === null) return null;
+          const diff = Math.round((m.val - fm.val) * 10) / 10;
+          if (diff === 0) return null;
+          const sign = diff > 0 ? "+" : "";
+          return `${m.label}: <strong style="color:${diff < 0 ? '#4ade80' : '#fbbf24'}">${sign}${diff} ${m.unit}</strong>`;
+        }).filter(Boolean);
+        if (changes.length > 0) {
+          fromTextEl.innerHTML = changes.join(" &nbsp;·&nbsp; ");
+          fromFirstEl.style.display = "";
+        } else {
+          fromFirstEl.style.display = "none";
+        }
+      } else {
+        fromFirstEl.style.display = "none";
+      }
+    }
+  },
+
+  async loadBodyComposition(sheetId, gender, age) {
+    try {
+      const range = encodeURIComponent("'Tel. sestava'!A1:BZ25");
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${SHEETS_API_KEY}&valueRenderOption=UNFORMATTED_VALUE`;
+      const resp = await fetch(url);
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const rows = data.values || [];
+      if (rows.length < 10) return;
+
+      // Row 8 (index 7) = dates; scan cols from index 6 onwards
+      const dateRow = rows[7] || [];
+      const measurements = [];
+      for (let c = 6; c < dateRow.length; c++) {
+        const rawDate = dateRow[c];
+        if (!rawDate) continue;
+        let dateStr = String(rawDate).trim();
+        // Convert Sheets serial date
+        const serial = parseFloat(dateStr);
+        if (!isNaN(serial) && serial > 1000) {
+          const d = new Date((serial - 25569) * 86400 * 1000);
+          dateStr = d.toLocaleDateString("sl-SI", {day:"numeric",month:"numeric",year:"numeric"});
+        }
+        if (!dateStr) continue;
+
+        // Rows 9–17 (indices 8–16): Višina, Teža, ITM, Maščoba%, Pusta masa, Kostna masa, Starost organizma, Delež vode, Visceralna m.
+        const metaDefs = [
+          { label: "Višina",           unit: "cm",  hidden: true },
+          { label: "Teža",             unit: "kg",  range: null },
+          { label: "ITM",              unit: "",    range: gender==="m" ? [18.5, 24.9] : [18.5, 24.9] },
+          { label: "Maščoba",          unit: "%",   range: gender==="m" ? [10, 20] : [18, 28] },
+          { label: "Pusta masa",       unit: "kg",  range: null },
+          { label: "Kostna masa",      unit: "kg",  range: null },
+          { label: "Biološka starost", unit: "let", range: age ? [age-5, age+5] : null },
+          { label: "Delež vode",       unit: "%",   range: gender==="m" ? [50, 65] : [45, 60] },
+          { label: "Visceralna maščoba", unit: "",  range: [1, 9] },
+        ];
+
+        const metrics = [];
+        for (let r = 0; r < metaDefs.length; r++) {
+          const def = metaDefs[r];
+          if (def.hidden) continue;
+          const rawVal = (rows[8 + r] || [])[c];
+          const val = rawVal !== undefined && rawVal !== "" ? Math.round(parseFloat(String(rawVal).replace(",",".")) * 10) / 10 : null;
+          metrics.push({ label: def.label, unit: def.unit, val: isNaN(val) ? null : val, range: def.range });
+        }
+        measurements.push({ date: dateStr, metrics });
+      }
+
+      if (measurements.length === 0) return;
+
+      const tsCard = document.getElementById("ts-card");
+      if (tsCard) tsCard.style.display = "";
+
+      this._tsData = measurements;
+      this._tsIdx = measurements.length - 1; // start at latest
+      this._tsRender();
+
+      // Auto-expand
+      const tsBody = document.getElementById("ts-body");
+      if (tsBody && tsBody.style.display === "none") APP._toggleCard("ts-body","ts-chev");
+    } catch(e) {}
+  },
 
   nav(section) {
     document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
@@ -1446,6 +1859,7 @@ const APP = window.APP = {
             const statsContent = g("profile-stats-content");
             if (statsCard && statsContent) {
               statsCard.style.display = "";
+              APP._toggleCard("stats-body","stats-chev"); // auto-expand
               statsContent.innerHTML = `<div class="stat-grid">
                 <div class="stat-box">
                   <div class="stat-val">${totalW}</div>
@@ -1465,87 +1879,114 @@ const APP = window.APP = {
         }
       } catch(e){}
 
-      // ── Fetch Personal Records (Počep & Mrtvi dvig) ──
+      // ── Fetch Personal Records ──
       try {
-        // Load PR exercises for this specific user from their allowedUsers doc
         const PR_EXERCISES = (profileData.prExercises || []).filter(Boolean);
-        const prMap = {}; // exercise name → {weight, sets, reps}
+        const prMap = {}; // exercise name → {weight, isCm, raw, sets, reps}
 
+        // Regular weight extractor — handles 2*15=30, 10+0,4TT=10, skips pure elastic
         function extractWeight(val) {
           if (!val) return null;
           const s = String(val).trim().toLowerCase();
-          // skip non-numeric formats
-          if (s.includes("tt") || s.includes("el") || s.includes("cm") || s === "x" || s === "") return null;
-          // 2*25 or 2x25 → multiply (total weight)
+          if (s === "" || s === "x") return null;
+          // Skip pure elastic band entries
+          if (s.includes("el")) return null;
+          // TT (traction table / body weight) — extract only the non-TT addend
+          if (s.includes("tt")) {
+            const parts = s.split("+");
+            let total = 0, found = false;
+            for (const p of parts) {
+              if (!p.trim().includes("tt")) {
+                const m = p.trim().replace(/\?/g,"").match(/(\d+[\.,]?\d*)/);
+                if (m) { total += parseFloat(m[1].replace(",",".")); found = true; }
+              }
+            }
+            return found ? total : null;
+          }
+          // 2*25 or 2x25 → multiply
           const multi = s.match(/(\d+)[\*x]\s*(\d+[\.,]?\d*)/);
           if (multi) return parseFloat(multi[1]) * parseFloat(multi[2].replace(",","."));
-          // plain number — strip trailing ? and other chars
+          // plain number
           const plain = s.replace(/\?/g,"").match(/(\d+[\.,]?\d*)/);
           if (plain) return parseFloat(plain[1].replace(",","."));
           return null;
         }
 
-        for (const tab of ["Moč 1","Moč 2","Moč 3"]) {
+        // Elastic band extractor — "0,5 + 1cm el." → {cm:1.5, raw:"0,5 + 1cm el."}
+        function extractElasticCm(val) {
+          if (!val) return null;
+          const s = String(val).trim().toLowerCase();
+          if (!s.includes("el")) return null;
+          let total = 0;
+          for (const m of s.matchAll(/(\d+[\.,]?\d*)/g))
+            total += parseFloat(m[1].replace(",","."));
+          if (total === 0) return null;
+          return { cm: total, raw: String(val).trim() };
+        }
+
+        // Fetch all 3 Moč tabs in parallel
+        const tabResults = await Promise.all(["Moč 1","Moč 2","Moč 3"].map(async tab => {
           try {
             const tRange = encodeURIComponent(`'${tab}'!A:Q`);
-            const tUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetIdForStats}/values/${tRange}?key=${SHEETS_API_KEY}&valueRenderOption=FORMULA`;
+            const tUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetIdForStats}/values/${tRange}?key=${SHEETS_API_KEY}&valueRenderOption=UNFORMATTED_VALUE`;
             const tResp = await fetch(tUrl);
-            if (!tResp.ok) continue;
-            const tData = await tResp.json();
-            const tRows = tData.values || [];
+            if (!tResp.ok) return [];
+            return (await tResp.json()).values || [];
+          } catch(e2){ return []; }
+        }));
 
-            for (const row of tRows) {
-              const nameRaw = String(row[2]||"").trim();
-              const nameParsed = parseHyperlink(nameRaw);
-              const name = (nameParsed.name || nameRaw).toLowerCase();
+        for (const tRows of tabResults) {
+          for (const row of tRows) {
+            const nameRaw = String(row[2]||"").trim();
+            const nameParsed = parseHyperlink(nameRaw);
+            const name = (nameParsed.name || nameRaw).toLowerCase();
 
-              // Check if this is one of our tracked exercises
-              // Check against all tracked exercises (case-insensitive)
-              let exKey = null;
-              for (const prEx of PR_EXERCISES) {
-                if (prEx && name.includes(prEx.toLowerCase())) {
-                  exKey = prEx;
-                  break;
+            let exKey = null;
+            for (const prEx of PR_EXERCISES) {
+              if (prEx && name.includes(prEx.toLowerCase())) { exKey = prEx; break; }
+            }
+            if (!exKey) continue;
+
+            // Scan columns I–P (indices 8–15)
+            for (let c = 8; c <= 15; c++) {
+              const cell = row[c];
+
+              // Try regular weight
+              const w = extractWeight(cell);
+              if (w && w > 0 && (!prMap[exKey] || (!prMap[exKey].isCm && w > prMap[exKey].weight))) {
+                const setIdx = c - 8;
+                const repsRaw = String(row[5]||"").trim();
+                let repsForSet = repsRaw;
+                if (repsRaw.includes("/")) {
+                  const parts = repsRaw.split("/");
+                  repsForSet = parts[setIdx] || parts[parts.length-1] || repsRaw;
                 }
+                prMap[exKey] = { weight: w, isCm: false, sets: String(row[4]||"").trim(), reps: repsForSet.trim() };
               }
-              if (!exKey) continue;
 
-              // Check nizi columns I-P (indices 8-15)
-              for (let c = 8; c <= 15; c++) {
-                const w = extractWeight(row[c]);
-                if (w && w > 0) {
-                  if (!prMap[exKey] || w > prMap[exKey].weight) {
-                    // Get reps for this specific set (c-8 = set index 0,1,2...)
-                    const setIdx = c - 8;
-                    const repsRaw = String(row[5]||"").trim();
-                    // Parse reps — could be "10" or "8/10/10/6"
-                    let repsForSet = repsRaw;
-                    if (repsRaw.includes("/")) {
-                      const repParts = repsRaw.split("/");
-                      repsForSet = repParts[setIdx] || repParts[repParts.length-1] || repsRaw;
-                    }
-                    prMap[exKey] = {
-                      weight: w,
-                      sets:  String(row[4]||"").trim(),
-                      reps:  repsForSet.trim()
-                    };
-                  }
-                }
+              // Try elastic band (only if no kg PR found yet for this exercise)
+              if (!prMap[exKey] || prMap[exKey].isCm) {
+                const e = extractElasticCm(cell);
+                if (e && (!prMap[exKey] || e.cm > prMap[exKey].weight))
+                  prMap[exKey] = { weight: e.cm, isCm: true, raw: e.raw, sets: "", reps: "" };
               }
             }
-          } catch(e2){}
+          }
         }
 
         const prCard = g("profile-pr-card");
         const prContent = g("profile-pr-content");
         if (prCard && prContent && Object.keys(prMap).length > 0) {
           prCard.style.display = "";
+          APP._toggleCard("pr-body","pr-chev"); // auto-expand
           prContent.innerHTML = `<div class="stat-grid">
             ${Object.entries(prMap).map(([ex, data]) => `
               <div class="stat-box">
                 <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem">${esc(ex)}</div>
-                <div class="stat-val">${data.weight} <span style="font-size:1rem">kg</span></div>
-                <div class="stat-lbl" style="margin-top:.3rem">${data.reps ? data.reps+" ponovitev" : "Osebni rekord"}</div>
+                ${data.isCm
+                  ? `<div class="stat-val">${esc(data.raw)}</div><div class="stat-lbl" style="margin-top:.3rem">Elastika</div>`
+                  : `<div class="stat-val">${data.weight} <span style="font-size:1rem">kg</span></div>
+                     <div class="stat-lbl" style="margin-top:.3rem">${data.reps ? data.reps+" ponovitev" : "Osebni rekord"}</div>`}
               </div>`).join("")}
           </div>`;
         }
@@ -1583,6 +2024,7 @@ const APP = window.APP = {
     const kcalContent = g("profile-kcal-content");
     if (kcalCard && kcalContent) {
       kcalCard.style.display = "";
+      APP._toggleCard("kcal-body","kcal-chev"); // auto-expand
       const missing = [];
       if (!latestWeight) missing.push("tehtanje");
       if (!height) missing.push("višina");
@@ -1641,6 +2083,14 @@ const APP = window.APP = {
       } else {
         kcalContent.innerHTML = `<p class="muted" style="font-size:.85rem">Za izračun manjka še: <strong>${missing.join(", ")}</strong>. Izpolnite v osebnih podatkih in dodajte vsaj eno tehtanje.</p>`;
       }
+    }
+
+    // ── Blood pressure ──
+    try { await APP.loadBP(currentUser.email); } catch(e){}
+
+    // ── Body composition (Tel. sestava sheet) ──
+    if (sheetIdForStats) {
+      try { await APP.loadBodyComposition(sheetIdForStats, gender, age); } catch(e){}
     }
 
     // Load today's weight entry
@@ -3786,8 +4236,8 @@ greeting.innerHTML = `👋 Živijo, <strong style="color:var(--text)">${esc(firs
         const videoUrl = nameCell2.url || "";
         const colQ = String(row[16]||"").trim();
 
-        // Volume — any row where col Q is a number
-        if (colQ && !isNaN(parseFloat(colQ.replace(",",".")))) {
+        // Volume — any row where col Q is a positive number (ignore 0-value rows)
+        if (colQ && parseFloat(String(colQ).replace(",",".")) > 0) {
           volumeKg = colQ;
         }
 
@@ -4607,7 +5057,6 @@ on("mnav-feed",   ()=> APP.nav("feed"));
 on("mnav-dashboard", ()=> APP.nav("dashboard"));
 on("mnav-courses",   ()=> APP.nav("courses"));
 on("mnav-admin",     ()=> APP.nav("admin"));
-on("mnav-logout",    ()=> APP.logout());
 
 // lessons sidebar toggle (mobile)
 on("lessons-toggle", () => {
@@ -4623,8 +5072,11 @@ on("nav-dashboard",   ()=> APP.nav("dashboard"));
 on("nav-courses",     ()=> APP.nav("courses"));
 on("nav-admin",       ()=> APP.nav("admin"));
 
-// logout button (by class, not id)
-document.querySelectorAll(".logout-btn").forEach(b=> b.addEventListener("click", ()=>APP.logout()));
+// close user menu when clicking outside
+document.addEventListener("click", e => {
+  if (!e.target.closest(".user-menu-wrap"))
+    document.querySelectorAll(".user-menu-dropdown.open").forEach(m=>m.classList.remove("open"));
+});
 
 // admin panel static buttons
 on("add-user-btn",    ()=> APP.addUser());
@@ -4649,6 +5101,12 @@ on("close-viewer-btn",()=> APP.closeViewer());
 document.getElementById("forgot-email").addEventListener("keydown", e=>{
   if(e.key==="Enter") APP.forgotPassword();
 });
+
+// Safety net: if loading screen still showing after 8s, fall back to login
+setTimeout(() => {
+  const ls = document.getElementById("screen-loading");
+  if (ls && ls.classList.contains("active")) switchScreen("login");
+}, 8000);
 </script>
 
 </body>
