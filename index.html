@@ -1717,24 +1717,27 @@ const APP = window.APP = {
         }
         if (!dateStr) continue;
 
-        // Rows 9–17 (indices 8–16): Višina, Teža, ITM, Maščoba%, Pusta masa, Kostna masa, Starost organizma, Delež vode, Visceralna m.
+        // rows[8] = "IME TESTA" label row (skip); data starts at rows[9]
+        // rows[9]=Višina, [10]=Telesna teža, [11]=ITM, [12]=Telesna maščoba,
+        // [13]=Pusta telesna masa, [14]=Kostna masa, [15]=Starost organizma,
+        // [16]=Delež vode, [17]=Visceralna maščoba
         const metaDefs = [
-          { label: "Višina",           unit: "cm",  hidden: true },
-          { label: "Teža",             unit: "kg",  range: null },
-          { label: "ITM",              unit: "",    range: gender==="m" ? [18.5, 24.9] : [18.5, 24.9] },
-          { label: "Maščoba",          unit: "%",   range: gender==="m" ? [10, 20] : [18, 28] },
-          { label: "Pusta masa",       unit: "kg",  range: null },
-          { label: "Kostna masa",      unit: "kg",  range: null },
-          { label: "Biološka starost", unit: "let", range: age ? [age-5, age+5] : null },
-          { label: "Delež vode",       unit: "%",   range: gender==="m" ? [50, 65] : [45, 60] },
-          { label: "Visceralna maščoba", unit: "",  range: [1, 9] },
+          { label: "Višina",              unit: "m",   hidden: true },
+          { label: "Telesna teža",        unit: "kg",  range: null },
+          { label: "ITM",                 unit: "kg/m²", range: [18.5, 24.9] },
+          { label: "Telesna maščoba",     unit: "%",   range: gender==="m" ? [10, 20] : [18, 28] },
+          { label: "Pusta telesna masa",  unit: "kg",  range: null },
+          { label: "Kostna masa",         unit: "kg",  range: null },
+          { label: "Starost organizma",   unit: "let", range: age ? [age-5, age+5] : null },
+          { label: "Delež vode",          unit: "%",   range: gender==="m" ? [50, 65] : [45, 60] },
+          { label: "Visceralna maščoba",  unit: "",    range: [1, 9] },
         ];
 
         const metrics = [];
         for (let r = 0; r < metaDefs.length; r++) {
           const def = metaDefs[r];
           if (def.hidden) continue;
-          const rawVal = (rows[8 + r] || [])[c];
+          const rawVal = (rows[9 + r] || [])[c];
           const val = rawVal !== undefined && rawVal !== "" ? Math.round(parseFloat(String(rawVal).replace(",",".")) * 10) / 10 : null;
           metrics.push({ label: def.label, unit: def.unit, val: isNaN(val) ? null : val, range: def.range });
         }
